@@ -89,7 +89,7 @@
  *   $db_url = 'mysqli://username:password@localhost/databasename';
  *   $db_url = 'pgsql://username:password@localhost/databasename';
  */
-$db_url = 'mysql://username:password@localhost/databasename';
+$db_url = 'mysql://test:test@localhost/webbspace_dev';
 $db_prefix = '';
 
 /**
@@ -169,7 +169,8 @@ ini_set('url_rewriter.tags',        '');
  *
  * Remove the leading hash signs to enable.
  */
-# $conf = array(
+$conf = array(
+  'clean_url' => 0,
 #   'site_name' => 'My Drupal site',
 #   'theme_default' => 'minnelli',
 #   'anonymous' => 'Visitor',
@@ -210,7 +211,7 @@ ini_set('url_rewriter.tags',        '');
  * your web server spoofing the X-Forwarded-For headers.
  */
 #   'reverse_proxy_addresses' => array('a.b.c.d', ...),
-# );
+);
 
 /**
  * String overrides:

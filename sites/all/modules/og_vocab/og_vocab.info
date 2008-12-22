@@ -1,8 +1,0 @@
-name = Organic groups vocabularies
-description = "Enable groups to maintain their own vocabularies."
-dependencies = og
-package = "Organic groups"
-; Information added by drupal.org packaging script on 2007-01-02
-version = "5.x-1.x-dev"
-project = "og_vocab"
-

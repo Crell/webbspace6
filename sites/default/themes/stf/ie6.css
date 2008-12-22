@@ -1,7 +1,0 @@
-
-.block .content .corner, #main .corner {
-  display: none;
-}
-
-/* PNG Alpha Transparency fix for IE versions < IE7 */
-img { behavior: url(./pngbehavior.htc); }

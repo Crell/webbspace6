@@ -1,0 +1,4 @@
+name = WeBB
+description = Custom callbacks, overrides, and so forth for the WeBB project
+version = 1.0
+package = STF

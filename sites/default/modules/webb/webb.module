@@ -1,0 +1,1464 @@
+<?php
+
+/*------------------- Includes -------------------*/
+
+require_once(drupal_get_path('module', 'webb') . '/webb_nodes.inc');
+require_once(drupal_get_path('module', 'webb') . '/dbhelpers.inc');
+
+/*------------------- Miscellaneous -------------------*/
+
+/**
+ * Implementation of hook_perm().
+ */
+function webb_perm() {
+  $perms = array('read notes', 'post notes');
+
+  foreach(array_keys(webb_node_info()) as $type) {
+    $perms[] = 'create '. $type .' content';
+    $perms[] = 'edit '. $type .' content';
+    $perms[] = 'edit own '. $type .' content';
+  }
+
+  return $perms;
+}
+
+/**
+ * Implementation of hook_node_info().
+ */
+function webb_node_info() {
+  return array(
+    'character' => array(
+      'name' => t('Character'),
+      'module' => 'webb_character',
+      'description' => t("A character on an RPG board."),
+      'title_label' => t('Character name'),
+      'body_label' => t('Bio'),
+    ),
+    'board' => array(
+      'name' => t('Board'),
+      'module' => 'webb_board',
+      'description' => t('A board is where a RPG events take place.'),
+      'title_label' => t('Name'),
+      'body_label' => t('MOTD'),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function webb_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+
+  // Break out node operations to a handler function for each node type.
+  if (!empty($node->type)) {
+    $function = '_webb_nodeapi_'. $node->type;
+    if (function_exists($function)) {
+      $function($node, $op, $a3, $a4);
+    }
+  }
+}
+
+/**
+ * Helper function for hook_nodeapi().
+ */
+function _webb_nodeapi_logentry(&$node, $op, $a3 = NULL, $a4 = NULL) {
+
+  switch ($op) {
+    case 'insert':
+    case 'update':
+      // Force a title on logentry nodes of the posting date.
+      db_query("UPDATE {node} SET title='%s' WHERE nid=%d", format_date($node->created, 'custom', 'd M Y'), $node->nid);
+      db_query("UPDATE {node_revisions} SET title='%s' WHERE nid=%d", format_date($node->created, 'custom', 'd M Y'), $node->nid);
+      break;
+  }
+}
+
+/**
+ * Helper function for hook_nodeapi().
+ */
+function _webb_nodeapi_note(&$node, $op, $a3 = NULL, $a4 = NULL) {
+
+  switch ($op) {
+    case 'insert':
+    case 'update':
+      // Force the title of "note" nodes to be a custom label
+      $groups = array();
+      foreach ($node->og_groups as $group) {
+        $groups[] = db_result(db_query_range("SELECT title FROM {node} n WHERE nid=%d", $group, 0, 1));
+      }
+
+      $group = implode(', ', $groups);
+      $topic = $node->webb['webbtopic_topic'];
+      $label = t('!topic on !groups', array(
+        '!topic' => $topic,
+        '!groups' => $group,
+      ));
+      db_query("UPDATE {node} SET title='%s' WHERE nid=%d", $label, $node->nid);
+      db_query("UPDATE {node_revisions} SET title='%s' WHERE nid=%d", $label, $node->nid);
+
+      // Save the denormalization data so that we can run a query in less than an hour.
+      //dsm($node);
+      db_query("DELETE FROM {webb_note_lookup} WHERE nid=%d", $node->nid);
+      if ($node->status == 1) {
+        foreach ($node->og_groups as $group_nid) {
+          db_query("INSERT INTO {webb_note_lookup} (nid, group_nid, created) VALUES (%d, %d, %d)", array(
+            $node->nid, $group_nid, $node->created,
+          ));
+        }
+      }
+      break;
+    case 'view':
+      if ($a4) {  // in $op=view, $a4 is the $page boolean.
+        $node->content['notes'] = array(
+          '#value' => component_get_view('og_notes', $node->og_groups[0]),
+        );
+      }
+      break;
+  }
+}
+
+/**
+ * Helper function for hook_nodeapi().
+ */
+function _webb_nodeapi_character(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  static $node_owner;
+
+  switch ($op) {
+    case 'submit':
+      // In order to save the node owner even if the user doesn't have "administer nodes" permission,
+      // we need to grab the submitted value here, cache it, and then save it in the insert/update op
+      // in a moment.  We can't save it here or in a form_alter submit callback because we need the
+      // nid and vid, and those don't exist until the insert/update ops and aren't passed to the
+      // form_alter if we're dealing with a new node.  Ugh!
+      $node_owner = $node->name;
+      break;
+    case 'insert':
+    case 'update':
+      if (_webb_is_og_admin($node->og_groups)) {
+        // Populate the "authored by" field.
+        if ($account = user_load(array('name' => $node_owner))) {
+          db_query("UPDATE {node} SET uid=%d WHERE nid=%d AND vid=%d", $account->uid, $node->nid, $node->vid);
+        }
+        else {
+          drupal_set_message('Sorry, that username does not exist in the system.', 'error');
+        }
+      }
+      break;
+    case 'view':
+      if ($a4) {  // in $op=view, $a4 is the $page boolean.
+        $node->content['notes'] = array(
+          '#value' => component_get_view('character_notes', $node->nid),
+          '#weight' => 10,
+        );
+      }
+
+  }
+}
+
+/**
+ * Helper function for hook_nodeapi().
+ */
+function _webb_nodeapi_board(&$node, $op, $a3 = NULL, $a4 = NULL) {
+
+  switch ($op) {
+    case update:
+      $positions = array_keys(array_filter($node->positions));
+      $ranks = array_keys(array_filter($node->ranks));
+      // When updating, first delete old data.  We insert the new records in the insert
+      // block below.  Note the lack of a break statement here.
+      if ($positions) {
+        db_query("DELETE FROM {webb_board_positions} WHERE nid=%d", $node->nid);
+      }
+      if ($ranks) {
+        db_query("DELETE FROM {webb_board_ranks} WHERE nid=%d", $node->nid);
+      }
+    case insert:
+      // array_filter() removes all false/0 values, so what we get back is just what was checked.  Nifty.
+      // We have to recalculate these here, in case we're adding and not updating.
+      $positions = array_keys(array_filter($node->positions));
+      $ranks = array_keys(array_filter($node->ranks));
+      if ($positions) {
+        foreach ($positions as $tid) {
+          db_insert('webb_board_positions', array(
+            'nid' => $node->nid,
+            'tid' => $tid,
+          ));
+        }
+      }
+      if ($ranks) {
+        foreach ($ranks as $tid) {
+          db_insert('webb_board_ranks', array(
+            'nid' => $node->nid,
+            'tid' => $tid,
+          ));
+        }
+      }
+      break;
+    case 'view':
+      $node->content['roster'] = array(
+        '#value' => component_get_view('og_ghp_characters', $node->nid),
+      );
+      break;
+  }
+}
+
+/*------------------- Menu -------------------*/
+
+/**
+ * Implementation of hook_menu().
+ */
+function webb_menu($may_cache) {
+  $items = array();
+  global $locale;
+  global $user;
+
+  if ($may_cache) {
+    foreach (node_get_types() as $type) {
+      if (function_exists($type->module .'_form')) {
+        $name = check_plain($type->name);
+        $type_url_str = str_replace('_', '-', $type->type);
+        global $user;
+        $account = _webb_user_load($user->uid);
+        $access = _webb_is_og_admin(array_keys($user->og_groups));
+        $items[] = array(
+          'path' => 'webb/node/add/'. $type_url_str,
+          'title' => drupal_ucfirst($name),
+          'access' => $access,
+          'type' => MENU_LOCAL_TASK,
+        );
+      }
+    }
+  }
+  else {
+    // The following apply only to certain node types
+    if (arg(0) == 'node' && is_numeric(arg(1))) {
+      $node = node_load(arg(1));
+
+      // Only OG node types get these extra menu items
+      if (og_is_group_type($node->type)) {
+
+        // Add the extra tab that points to the notes on this board
+        $items[] = array(
+          'path' => "node/{$node->nid}/notes",
+          'title' => t('Notes'),
+          'callback' => 'views_view_page',
+          'callback arguments' => array('og_notes', $node->nid),
+          'access' => user_access('read notes'),
+          'description' => t('View recent notes on this board'),
+          'type' => MENU_LOCAL_TASK,
+        );
+        // Add the extra tab that points to the Captain's Log for this board
+        $items[] = array(
+          'path' => "node/{$node->nid}/colog",
+          'title' => t("Captain's Log"),
+          'callback' => 'views_view_page',
+          'callback arguments' => array('og_co_log', $node->nid),
+          'access' => user_access('create logentry content'),
+          'description' => t("View Captain's Log"),
+          'type' => MENU_LOCAL_TASK,
+          'weight' => 3,
+        );
+        $items[] = array(
+          'path' => "node/{$node->nid}/add",
+          'title' => t('Add'),
+          'callback' => 'system_admin_menu_block_page',
+          //'callback arguments' => array($node->nid),
+          'access' => _webb_is_og_admin($node->nid),
+          'type' => MENU_CALLBACK,
+        );
+        $items[] = array(
+          'path' => "node/{$node->nid}/admin",
+          'title' => t('Admin'),
+          'callback' => 'webb_admin_menu_block_page',
+          //'callback arguments' => array($node->nid),
+          'access' => _webb_is_og_admin($node->nid),
+          'type' => MENU_LOCAL_TASK ,
+        );
+        $items[] = array(
+          'path' => "node/{$node->nid}/admin/characters",
+          'title' => t('Character list'),
+          'callback' => 'views_view_page',
+          'callback arguments' => array('og_characters_complete', $node->nid),
+          'access' => _webb_is_og_admin($node->nid),
+          'type' => MENU_SUGGESTED_ITEM,
+          'description' => t('A complete list of all characters on this board, rostered and not.'),
+        );
+        // Allow admins to create OG-specific node types.
+        foreach (node_get_types() as $type) {
+          if (function_exists($type->module .'_form') && !og_is_omitted_type($type->type) && !og_is_group_type($type->type)) {
+            $name = t('Create new @type', array('@type'=> drupal_ucfirst($type->name)));
+            $type_url_str = str_replace('_', '-', $type->type);
+            $items[] = array(
+              'path' => "node/{$node->nid}/admin/". $type_url_str,
+              'callback' => 'node_add',
+              'callback arguments' => $type->type,
+              'title' => $name,
+              'description' => $type->description,
+              'access' => _webb_is_og_admin($node->nid),
+              'type' => MENU_SUGGESTED_ITEM,  // We don't want this shown in the menu block, so this effectively hides it
+            );
+            if (arg(2) == 'admin' && arg(3) == $type_url_str) {
+              // This is bad.  Never do this.
+              // OG expects the group to be specified in the GET query, but we can't put
+              // a GET query into a path directly.  So we convert it back.
+              $_GET['gids'] = array(arg(1));
+            }
+          }
+        }
+
+        // Allow direct access to OG functionality without using the moronic sidebar block.
+        $items[] = array(
+          'path' => "node/{$node->nid}/admin/subscribers",
+          'callback' => 'og_menu_check',
+          'title' => t('Subscribers'),
+          'callback arguments' => array('og_list_users_page', $node->nid),
+          'type' => MENU_SUGGESTED_ITEM,
+          'access' => _webb_is_og_admin($node->nid),
+          'description' => t('View subscribers on this board and edit which of them are managers.')
+        );
+        $items[] = array(
+          'path' => "node/{$node->nid}/admin/add_user",
+          'title' => t('Add subscribers'),
+          'callback' => 'drupal_get_form',
+          'callback arguments' => array('og_add_users', $node->nid),
+          'type' => MENU_SUGGESTED_ITEM,
+          'weight' => 5,
+          'access' => _webb_is_og_admin($node->nid),
+          'description' => t('Add a subscriber to this board.'),
+        );
+      }
+
+      // On Note nodes, offer a menu tab to go back to the group (kinda hacky)
+      if ('note' == $node->type) {
+        $group_nid = $node->og_groups[0];
+        if ($group_nid) {
+          $items[] = array(
+            'path' => "node/{$node->nid}/group",
+            'title' => t('Board'),
+            'callback' => 'drupal_goto',
+            'callback arguments' => array('node/'. $group_nid),
+            'access' => user_access('access content'),
+            'description' => t('View board'),
+            'type' => MENU_LOCAL_TASK,
+            'weight' => -1,
+          );
+        }
+      }
+    }
+
+
+  }
+
+  return $items;
+}
+
+/**
+ * This pair of functions is identical to the system module versions,
+ * except that it shows all menu items instead of just those that are
+ * VISIBLE_IN_TREE.
+ */
+function webb_admin_menu_block_page() {
+  $menu = menu_get_item(NULL, $_GET['q']);
+  $content = webb_admin_menu_block($menu);
+
+  $output = theme('admin_block_content', $content);
+  return $output;
+}
+
+function webb_admin_menu_block($block) {
+  $content = array();
+  if (is_array($block['children'])) {
+    usort($block['children'], '_menu_sort');
+    foreach ($block['children'] as $mid) {
+      $item = menu_get_item($mid);
+      if (($item['type']) && _menu_item_is_accessible($mid)) {
+        $content[] = $item;
+      }
+    }
+  }
+  return $content;
+}
+
+/*------------------- Links -------------------*/
+
+/**
+ * Implementation of hook_project_page_link_alter().
+ */
+function webb_project_page_link_alter($project, &$all_links) {
+
+  // Remove a couple of links that don't make any sense.
+  unset($all_links['development']['links']['pending_patches']);
+
+}
+
+/**
+ * Implementation of hook_link().
+ *
+ */
+function webb_link($type, $node=NULL, $teaser=FALSE) {
+  $links = array();
+
+  if ($type == 'node' && $node->type == 'note') {
+    $links = array_merge($links, _webb_link_note($node, $teaser));
+  }
+
+  if ($type == 'node' && $node->type == 'board') {
+    $links = array_merge($links, _webb_link_board($node, $teaser));
+  }
+
+  return $links;
+}
+
+
+/**
+ * Helper function for hook_link() on "note" nodes
+ */
+function _webb_link_note($node, $teaser) {
+  global $user;
+
+  $links = array();
+
+  $group_nid = $node->og_groups[0];
+  if ($group_nid) {
+    $group = node_load($group_nid);
+
+    // Add a HEAD LINK to the board, and to the note list
+    drupal_add_link(array('rel' => 'start', 'href' => url('node/'. $group_nid)));
+    drupal_add_link(array('rel' => 'index', 'href' => url('node/'. $group_nid . '/notes')));
+
+    // Add a link to the previous note chronologically on this board
+    $prev_by_time = db_result(
+      db_query_range("SELECT n.nid
+        FROM {node} n INNER JOIN {og_ancestry} oa ON n.nid=oa.nid
+        WHERE n.type='%s'
+          AND oa.group_nid=%d
+          AND n.created < %d
+          AND n.status = 1
+        ORDER By created DESC",
+        array($node->type, $group_nid, $node->created), 0, 1)
+    );
+    if ($prev_by_time) {
+      $links['prev_by_time'] = array(
+        'title' => t("Previous note"),
+        'href' => "node/{$prev_by_time}",
+        'attributes' => array(
+          'title' => t("View the previous note on this board"),
+         ),
+      );
+      drupal_add_link(array('rel' => 'prev', 'href' => url('node/'. $prev_nid)));
+    }
+/*
+    // Add a link back to the Board
+    $links['view_board'] = array(
+      'title' => t("Back to !boardname", array('!boardname' => $group->title)),
+      'href' => "node/{$group_nid}",
+      'attributes' => array(
+        'title' => t("Back to Board"),
+       ),
+    );
+*/
+    // Add a link to the parent note, if any
+    if ($node->field_parent_note[0]['nid']) {
+      $links['parent_note'] = array(
+        'title' => t("Parent"),
+        'href' => "node/{$node->field_parent_note[0]['nid']}",
+        'attributes' => array(
+          'title' => t("Go to parent note"),
+         ),
+      );
+      drupal_add_link(array('rel' => 'up', 'href' => url('node/'. $node->field_parent_note[0]['nid'])));
+    }
+
+    // Add a "reply" link
+    if (user_access('post notes')) {
+      $links['reply'] = array(
+        'title' => t("Reply"),
+        'href' => 'node/add/note',
+        'query' => 'gids[]=' . $group->nid . '&parent_nid=' . $node->nid,
+        'attributes' => array(
+          'title' => t("Post a reply to this note"),
+         ),
+      );
+    }
+
+    // Add a link to the next note chronologically on this board
+    $next_by_time = db_result(
+      db_query_range("SELECT n.nid
+        FROM {node} n INNER JOIN {og_ancestry} oa ON n.nid=oa.nid
+        WHERE n.type='%s'
+          AND oa.group_nid=%d
+          AND n.created > %d
+          AND n.status = 1
+        ORDER By created",
+        array($node->type, $group_nid, $node->created), 0, 1)
+    );
+    if ($next_by_time) {
+      $links['next_by_time'] = array(
+        'title' => t("Next chronologically"),
+        'href' => "node/{$next_by_time}",
+        'attributes' => array(
+          'title' => t("View the next note on this board"),
+         ),
+      );
+      drupal_add_link(array('rel' => 'next', 'href' => url('node/'. $next_nid)));
+    }
+
+    // Add a link to the next note in the same webbtopic.
+    $next_in_topic = db_result(
+        db_query_range("SELECT n.nid
+          FROM {node} n
+            INNER JOIN {og_ancestry} oa ON n.nid=oa.nid
+            INNER JOIN {webbtopic_topic} wt ON wt.nid=n.nid
+          WHERE n.type='%s'
+            AND oa.group_nid=%d
+            AND n.created > %d
+            AND n.status = 1
+            AND wt.topic='%s'
+          ORDER By created",
+          array($node->type, $group_nid, $node->created, $node->webb['webbtopic_topic']), 0, 1)
+      );
+    if ($next_in_topic) {
+      $topic_label = db_result(db_query("SELECT label FROM {webbtopic_label} WHERE nid=%d", array($group_nid)));
+      $links['next_in_topic'] = array(
+        'title' => t("Next in @topic", array('@topic' => $topic_label)),
+        'href' => "node/{$next_in_topic}",
+        'attributes' => array(
+          'title' => t("View the next note on this board in the same @topic", array('@topic' => $topic_label)),
+        ),
+      );
+    }
+
+    // Add a link to the next unread note chronologically on this board
+    if ($user->uid) {
+      $next_unread = db_result(
+        db_query_range("SELECT n.nid
+          FROM {node} n
+            INNER JOIN {og_ancestry} oa ON n.nid=oa.nid
+            LEFT OUTER JOIN {history} h ON h.uid=2 AND h.nid=n.nid
+          WHERE n.type='%s'
+            AND oa.group_nid=%d
+            AND n.created > %d
+            AND n.status = 1
+            AND h.nid IS NULL
+          ORDER By created",
+          array($node->type, $group_nid, $node->created), 0, 1)
+      );
+      if ($next_unread) {
+        $links['next_unread'] = array(
+          'title' => t("Next new note"),
+          'href' => "node/{$next_unread}",
+          'attributes' => array(
+            'title' => t("View the next note on this board after this one that you have not yet read"),
+          ),
+        );
+      }
+    }
+  }
+
+  return $links;
+}
+
+/**
+ * Helper function for hook_link() on "board" nodes.
+ */
+function _webb_link_board($node, $teaser) {
+  $links = array();
+
+  // Add a HEAD LINK to the note list
+  drupal_add_link(array('rel' => 'index', 'href' => url('node/'. $node->nid . '/notes')));
+
+  $links['read_notes'] = array(
+    'title' => t("Read Notes"),
+    'href' => "node/{$node->nid}/notes",
+    'attributes' => array(
+      'title' => t("See recently-posted notes on this board"),
+     ),
+  );
+  $links['post_new_note'] = array(
+    'title' => t("Post Note"),
+    'href' => 'node/add/note',
+    'query' => 'gids[]=' . $node->nid,
+    'attributes' => array(
+      'title' => t("Post a note on this board"),
+     ),
+  );
+
+  // Anonymous users don't get to see subscriptions at all.
+  if ($GLOBALS['user']->uid) {
+    if (_webb_og_is_subscriber($node->nid)) {
+      $links['manage_subscription'] = array(
+        'title' => t("Manage subscription"),
+        'href' => 'og/manage/'. $node->nid,
+        'query' => drupal_get_destination(),
+        'attributes' => array(
+          'title' => t("Unsubscribe from this group or change your email subscription"),
+         ),
+      );
+    }
+    else {
+      $links['add_subscription'] = array(
+        'title' => t("Subscribe"),
+        'href' => 'og/subscribe/'. $node->nid,
+        'query' => drupal_get_destination(),
+        'attributes' => array(
+          'title' => t("Subscribe to this group"),
+         ),
+      );
+    }
+  }
+
+  if (_webb_is_og_admin($node->nid)) {
+    $links['post_log_entry'] = array(
+      'title' => t("Post Log Entry"),
+      'href' => "node/{$node->nid}/admin/logentry",
+      'query' => 'gids[]=' . $node->nid,
+      'attributes' => array(
+        'title' => t("Post a Captain's Log entry"),
+      ),
+    );
+  }
+
+  return $links;
+}
+
+
+/*------------------- Form Alter -------------------*/
+
+/**
+ * Implementation of hook_form_alter
+ */
+function webb_form_alter($form_id, &$form) {
+  if (isset($form['type']) && 'note_node_form' == $form_id) {
+    _webb_form_alter_note_node_form($form_id, $form);
+  }
+  elseif (isset($form['type']) && 'advpoll_binary_node_form' == $form_id) {
+    _webb_form_alter_advpoll_binary_node_form($form_id, $form);
+  }
+  elseif (isset($form['type']) && 'logentry_node_form' == $form_id) {
+    _webb_form_alter_logentry_node_form($form_id, $form);
+  }
+  elseif (isset($form['type']) && 'board_node_form' == $form_id) {
+    _webb_form_alter_board_node_form($form_id, $form);
+  }
+  elseif (isset($form['type']) && 'character_node_form' == $form_id) {
+    _webb_form_alter_character_node_form($form_id, $form);
+  }
+  elseif ('views_filters' == $form_id && $form['view']['#value']->name == 'og_notes') {
+    _webb_form_alter_og_notes_filter_form($form_id, $form);
+  }
+  elseif ('user_edit' == $form_id) {
+    _webb_form_alter_user_edit($form_id, $form);
+  }
+  elseif ('node_type_form' == $form_id) {
+    _webb_form_alter_node_type_form($form_id, $form);
+  }
+  elseif ('og_confirm_unsubscribe' == $form_id) {
+    _webb_form_alter_og_confirm_unsubscribe($form_id, $form);
+  }
+}
+
+function _webb_form_alter_og_confirm_unsubscribe($form_id, &$form) {
+
+  $form['#redirect'] = 'node/'. $form['gid']['#value'];
+
+}
+
+function _webb_form_alter_advpoll_binary_node_form($form_id, &$form) {
+
+  $form['settings']['#collapsed'] = FALSE;
+
+}
+
+/**
+ * Helper function for hook_form_alter on node type forms.
+ */
+function _webb_form_alter_node_type_form($form_id, &$form) {
+/*
+  $form['webb'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('WeBB'),
+    '#description' => t('WeBB-specific configuration.'),
+  );
+  */
+}
+
+/**
+ * Helper function for hook_form_alter on user-edit forms.
+ */
+function _webb_form_alter_user_edit($form_id, &$form) {
+
+  // Always make sure the contact form is enabled.
+  $form['contact'] = array(
+    '#type' => 'value',
+    '#value' => 1,
+  );
+}
+
+/**
+ * Helper function for form_alter for the note form.
+ */
+function _webb_form_alter_note_node_form($form_id, &$form) {
+
+  // Pre-fill the parent id field from the GET query, then hide it
+  $parent_nid = (int)$_GET['parent_nid'];
+  $form['field_parent_note'][0]['node_name']['#type'] = 'value';
+  if ($parent_nid) {
+    $parent = node_load($parent_nid);
+
+    //Note 2 [nid:13]
+    $form['field_parent_note'][0]['node_name']['#value'] = "{$parent->title} [nid:{$parent->nid}]";
+
+    // Also set the default value of the note to the quoted version of the parent's body
+    $body = &$form['body_filter']['body'];
+    if (! $body['#default_value']) {
+      $parent = node_load($parent_nid);
+      $body['#default_value'] = webb_quote_note($parent);
+    }
+  }
+
+  // Hide and pre-fill the title field, since we don't want to use it
+  // We'll fill in a "real" title in hook_nodeapi.
+  $form['title']['#type'] = 'value';
+  $form['title']['#value'] = 'Note';
+
+
+  // Set the options for the character to post as manually, because this is too complex to do via configuration.
+  // We want all characters owned by the current user (or the user that posted the note if it's an edit), ordered
+  // alphabetically.  The default character is whichever was most recently used.
+  if (isset($_GET['gids'])) {
+    $params = $_GET['gids'];
+    global $user;
+    $uid = $user->uid;
+    $new_node = TRUE;
+  }
+  else {
+    $node = $form['#node'];
+    $params = $node->og_groups;
+    $uid = $node->uid;
+    $new_node = FALSE;
+  }
+
+  if (count($params)) { // This should only ever be false on the content type edit form, because CCK is weird and calls form_alter when it doesn't have to.
+    $placeholders = implode(',', array_fill(0, count($params), '%d'));
+    $params[] = $uid;
+    $characters = db_fetch_assoc("SELECT n.nid, field_display_name_value
+      FROM {node} n
+        INNER JOIN {content_type_character} ctc ON n.vid=ctc.vid
+        INNER JOIN {og_ancestry} oa ON ctc.nid=oa.nid
+      WHERE oa.group_nid IN (" . $placeholders . ")
+        AND n.uid=%d
+      ORDER BY title", $params);
+  }
+  else {
+    $characters = array();
+  }
+  $form['field_character']['nids']['#options'] = array(0 => t('<none>')) + $characters;
+  if (count($characters)) {
+    $placeholders = implode(',', array_fill(0, count($characters), '%d'));
+    $default_character = db_result(db_query_range("SELECT ctn.field_character_nid
+      FROM {node} n
+        INNER JOIN {content_type_note} ctn on n.nid=ctn.nid AND n.vid=ctn.vid
+      WHERE ctn.field_character_nid IN (" . $placeholders . ")
+      ORDER BY n.created DESC", array_keys($characters), 0, 1));
+    if ($new_node) {
+      $form['field_character']['nids']['#default_value'] = array($default_character);
+    }
+  }
+  else {
+    $form['field_character']['nids']['#default_value'] = array(0);
+  }
+}
+
+/**
+ * Helper function for form_alter for the logentry form.
+ */
+function _webb_form_alter_logentry_node_form($form_id, &$form) {
+  // Hide and pre-fill the title field, since we don't want to use it.
+  // We'll fill in a "real" title in hook_nodeapi
+  $form['title']['#type'] = 'value';
+  $form['title']['#value'] = 'Log Entry';
+}
+
+/**
+ * Helper function for form_alter for the board form.
+ */
+function _webb_form_alter_board_node_form($form_id, &$form) {
+
+  // If the user isn't a site-admin, then we don't want to give them access to the OG-specific functionality.
+  if (! user_access('administer site configuration')) {
+    $form['title'] = array(
+      '#type' => 'item',
+      '#title' => $form['title']['#title'],
+      '#value' => $form['title']['#default_value'],
+      '#weight' => $form['title']['#weight'],
+    );
+    $form['og_selective'] = array(
+      '#type' => 'value',
+      '#value' => $form['og_selective']['#default_value'],
+    );
+
+    // Disable various OG fields that have no purpose.
+    $form['og_register'] = array(
+      '#type' => 'value',
+      '#value' => $form['og_register']['#default_value'],
+    );
+    $form['og_directory'] = array(
+      '#type' => 'value',
+      '#value' => $form['og_directory']['#default_value'],
+    );
+    $form['og_private'] = array(
+      '#type' => 'value',
+      '#value' => $form['og_private']['#default_value'],
+    );
+
+  }
+  $form['og_description']['#title'] = t('Slogan');
+
+  // If and only if the user is a site admin, let them configure what rank/position terms we allow on this board.
+  $form['webb_cck_taxonomy'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Ranks and positions'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#weight' => 5,
+    '#access' => user_access('administer site configuration'),
+  );
+  // Add position checkboxes.
+  $position = webb_get_field_instance('field_position', 'character');
+  $vid = $position->widget_type[13]; // "cck_taxonomy_?" is the widget name.  Yes, weird.
+  $position_options = _webb_taxonomy_get_terms($vid);
+  $default_positions = db_fetch_column("SELECT tid FROM {webb_board_positions} WHERE nid=%d", $form['#node']->nid);
+  $form['webb_cck_taxonomy']['positions'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Allowed positions'),
+    '#default_value' => $default_positions,
+    '#options' => $position_options,
+    '#description' => t('Check those positions that will be allowed on this board.'),
+  );
+
+  // Add rank checkboxes.
+  $rank = webb_get_field_instance('field_rank', 'character');
+  $vid = $rank->widget_type[13]; // "cck_taxonomy_?" is the widget name.  Yes, weird.
+  $rank_options = _webb_taxonomy_get_terms($vid);
+  $default_ranks = db_fetch_column("SELECT tid FROM {webb_board_ranks} WHERE nid=%d", $form['#node']->nid);
+  $form['webb_cck_taxonomy']['ranks'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Allowed ranks'),
+    '#default_value' => $default_ranks,
+    '#options' => $rank_options,
+    '#description' => t('Check those ranks that will be allowed on this board.'),
+  );
+
+  // This is a node form, so the saving has to happen in hook_nodeapi(), as much as that sucks.
+}
+
+/**
+ * Helper function for form_alter for the character form.
+ */
+function _webb_form_alter_character_node_form($form_id, &$form) {
+  // Rename the "Author" field and make it accessible to board admins, too.
+  if ((isset($form['#node']->og_groups[0]) && _webb_is_og_admin($form['#node']->og_groups)) || _webb_is_og_admin(arg(1))) {
+    $form['author']['#access'] = TRUE;
+    $form['author']['#collapsed'] = FALSE;
+    $form['author']['name']['#title'] = t('Owner');
+    $form['author']['name']['#description'] = t('Specify the user that owns this character.');
+    $form['author']['date']['#access'] = FALSE;
+  }
+
+  // First get the allowed positions for this Board.
+  if (isset($form['#node']->nid) && $form['#node']->nid) {
+    $ogs = $form['#node']->og_groups; // The character node's groups are already defined.
+  }
+  else {
+    $ogs = array(arg(1)); // Use whatever the current OG is, since we'll be assigning to that anyway.
+  }
+
+  if ($ogs) {
+    // Now, take the position field and group it into optgroups.
+    $placeholders = array_fill(0, count($ogs), '%d');
+    $new_options = array();
+    $allowed_positions = db_fetch_column("SELECT tid FROM {webb_board_positions} WHERE nid IN (" . implode(',', $placeholders) . ")", $ogs);
+    foreach ($form['field_position']['tid']['#options'] as $option) {
+      if ($option == t('<none>')) {
+        $new_options[t('Empty')][] = $option;
+      }
+      else {
+        list($key, $value) = each($option->option);
+        if ($value[0] != '-') {
+          // This is a top-level option, so it becomes an optgroup.
+          $new_options[t($value)] = array();
+          $last = $value;
+        }
+        else {
+          // Non-top level items get folded into the correct optgroup.
+          // If it's not checked as allowed, skip it.
+          if (in_array($key, $allowed_positions)) {
+            $option->option[$key] = substr($option->option[$key], 1);
+            $new_options[$last][] = $option;
+          }
+        }
+      }
+    }
+    // And now remove any empty optgroups.
+    foreach ($new_options as $key => $optgroup) {
+      if (empty($optgroup))  {
+        unset($new_options[$key]);
+      }
+    }
+    $form['field_position']['tid']['#options'] = $new_options;
+
+    // Filter the rank selector to only show those ranks allowed on this board.
+    $new_options = array();
+    $allowed_ranks = db_fetch_column("SELECT tid FROM {webb_board_ranks} WHERE nid IN (" . implode(',', $placeholders) . ")", $ogs);
+    foreach ($form['field_rank']['tid']['#options'] as $option) {
+      if ($option == t('<none>')) {
+        $new_options[] = $option;
+      }
+      else {
+        list($key, $value) = each($option->option);
+        if (in_array($key, $allowed_ranks)) {
+          $new_options[] = $option;
+        }
+      }
+    }
+    $form['field_rank']['tid']['#options'] = $new_options;
+  }
+
+  // Hide some fields from non-admins, because we don't want people editing
+  // their own rank.
+  // Note that we cannot do this for checkboxes, only select boxes, due to
+  // a ridiculously obscure bug in optionwidget that I can't even figure out.
+  $access = _webb_is_og_admin($ogs);
+  //dsm($form);
+  $form['field_rank']['#access'] = $access;
+  $form['field_position']['#access'] = $access;
+  $form['field_custom_position']['#access'] = $access;
+  $form['field_rostered']['#access'] = $access;
+}
+
+
+function webb_views_query_alter(&$query, &$view, $summary, $level) {
+
+  if ($view->name == 'og_notes' && !empty($_SESSION['webb']['default_notes_filter_time'])) {
+
+    $options = _webb_og_notes_filter_form_time_options($view);
+
+    // If there is a filter specified in the GET query, that takes precedence.
+    // Save that in the session for later use.
+    if (!empty($_GET['filter1'])) {
+      $default = check_plain($_GET['filter1']);
+      $_SESSION['webb']['default_notes_filter_time'] = $options[$default];
+    }
+
+    // Because we're doing weird stuff to the query, it can't be cached.
+    // This is already set, I think, but let's be sure.
+    $view->is_cacheable = FALSE;
+
+    // Technically this is not necessary as the used_filters have aleady been
+    // parsed.  But we'll do it again anyway just for completeness.
+    $view->used_filters['filter1'] = array_search($_SESSION['webb']['default_notes_filter_time'], $options);
+
+    // 9 is a magic number.  It was determined via debugging.  This is ugly
+    // and evil.  Index 9 is where the timestamp happens to be.  We don't need
+    // to calculate the offset here, because that's already done in the query
+    // (in index 10).
+    $query->where_args[9] = strtotime($view->used_filters['filter1']);
+  }
+}
+
+/**
+ * Helper function for form_alter for the og_nodes filter form.
+ */
+function _webb_form_alter_og_notes_filter_form($form_id, &$form) {
+
+  $options = _webb_og_notes_filter_form_time_options($form['view']['#value']);
+
+  // The default value for the select box is a timestamp, but we could get it
+  // from any number of places.  The GET parameter has first priority, then
+  // the session as set by hook_views_query_alter(), then the hard-coded default
+  // of 1 week.
+  if (!empty($_GET['filter1'])) {
+    $default = check_plain($_GET['filter1']);
+  }
+  elseif (!empty($_SESSION['webb']['default_notes_filter_time'])) {
+    $default = array_search($_SESSION['webb']['default_notes_filter_time'], $options);
+  }
+  else {
+    $default = array_search('1 week', $options);
+  }
+
+  // Replace the existing textfield with our fancy select box.
+  $form['filter1'] = array(
+    '#type' => 'select',
+    '#options' => $options,
+    '#default_value' => $default,
+  );
+
+  // We also need to completely change the values for the Location select box.  By default
+  // it's set to a completely nonsense value because I have no idea how else to do it. :-)
+  // Instead, we change it here to be the terms for the "Location" vocab in the current OG.
+  // This is insanely ugly and ought to be fixed at some point.
+  /*$og = og_get_group_context();
+  dpm($og);
+  $vid = key($og->og_vocabularies);
+  $terms = _webb_taxonomy_get_terms($vid);*/
+  //$form['filter0']['#options'] = array('**ALL**' => t('<All>')) + $terms;
+
+}
+
+
+/**
+ * Returns an array of time offset options for the og_notes views filter form.
+ *
+ * @param $view
+ *   The view object for which we want the possible options.
+ */
+function _webb_og_notes_filter_form_time_options($view) {
+  // The view may have a default offset specified so that when no form is used actual
+  // notes are shown.  We therefore compensate by subtracting that value from each option.
+  // Since the exact time of the page load will vary, each option is midnight GMT the
+  // specified time period ago.
+  $offset = $view->filter[2]['options'];
+  $times = array('1 day', '3 days', '1 week', '2 weeks', '1 month', '3 months', '1 year');
+  $options = array();
+  foreach ($times as $time) {
+    $date = getdate(strtotime('-' . $time) - $offset);
+    $options["{$date['year']}-{$date['mon']}-{$date['mday']} 0:0:0"] = t($time);
+  }
+
+  return $options;
+}
+
+/*------------------- Filters -------------------*/
+
+/**
+ * Implementation of hook_filter().
+ */
+function webb_filter($op, $delta = 0, $format = -1, $text = '') {
+  // The "list" operation provides the module an opportunity to declare both how
+  // many filters it defines and a human-readable name for each filter. Note that
+  // the returned name should be passed through t() for translation.
+  if ($op == 'list') {
+    return array(
+      0 => t('WeBB note quote filter'),
+    );
+  }
+
+  switch ($delta) {
+
+    // First we define the simple string substitution filter.
+    case 0:
+
+      switch ($op) {
+        // This description is shown in the administrative interface, unlike the
+        // filter tips which are shown in the content editing interface.
+        case 'description':
+          return t('Wrap lines that begin with a configurable "quote" character so they can be styled.');
+
+        // We don't need the "prepare" operation for this filter, but it's required
+        // to at least return the input text as-is.
+        case 'prepare':
+          return $text;
+
+        // The actual filtering is performed here. The supplied text should be
+        // returned, once any necessary substitutions have taken place.
+        case 'process':
+          $lines = explode("\n", $text);
+          $num_lines = sizeof($lines);
+          $quote_char = variable_get('webb_note_quote_char', ':');
+          for ($i=0; $i < $num_lines; ++$i) {
+            if ($lines[$i][0] == $quote_char) {
+              $lines[$i] = theme('webb_note_quoted_line', $lines[$i], $quote_char);
+            }
+          }
+          return implode("\n", $lines);
+
+        // Since we allow the administrator to define the string that gets
+        // substituted when "foo" is encountered, we need to provide an
+        // interface for this customization. Note that the value of $format
+        // needs to be provided as part of the form name, so that different
+        // customization can be done for this filter in each of the different
+        // input formats that may use it.
+        case 'settings':
+          $form['webb_note_quote_filter'] = array(
+            '#type' => 'fieldset',
+            '#title' => t('WeBB note quote filter'),
+            '#collapsible' => TRUE,
+            '#collapsed' => FALSE,
+          );
+          $form['webb_note_quote_filter']["webb_note_quote_filter_$format"] = array(
+            '#type' => 'textfield',
+            '#title' => t('Quoting prefix character'),
+            '#default_value' => variable_get('webb_note_quote_char', ':'),
+            '#description' => t('The character to prefix to a line to indicate that it is quoted.  Do not include a leading or trailing space.'),
+          );
+          return $form;
+      }
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_filter_tips().
+ */
+function webb_filter_tips($delta, $format, $long = FALSE) {
+  switch ($delta) {
+    case 0:
+      if ($long) {
+        return t('Every line beginning with %char will be treated as "quoted" from the previous message.', array(
+          '%char' => variable_get('webb_note_quote_char', ':'),
+        ));
+      }
+      else {
+        return t('Every line beginning with %char will be treated as "quoted" from the previous message.', array(
+          '%char' => variable_get('webb_note_quote_char', ':'),
+        ));
+      }
+      break;
+  }
+}
+
+/*------------------- Computed Field calculation functions -------------------*/
+
+/**
+ * Computing function for the Note::field_character field.
+ *
+ * The saved character name is either the name of the character, if applcable,
+ * or the name of the user if no character is specified.
+ *
+ */
+function webb_character_name_format(&$node, $field, &$node_field) {
+  if ($node->field_character[0]['nid']) {
+    // There is a character, so return its formatted full name.
+    $character = node_load($node->field_character[0]['nid']);
+
+    return $character->field_display_name[0]['value'];
+  }
+  else {
+    // We're posting as a normal user.  The user's name will already be listed by the theme.
+    $account = _webb_user_load($node->uid);
+
+    $name = array();
+    if (!empty($account->profile_first_name)) {
+      $name[] = $account->profile_first_name;
+    }
+    if (!empty($account->profile_last_name)) {
+      $name[] = $account->profile_last_name;
+    }
+
+    $name = count($name) ? implode($name, ' ') : $account->name;
+
+    return $name;
+  }
+}
+
+/**
+ * Computing function for the Character::field_display_name field.
+ *
+ * The character's display name is based off of its rank, name, and position.
+ *
+ */
+function webb_character_display_name_format(&$node, $field, &$node_field) {
+
+    $ranks = array();
+    foreach ($node->field_rank as $rank) {
+      $term = taxonomy_get_term($rank['tid']);
+      if ($term->name) {
+        $ranks[] = $term->name;
+      }
+    }
+
+    $rank = sizeof($ranks) ? implode(', ', $ranks) . ' ' : '';
+    $position = trim(webb_character_position_format($node, $field, $node_field));
+    if ($position) {
+      $position = ' (' . $position . ')';
+    }
+
+    return  $rank . $node->title . $position;
+}
+
+/**
+ * Computing function for the Character::field_position field.
+ *
+ * The computed position is simply all pre-defined and custom positions
+ * concatenated and comma-delimited.
+ *
+ */
+function webb_character_position_format(&$node, $field, &$node_field) {
+  $positions = array();
+  foreach ($node->field_position as $position) {
+    $term = taxonomy_get_term($position['tid']);
+    if ($term->name) {
+      $positions[] = $term->name;
+    }
+  }
+  foreach ($node->field_custom_position as $position) {
+    if ($position['value']) {
+      $positions[] = $position['value'];
+    }
+  }
+
+  return implode(', ', $positions);
+}
+
+/*------------------- Theme functions -------------------*/
+
+function theme_webb_note_quoted_line($line, $quote_char = ':') {
+
+  // This bit of excitement counts the number of quote characters the $line
+  // starts with, that is, how deep the quote nesting is.
+  $i = 0;
+  $stripped_line = str_replace(': ', ':', $line);
+  while ($stripped_line[++$i] == $quote_char);
+
+  return "<span class='webb-quoted webb-quoted-{$i}'>" . $line . "</span>";
+}
+
+
+/*------------------- Utility Functions -------------------*/
+
+/**
+ * Utility function to load a cck field instance object.
+ *
+ * Why this doesn't exist in CCK, I don't know...
+ *
+ * @param string $field_name
+ * @param string $type_name
+ * @return object
+ */
+function webb_get_field_instance($field_name, $type_name) {
+  $field = db_fetch_object(db_query("SELECT * FROM {node_field_instance} WHERE field_name='%s' AND type_name='%s'", $field_name, $type_name));
+  $field->widget_settings = unserialize($field->widget_settings);
+  $field->display_settings = unserialize($field->display_settings);
+  return $field;
+}
+
+
+/**
+ * Formats a note as the default body string for replies to it.
+ */
+function webb_quote_note($node) {
+
+  $body = trim($node->body);
+
+  // build the "header" portion of the quote, saying where it came from and when
+  $characters = array();
+  foreach ($node->field_character_name as $character) {
+    $characters[] = $character['value'];
+  }
+  $character = implode(', ', $characters);
+  $locations = array();
+  foreach ($node->taxonomy as $location) {
+    $locations[] = $location->name;
+  }
+  $location = implode(', ', $locations);
+  $header = t('Posted by @character in @location', array(
+    '@character' => $character,
+    '@location' => (empty($node->webb['webbtopic_topic']) ? '' : $node->webb['webbtopic_topic']),
+  ));
+  $body = $header . "\n" . $body;
+
+  // Now quote it by prefixing every line with a magic value
+  $quote_char = variable_get('webb_note_quote_char', ':');
+  $quote_replace = "\n{$quote_char} ";
+  $body = $quote_char . ' ' . preg_replace("/\n/", $quote_replace, $body) . "\n\n";
+
+  return $body;
+}
+
+function _webb_is_og_admin($og_nids, $uid=NULL) {
+  return _webb_og_is_subscriber($og_nids, $uid, TRUE);
+}
+
+function _webb_og_is_subscriber($og_nids, $uid=NULL, $check_admin = FALSE) {
+  if (!isset($uid)) {
+    global $user;
+    $uid = $user->uid;
+  }
+  // We want to allow both single and multi-og checks.
+  if (!is_array($og_nids)) {
+    $og_nids = array($og_nids);
+  }
+  $account = _webb_user_load($uid);
+
+  if ($check_admin) {
+    foreach ($account->og_groups as $og => $settings) {
+      if ((in_array($og, $og_nids) && isset($settings['is_admin']) && $settings['is_admin']) || user_access('administer organic groups', $account)) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+  else {
+    $subscribed_ogs = array_keys($account->og_groups);
+    return (boolean)array_intersect($subscribed_ogs, $og_nids);
+  }
+}
+
+
+
+/**
+ * Loads a user by uid, cached
+ *
+ * user_load() doesn't do caching, because it's dumb, so we wrap a layer of caching around it.
+ */
+function _webb_user_load($uid) {
+  static $users = array();
+
+  if (!isset($users[$uid])) {
+    $users[$uid] = user_load(array('uid' => $uid));
+  }
+  return $users[$uid];
+}
+
+/**
+ * Gets an associative array of taxonomy terms in a vocabulary.
+ */
+function _webb_taxonomy_get_terms($vid) {
+  $terms = array();
+  $select = _taxonomy_term_select('', 'vid', 0, $vid, '', FALSE, FALSE, array());
+  foreach ($select['#options'] as $option) {
+    list($tid, $term) = each($option->option);
+    $terms[$tid] = $term;
+  }
+  return $terms;
+}
+
+
+/**
+ * Implementation of hook_views_default_views().
+ */
+function webb_views_default_views() {
+  $views = array();
+  foreach(glob(drupal_get_path('module', 'webb') .'/views/*.view.inc') as $file) {
+    require_once($file);
+  }
+
+  return $views;
+}
+
+/**
+ * Implementation of hook_profile_alter().
+ */
+function webb_profile_alter(&$account, &$fields) {
+
+  // We don't want to show the subscription list or the user's
+  // original application.
+  //unset($fields['Groups']);
+  unset($fields['Application']);
+
+  // Add a list of this user's characters
+  $fields[t('Characters')] = array(
+    array(
+      'value' => component_get_view('user_characters', $account->uid),
+      'title' => '',
+      'class' => 'user_characters',
+    )
+  );
+}
+
+/**
+ * Implementation of hook_views_tables().
+ */
+function webb_views_tables() {
+  $tables['webb_note_lookup'] = array(
+    'name' => 'webb_note_lookup',
+    'join' => array(
+      'type' => 'inner',
+      'left' => array(
+        'table' => 'node',
+        'field' => 'nid',
+      ),
+      'right' => array(
+        'field' => 'nid',
+      ),
+    ),
+    'sorts' => array(
+      'created_lookup' => array(
+        'field' => 'created',
+        'name' => t('WeBB Note Lookup: Created Time'),
+        'handler' => 'views_handler_sort_date',
+        'option' => views_handler_sort_date_options(),
+        'help' => t('Sort by the submission date of the node.'),
+      ),
+    ),
+    'filters' => array(
+      'created' => array(
+        'name' => t('WeBB Note Lookup: Created Time'),
+        'operator' => 'views_handler_operator_gtlt',
+        'value' => views_handler_filter_date_value_form(),
+        'handler' => 'views_handler_filter_timestamp',
+        'option' => 'string',
+        'help' => t('This filter allows nodes to be filtered by their creation date.')
+          .' '. views_t_strings('filter date'),
+      ),
+    ),
+  );
+
+  return $tables;
+}
+
+/**
+ * Implemenation of hook_views_arguments().
+ */
+function webb_views_arguments() {
+  $args = array(
+    'gid_lookup' => array(
+      'name' => t("WeBB Note Lookup: Group nid(s)"),
+      'handler' => 'webb_og_handler_argument_gid',
+      'help' => t('Filter for the one or more organic groups. Groups should be specified as a comma or plus delimited list of node ids, like taxonomy URLs. '),
+    ),
+  );
+  return $args;
+}
+
+function webb_og_handler_argument_gid($op, &$query, $argtype, $arg = '') {
+  switch ($op) {
+    case 'summary':
+      og_handler_summary($fieldinfo, $query);
+      return $fieldinfo;
+    case 'link':
+      if ($name = $query->title) {
+        return l($name, "node/". intval($query->group_nid));
+      }
+      else {
+        // return l(t('Unaffiliated'), "$arg/-1-1"); // just signifies 'no group'
+        return t('All posts');
+      }
+      break;
+    case 'sort':
+      // no luck using add_orderby method.
+      $query->orderby[] = ' num_nodes '. $argtype;
+      break;
+    case 'filter':
+      webb_og_views_break_phrase($arg, $query);
+      break;
+    case 'title':
+      return db_result(db_query_range('SELECT title FROM {node} WHERE nid = %d', $query, 0, 1));;
+  }
+}
+
+function webb_og_views_break_phrase($string, &$query) {
+  list($and_or, $gids) = _views_break_phrase($string);
+  $and_or = strtoupper($and_or);
+  // analogous to taxonomy AND/OR query. see views_taxonomy.inc
+
+  if ($and_or == 'OR') {
+      $query->ensure_table('webb_note_lookup');
+      $cond = array_fill(0, count($gids), "{webb_note_lookup}.group_nid = %d");
+      $query->add_where(implode(" $and_or ", $cond), $gids);
+  }
+  else {
+    foreach ((array)$gids as $gid) {
+      $query->ensure_table('webb_note_lookup');
+      //$num = $query->add_table('webb_note_lookup');
+      //$tablename = $query->get_table_name('webb_note_lookup', $num);
+      $query->add_where("{webb_note_lookup}.group_nid = %d", $gid);
+    }
+  }
+
+  if ($GLOBALS['current_view']->build_type == 'page' && is_numeric($gids[0])) {
+    $node = node_load($gids[0]);
+    og_set_group_context($node);
+  }
+}

@@ -1,0 +1,1300 @@
+<?php
+
+require_once(drupal_get_path('module', 'webbimport') .'/rosterutils.inc');
+
+function webbimport_menu($may_cache) {
+  $items = array();
+
+  $config = webbimport_config();  
+  $messages_dir = $config['messages_dir'];
+  
+  if ($may_cache) {
+    
+  }
+  else {
+    $items[] = array(
+      'title' => t('WeBB import tasks'),
+      'path' => 'webbimport',
+      'callback' => 'system_admin_menu_block_page',
+      'access' => TRUE,
+    );
+    $items[] = array(
+      'title' => t('Import users'),
+      'path' => 'webbimport/users',
+      'callback' => 'webbimport_import_users',
+      'access' => TRUE,
+      'weight' => 1,
+    );
+    $items[] = array(
+      'title' => t('Import boards'),
+      'path' => 'webbimport/boards',
+      'callback' => 'webbimport_import_boards',
+      'access' => TRUE,
+      'weight' => 2,
+    );
+    
+    /*
+    $items[] = array(
+      'title' => t('Import notes'),
+      'path' => 'webbimport/notes',
+      'callback' => 'webbimport_import_notes',
+      'access' => TRUE,
+      'weight' => 3,
+    );
+    */
+
+    foreach (scandir($messages_dir) as $fleet) {
+      if (strpos($fleet, '.') === 0 || !is_dir("$messages_dir/$fleet")) { continue;}
+  
+      $items[] = array(
+        'title' => t('Import notes on '. $fleet),
+        'path' => "webbimport/$fleet",
+        'callback' => 'webbimport_import_notes_byfleet',
+        'callback arguments' => array($fleet),
+        'access' => TRUE,
+        'weight' => 4,
+      );
+    }
+  }
+  
+  return $items;
+}
+
+
+function webbimport_import_boards() {
+  
+  set_time_limit(0);
+
+  $config = webbimport_config();
+  
+  $messages_dir = $config['messages_dir'];
+  
+  //dsm(drupal_retrieve_form('character_node_form', array()));
+  
+  $num_fleets = 0;
+  $num_ships = 0;
+  $num_characters = 0;
+  $num_rostered_characters = 0;
+  
+  foreach (scandir($messages_dir) as $fleet) {
+    if (strpos($fleet, '.') === 0 || !is_dir("$messages_dir/$fleet")) { continue;}
+    
+    // Create the fleet node
+    $motd = file_get_contents("$messages_dir/$fleet/.motd");
+    $fleet_id = webbimport_get_fleet($fleet, $motd);
+    
+    foreach (scandir("$messages_dir/$fleet") as $ship) {
+      if (strpos($ship, '.') === 0 || !is_dir("$messages_dir/$fleet/$ship")) { continue;}
+      
+      // Create the ship node.
+      $motd = file_get_contents("$messages_dir/$fleet/$ship/.motd");
+      $board_id = webbimport_get_ship($ship, $fleet_id, $motd);
+      
+      // Create the first log entry.
+      if (file_exists("$messages_dir/$fleet/$ship/.log")) {
+        $log = file_get_contents("$messages_dir/$fleet/$ship/.log");
+        webbimport_get_logentry($ship, $log);
+      }
+      
+      // Create the necessary characters on the ship.
+      $extra['fleet'] = $fleet;
+      $extra['ship'] = $ship;
+      $chars = parse_character_file("$messages_dir/$fleet/$ship/.chars", $extra);
+      foreach ($chars as $character) {
+        $num_characters++;
+        
+        $character_id = webbimport_get_character($character->name, $character);
+      }
+    }
+  }
+  
+  /*
+  if (is_dir($messages_dir)) {
+    if ($dh = opendir($messages_dir)) {
+      // This is the main directory
+      while (($fleet = readdir($dh)) !== false) {
+        if (in_array($fleet, array('.', '..'))) { continue;}
+        if(is_dir("$messages_dir/$fleet")) {
+          if ($fleeth = opendir("$messages_dir/$fleet")) {
+            // This is the fleet directory
+            $num_fleets++;
+            
+            // Create the fleet node
+            $motd = file_get_contents("$messages_dir/$fleet/.motd");
+            $fleet_id = webbimport_get_fleet($fleet, $motd);
+            
+            while (($ship = readdir($fleeth)) !== false) {
+              if (in_array($ship, array('.', '..'))) { continue;}
+              if(is_dir("$messages_dir/$fleet/$ship")) {
+                drupal_set_message("Parsing $fleet / $ship");
+                $extra['fleet'] = $fleet;
+                $extra['ship'] = $ship;
+                $num_ships++;
+                
+                //if ($ship != 'USS Constellation') { continue;}
+                
+                // Create the ship node.
+                $motd = file_get_contents("$messages_dir/$fleet/$ship/.motd");
+                $board_id = webbimport_get_ship($ship, $fleet_id, $motd);
+                
+                // Create the first log entry.
+                if (file_exists("$messages_dir/$fleet/$ship/.log")) {
+                  $log = file_get_contents("$messages_dir/$fleet/$ship/.log");
+                  webbimport_get_logentry($ship, $log);
+                }
+                
+                // Create the necessary characters on the ship.
+                $chars = parse_character_file("$messages_dir/$fleet/$ship/.chars", $extra);
+                //print_r($chars);
+                foreach ($chars as $character) {
+                  $num_characters++;
+                  
+                  $character_id = webbimport_get_character($character->name, $character);
+                }
+              }
+            }
+            closedir($fleeth);
+          }
+        }
+      }
+      closedir($dh);
+    }
+  }
+  */
+  
+  return 'x';
+}
+
+function webbimport_import_notes() {
+  
+  set_time_limit(0);
+
+  $config = webbimport_config();
+  
+  $messages_dir = $config['messages_dir'];
+  
+  $num_fleets = 0;
+  $num_ships = 0;
+  $num_characters = 0;
+  $num_rostered_characters = 0;
+  if (is_dir($messages_dir)) {
+    if ($dh = opendir($messages_dir)) {
+      // This is the main directory
+      while (($fleet = readdir($dh)) !== false) {
+        if (in_array($fleet, array('.', '..'))) { continue;}
+        if(is_dir("$messages_dir/$fleet")) {
+          if ($fleeth = opendir("$messages_dir/$fleet")) {
+            // This is the fleet directory
+            $num_fleets++;
+            
+            while (($ship = readdir($fleeth)) !== false) {
+              if (in_array($ship, array('.', '..'))) { continue;}
+              if (is_dir("$messages_dir/$fleet/$ship") /*&& ! file_exists("$messages_dir/$fleet/$ship/.norp")*/) {
+                //drupal_set_message("Parsing $fleet / $ship");
+                
+                foreach (scandir("$messages_dir/$fleet/$ship") as $topic) {
+                  if (strpos($topic, '.') === 0 || !is_dir("$messages_dir/$fleet/$ship/$topic")) { continue;}
+                  drupal_set_message("Parsing $fleet / $ship / $topic");
+                  
+                  foreach (scandir("$messages_dir/$fleet/$ship/$topic") as $thread) {
+                    if (strpos($thread, '.') === 0 || !is_dir("$messages_dir/$fleet/$ship/$topic/$thread")) { continue;}
+                    // Import note 0 as the start of a thread, and everything else as a direct reply to it.
+                    // It's not perfect, but it's the best we can do.
+                    
+                    $parent_note_id = 0;
+                    foreach (scandir("$messages_dir/$fleet/$ship/$topic/$thread") as $note) {
+                      if (in_array($note, array('.', '..'))) { continue;}
+                      
+                      // We want to do some line processing, so get the file as an array.
+                      $body = file("$messages_dir/$fleet/$ship/$topic/$thread/$note");
+                      
+                      // Extract the posting date.
+                      preg_match_all("/Stardate (.+) at (.+) hours/", $body[0], $matches);
+                      $day = '20'. str_replace('.', '', $matches[1][0]);
+                      $hour = $matches[2][0];
+                      $date = strtotime("$day $hour");
+                      
+                      unset($body[1], $body[3]); // These are always just HTML tags.
+                      array_pop($body); // The last line is always an hr.
+                      //dsm($body);
+                      $body = strip_tags(implode("\n", $body));
+                      $note_id = webbimport_get_note($ship, $topic, $body, $date, $parent_note_id);
+                      if (!$parent_note_id) {
+                        $parent_note_id = $note_id;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            closedir($fleeth);
+          }
+        }
+      }
+      closedir($dh);
+    }
+  }
+  
+  return 'x';
+}
+
+function webbimport_import_notes_byship($fleet, $ship) {
+  dsm("Importing $fleet / $ship");
+  set_time_limit(0);
+
+  $config = webbimport_config();
+  
+  $messages_dir = $config['messages_dir'];
+  
+  $topics = scandir("$messages_dir/$fleet/$ship");
+  //$topics = array($topics[0]);
+  foreach ($topics as $topic) {
+    if (strpos($topic, '.') === 0 || !is_dir("$messages_dir/$fleet/$ship/$topic")) { continue;}
+    drupal_set_message("Parsing $fleet / $ship / $topic");
+    
+    foreach (scandir("$messages_dir/$fleet/$ship/$topic") as $thread) {
+      if (strpos($thread, '.') === 0 || !is_dir("$messages_dir/$fleet/$ship/$topic/$thread")) { continue;}
+      // Import note 0 as the start of a thread, and everything else as a direct reply to it.
+      // It's not perfect, but it's the best we can do.
+      dsm("Parsing $fleet / $ship / $topic / $thread");
+      $parent_note_id = 0;
+      foreach (scandir("$messages_dir/$fleet/$ship/$topic/$thread") as $note) {
+        if (in_array($note, array('.', '..'))) { continue;}
+        
+        // We want to do some line processing, so get the file as an array.
+        $body = file("$messages_dir/$fleet/$ship/$topic/$thread/$note");
+        
+        // Extract the posting date.
+        preg_match_all("/Stardate (.+) at (.+) hours/", $body[0], $matches);
+        $day = '20'. str_replace('.', '', $matches[1][0]);
+        $hour = $matches[2][0];
+        $date = strtotime("$day $hour");
+        
+        unset($body[1], $body[3]); // These are always just HTML tags.
+        array_pop($body); // The last line is always an hr.
+        
+        $body = strip_tags(implode("\n", $body));
+        $note_id = webbimport_get_note($ship, $topic, $body, $date, $parent_note_id);
+        if (!$parent_note_id) {
+          $parent_note_id = $note_id;
+        }
+      }
+    }
+  }
+    
+  return 'x';
+}
+
+function webbimport_import_notes_byfleet($fleet) {
+  dsm("Importing $fleet");
+  set_time_limit(0);
+
+  $config = webbimport_config();
+  
+  $messages_dir = $config['messages_dir'];
+  
+  foreach (scandir("$messages_dir/$fleet") as $ship) {
+    if (strpos($ship, '.') === 0 || !is_dir("$messages_dir/$fleet/$ship")) { continue;}
+      drupal_set_message("Parsing $fleet / $ship");
+
+    foreach (scandir("$messages_dir/$fleet/$ship") as $topic) {
+      if (strpos($topic, '.') === 0 || !is_dir("$messages_dir/$fleet/$ship/$topic")) { continue;}
+      drupal_set_message("Parsing $fleet / $ship / $topic");
+      
+      foreach (scandir("$messages_dir/$fleet/$ship/$topic") as $thread) {
+        if (strpos($thread, '.') === 0 || !is_dir("$messages_dir/$fleet/$ship/$topic/$thread")) { continue;}
+        // Import note 0 as the start of a thread, and everything else as a direct reply to it.
+        // It's not perfect, but it's the best we can do.
+        dsm("Parsing $fleet / $ship / $topic / $thread");
+        $parent_note_id = 0;
+        foreach (scandir("$messages_dir/$fleet/$ship/$topic/$thread") as $note) {
+          if (in_array($note, array('.', '..'))) { continue;}
+          
+          // We want to do some line processing, so get the file as an array.
+          $body = file("$messages_dir/$fleet/$ship/$topic/$thread/$note");
+          
+          // Extract the posting date.
+          preg_match_all("/Stardate (.+) at (.+) hours/", $body[0], $matches);
+          $day = '20'. str_replace('.', '', $matches[1][0]);
+          $hour = $matches[2][0];
+          $date = strtotime("$day $hour");
+          
+          unset($body[1], $body[3]); // These are always just HTML tags.
+          array_pop($body); // The last line is always an hr.
+          
+          $body = strip_tags(implode('', $body));
+          $note_id = webbimport_get_note($ship, $topic, $body, $date, $parent_note_id);
+          if (!$parent_note_id) {
+            $parent_note_id = $note_id;
+          }
+        }
+      }
+    }
+  }
+  
+  return 'x';
+}
+
+
+function webbimport_get_logentry($ship, $body) {
+
+ $macro[0]['form_id'] = 'logentry_node_form';
+  $macro[0]['values']  = array (
+    'nid' => NULL,
+    'vid' => NULL,
+    'uid' => 0,
+    'created' => 0,
+    'type' => 'logentry',
+    'changed' => '',
+    'title' => 'Log Entry',
+    'body' => $body,
+    'format' => 7,
+    'log' => '',
+    'name' => '',
+    'date' => '',
+    'status' => 1,
+    'promote' => 0,
+    'sticky' => 0,
+    'revision' => 0,
+    'preview' => 'Preview',
+    'op' => 'Submit',
+    'submit' => 'Submit',
+    'form_id' => 'logentry_node_form',
+    'menu' => 
+    array (
+      'title' => '',
+      'description' => '',
+      'pid' => '1',
+      'path' => NULL,
+      'weight' => '0',
+      'mid' => 0,
+      'type' => 86,
+    ),
+    'og_public' => 1,
+    'og_groups' => 
+    array (
+      webbimport_get_ship($ship) => webbimport_get_ship($ship),
+    ),
+  );
+  $macro[0]['parameters']  = 'a:1:{i:0;a:3:{s:3:"uid";s:1:"1";s:4:"name";s:5:"admin";s:4:"type";s:8:"logentry";}}';
+
+  drupal_execute_macro($macro);
+    
+  // Get the nid we just created.  There's probably a better way.
+  $nid = db_result(db_query_range("SELECT nid FROM {node} ORDER BY created DESC", 0, 1));
+  return $nid;
+}
+
+function webbimport_get_note($ship, $topic, $body, $datestamp, $parent_note_id) {
+  
+  $topic = trim(str_replace(array('*'), '', $topic));
+
+  $node = new stdClass();
+  $node->status = 1;
+  $node->type = 'note';
+  $node->created = $datestamp;
+  $node->updated = $node->created;
+  $node->title = "$topic on $ship";
+  $node->body = $body;
+  $node->og_groups[0] = webbimport_get_ship($ship);
+  $node->webb['webbtopic_topic'] = $topic;
+  $node->field_parent_note[0]['nid'] = $parent_note_id;
+  
+  node_save($node);
+  drupal_set_message(t('Saving note on %ship in %topic', array(
+    '%ship' => $ship,
+    '%topic' => $topic,
+  )));
+  
+  return $node->nid;
+}
+
+function webbimport_user_load($uid) {
+  static $users;
+  
+  if (empty($users['uid'])) {
+    $users[$uid] = user_load(array('uid' => $uid));
+  }
+  return $users[$uid];
+}
+
+function webbimport_config() {
+  static $config;
+  
+  if (empty($config)) {
+    $config['webb_dir'] = drupal_get_path('module', 'webbimport') .'/WeBB';
+    $config['config_dir'] = "{$config['webb_dir']}/config";
+    $config['messages_dir'] = "{$config['webb_dir']}/messages";
+    $config['passwd_file'] = "{$config['config_dir']}/passwd.stf";
+    
+  }
+  
+  return $config;
+}
+
+function webbimport_import_users() {
+
+  set_time_limit(60);
+
+  $config = webbimport_config();
+  
+  $users = parse_user_file($config['passwd_file']);
+  
+  $num_users = count($users);
+  dsm('Number of users: '. $num_users);
+  for ($i=0; $i < $num_users; ++$i) {
+    webbimport_get_user($users[$i]['user'], $users[$i]['email'], $users[$i]['name']);
+  }
+  
+  
+  return 'x';
+}
+
+
+function webbimport_get_user($name, $email = '', $real_name = '') {
+  
+  $users = array();
+  
+  if (empty($users[$name])) {
+    
+    // Check the database first, just in case.
+    $uid = db_result(db_query("SELECT uid FROM {users} WHERE name='%s'", $name));
+    if ($uid) {
+      $users[$name] = $uid;
+    }
+    elseif ($email && $real_name) {
+      $name_parts = explode(' ', $real_name, 2);
+      $first_name = $name_parts[0];
+      $last_name = isset($name_parts[1]) ? $name_parts[1] : '';
+      $password = md5(time());  // Random password for everyone.
+      
+      $macro[0]['form_id'] = 'user_register';
+      $macro[0]['values']  = array (
+        'name' => $name,
+        'mail' => $email,
+        'pass' => $password,
+        'status' => '1',
+        'roles' => 
+        array (
+          5 => 0,
+          3 => 0,
+          4 => 0,
+          6 => 0,
+        ),
+        'current_id' => '2',
+        'profile_activity' => 'Infrequent (once per week or less)',
+        'profile_academy' => 'Yes - sign me up for the Academy Ship as a Cadet',
+        'profile_mentor' => 'No - I do not need a mentor.',
+        'profile_position_1' => 'Medical Officer',
+        'profile_position_2' => 'Medical Officer',
+        'profile_position_3' => 'Medical Officer',
+        'profile_howfind' => '',
+        'profile_character_name' => '',
+        'current_date' => '1197523740',
+        'conditions' => '', // I don't THINK we need this, and it's just a crapload of wasted text.
+        'legal_accept' => 0,
+        'display' => '0',
+        'profile_first_name' => $first_name,
+        'profile_last_name' => $last_name,
+      );
+      $macro[0]['parameters']  = 'a:0:{}';
+    
+      drupal_execute_macro($macro);
+      
+      // Get the nid we just created.  There's probably a better way.
+      $uid = db_result(db_query_range("SELECT uid FROM {users} ORDER BY created DESC", 0, 1));
+      $fleets[$name] = $uid;
+      drupal_set_message(t('Adding user %user with uid %uid', array('%user' => $name, '%uid' => $uid)));
+    }
+    else {
+      drupal_set_message(t('Could not find user: %user', array('%user' => $name)));
+    }
+  }
+  
+  return $users[$name];
+}
+
+function webbimport_get_fleet($name, $motd = '') {
+  
+  $fleets = array();
+  
+  if (empty($fleets[$name])) {
+    $nid = db_result(db_query("SELECT nid FROM {node} WHERE title='%s'", $name));
+    if ($nid) {
+      $fleets[$name] = $nid;
+    }
+    else {
+    
+      $macro[0]['form_id'] = 'fleet_node_form';
+      $macro[0]['values']  = array (
+        'nid' => NULL,
+        'vid' => NULL,
+        'uid' => '1',
+        'created' => 0,
+        'type' => 'fleet',
+        'changed' => '',
+        'title' => $name,
+        'body' => $motd,
+        'format' => 4,
+        'log' => '',
+        'name' => 'admin',
+        'date' => '',
+        'status' => 1,
+        'promote' => 0,
+        'sticky' => 0,
+        'revision' => 0,
+        'preview' => 'Preview',
+        'op' => 'Submit',
+        'submit' => 'Submit',
+        'form_id' => 'fleet_node_form',
+        'menu' => 
+        array (
+          'title' => $name,
+          'description' => $name,
+          'pid' => '125',
+          'path' => NULL,
+          'weight' => '0',
+          'mid' => 0,
+          'type' => 86,
+        ),
+      );
+      $macro[0]['parameters']  = 'a:1:{i:0;a:3:{s:3:"uid";s:1:"1";s:4:"name";s:5:"admin";s:4:"type";s:5:"fleet";}}';
+      
+      drupal_execute_macro($macro);
+      // Get the nid we just created.  There's probably a better way.
+      $nid = db_result(db_query_range("SELECT nid FROM {node} ORDER BY created DESC", 0, 1));
+      $fleets[$name] = $nid;
+    }
+  }
+  
+  return $fleets[$name];
+}
+
+
+function webbimport_get_ship($name, $fleet_id = 0, $motd = '', $css = '') {
+  
+  $ships = array();
+  
+  if (empty($ships[$name])) {
+    
+    $nid = db_result(db_query("SELECT nid FROM {node} WHERE title='%s'", $name));
+    if ($nid) {
+      $ships[$name] = $nid;
+    }
+    else {
+      $fleet_menu_id = db_result(db_query("SELECT mid FROM {menu} WHERE path='node/%d'", $fleet_id));
+      
+      $macro[0]['form_id'] = 'board_node_form';
+      $macro[0]['values']  = array (
+        'nid' => NULL,
+        'vid' => NULL,
+        'uid' => '1',
+        'created' => 0,
+        'type' => 'board',
+        'changed' => '',
+        'title' => $name,
+        'log' => '',
+        'name' => 'admin',
+        'date' => '',
+        'status' => 1,
+        'promote' => 0,
+        'sticky' => 0,
+        'revision' => 0,
+        'preview' => 'Preview',
+        'op' => 'Submit',
+        'submit' => 'Submit',
+        'form_id' => 'board_node_form',
+        'menu' => 
+        array (
+          'title' => $name,
+          'description' => $name,
+          'pid' => $fleet_menu_id,
+          'path' => NULL,
+          'weight' => '0',
+          'mid' => 0,
+          'type' => 86,
+        ),
+        'field_motd' => 
+        array (
+          0 => 
+          array (
+            'value' => $motd,
+            'format' => '4',
+          ),
+        ),
+        'og_public' => true,
+        'og_description' => 'Slogan here',
+        'og_selective' => '0',
+        'og_register' => 0,
+        'og_directory' => 0,
+        'css_css' => $css,
+        'webbtopic_topic' => 'Location',
+        'webbtopic_nodetypes' => 
+        array (
+          'note' => 'note',
+          'character' => 0,
+          'board' => 0,
+          'fleet' => 0,
+          'logentry' => 0,
+          'news' => 0,
+          'page' => 0,
+        ),
+        'positions' => 
+        array (
+          38 => 38,
+          40 => 40,
+          41 => 41,
+          34 => 34,
+          42 => 42,
+          43 => 43,
+          35 => 35,
+          44 => 44,
+          53 => 53,
+          52 => 52,
+          45 => 45,
+          36 => 36,
+          48 => 48,
+          49 => 49,
+          37 => 37,
+          50 => 50,
+          51 => 51,
+          65 => 65,
+          66 => 66,
+          67 => 67,
+          39 => 0,
+          46 => 0,
+          47 => 0,
+        ),
+        'ranks' => 
+        array (
+          61 => 61,
+          62 => 62,
+          13 => 13,
+          64 => 64,
+          63 => 63,
+          1 => 1,
+          2 => 2,
+          3 => 3,
+          4 => 4,
+          5 => 5,
+          6 => 6,
+          8 => 8,
+          9 => 9,
+          10 => 10,
+        ),
+      );
+      $macro[0]['parameters']  = 'a:1:{i:0;a:3:{s:3:"uid";s:1:"1";s:4:"name";s:5:"admin";s:4:"type";s:5:"board";}}';
+          
+      drupal_execute_macro($macro);
+      
+      // Get the nid we just created.  There's probably a better way.
+      $nid = db_result(db_query_range("SELECT nid FROM {node} ORDER BY created DESC", 0, 1));
+      $ships[$name] = $nid;
+    }
+  }
+  
+  return $ships[$name];
+}
+
+
+function webbimport_get_character($name, $character = NULL) {
+  
+  $characters = array();
+  
+  if (empty($characters[$name])) {
+
+    $uid = webbimport_get_user($character->user);
+    
+    if (is_null($uid)) {
+      drupal_set_message(t('Skipping character %character.  User %user could not be found.', array(
+        '%character' => $name,
+        '%user' => $character->user,
+      )));
+      return;
+    }
+    
+    $node = new stdClass();
+    $node->status = 1;
+    $node->type = 'character';
+    $node->created = time();
+    $node->changed = $node->created;
+    $node->title = $character->name;
+    $node->name = $character->user;
+    $node->body = '';
+    $node->uid = $uid;
+    $node->og_groups[0] = webbimport_get_ship($character->ship);
+    $node->field_rank[0]['tid'] = webbimport_rank_e2w($character->rankcode);
+    $node->field_position[0]['tid'] = webbimport_position_e2w($character->positioncode, 0);
+    $node->field_custom_position[0]['value'] = is_numeric($character->positioncode) ? '' : $character->positioncode;
+    $node->field_age[0]['value'] = $character->age;
+    $node->field_character_height[0]['value'] = html_entity_decode($character->height);
+    $node->field_weight[0]['value'] = $character->weight;
+    $node->field_species[0]['value'] = $character->species;
+    $node->field_rostered[0]['value'] = $character->rostered ? 'Rostered' : 'Not Rostered';
+    
+    node_save($node);
+    drupal_set_message(t('Saving character %character, assigned to user %user.', array(
+      '%character' => $name,
+      '%user' => $character->user,
+    )));
+    
+    // Get the nid we just created.  There's probably a better way.
+    $characters[$name] = $node->nid;
+  }
+  
+  return $characters[$name];
+}
+
+function webbimport_rank_e2w($rankcode) {
+  static $terms;
+  
+  if (empty($terms[$rankcode])) {
+    $term = taxonomy_get_term_by_name(rank_map($rankcode));
+    $terms[$rankcode] = $term[0]->tid;
+  }
+  return $terms[$rankcode];
+}
+
+function position_map_term($positioncode, $is_starbase = FALSE) {
+
+  if (! is_numeric($positioncode)) return 0;
+
+  $position = array();
+
+  // These are what is defined by effWeBB, not what makes any logical sense
+  
+  // We're also telling thise to point directly to the corresponding term in
+  // Drupal, which does not always match up literally.
+  
+  static $security = array(0 => 'Chief of Security', 1 => 'Security officer');
+  static $engineering = array(0 => 'Chief Engineer', 1 => 'Engineer');
+  static $medical = array(0 => 'Chief Medical Officer', 1 => 'Doctor');
+  static $science = array(0 => 'Chief Science Officer', 1 => 'Scientist');
+  static $co = array(0 => 'CO', 1 => '');
+  static $xo = array(0 => 'XO', 1 => '');
+  static $counselor = array(0 => 'Counselor', 1 => 'Counselor');
+  static $gamemaster = array(0 => 'Gamemaster', 1 => 'Gamemaster');
+  static $tactical = array(0 => 'Chief Tactical Officer', 1 => 'Tactical Assistant');
+  static $operations = array(0 => 'Chief of Operations', 1 => 'Operations');
+
+  $ship = array(1 => $gamemaster,
+                2 => $co,
+                3 => $xo,
+                4 => $counselor,
+                5 => $engineering,
+                6 => $medical,
+                7 => $science,
+                8 => $security,
+                9 => $tactical
+           );
+
+  $starbase = array(1 => $gamemaster,
+                2 => $co,
+                3 => $xo,
+                4 => $counselor,
+                5 => $operations,
+                6 => $medical,
+                7 => $science,
+                8 => $security,
+                9 => $tactical
+           );
+
+
+  $deptcode = (int)($positioncode / 10);
+  $levelcode = $positioncode % 10;
+
+  if ($is_starbase) {
+    return $starbase[$deptcode][$levelcode];
+  }
+  else {
+    return $ship[$deptcode][$levelcode];
+  }
+
+}
+
+
+function webbimport_position_e2w($positioncode, $starbase=0) {
+  static $terms;
+  
+  if (empty($terms[$positioncode][$starbase])) {
+    $term = position_map_term($positioncode, $starbase);
+    $term = taxonomy_get_term_by_name($term);
+    $terms[$positioncode][$starbase] = $term[0]->tid;
+  }
+  return $terms[$positioncode][$starbase];
+}
+
+
+/*
+ // Fleet
+ $macro[0]['form_id'] = 'fleet_node_form';
+$macro[0]['values']  = array (
+  'nid' => NULL,
+  'vid' => NULL,
+  'uid' => '1',
+  'created' => 1199650396,
+  'type' => 'fleet',
+  'changed' => '',
+  'title' => 'Fleet X',
+  'body' => 'MOTD goes here',
+  'format' => 4,
+  'log' => '',
+  'name' => 'admin',
+  'date' => '',
+  'status' => 1,
+  'promote' => 0,
+  'sticky' => 0,
+  'revision' => 0,
+  'preview' => 'Preview',
+  'op' => 'Submit',
+  'submit' => 'Submit',
+  'form_id' => 'fleet_node_form',
+  'menu' => 
+  array (
+    'title' => 'Fleet menu title',
+    'description' => '',
+    'pid' => '125',
+    'path' => NULL,
+    'weight' => '0',
+    'mid' => 0,
+    'type' => 86,
+  ),
+);
+$macro[0]['parameters']  = 'a:1:{i:0;a:3:{s:3:"uid";s:1:"1";s:4:"name";s:5:"admin";s:4:"type";s:5:"fleet";}}';
+*/
+
+/*
+ // Ship
+$macro[0]['form_id'] = 'board_node_form';
+$macro[0]['values']  = array (
+  'nid' => NULL,
+  'vid' => NULL,
+  'uid' => '1',
+  'created' => 1199676077,
+  'type' => 'board',
+  'changed' => '',
+  'title' => 'USS Snapple',
+  'log' => '',
+  'name' => 'admin',
+  'date' => '',
+  'status' => 1,
+  'promote' => 0,
+  'sticky' => 0,
+  'revision' => 0,
+  'preview' => 'Preview',
+  'op' => 'Submit',
+  'submit' => 'Submit',
+  'form_token' => 'b691df16e9c2849f987ff2f3c4c00f3f',
+  'form_id' => 'board_node_form',
+  'menu' => 
+  array (
+    'title' => 'Ship menu title',
+    'description' => 'Menu description',
+    'pid' => '129',
+    'path' => NULL,
+    'weight' => '0',
+    'mid' => 0,
+    'type' => 86,
+  ),
+  'field_motd' => 
+  array (
+    0 => 
+    array (
+      'value' => 'MOTD here',
+      'format' => '6',
+    ),
+  ),
+  'og_public' => true,
+  'og_description' => 'Slogan here',
+  'og_selective' => '0',
+  'og_register' => 0,
+  'og_directory' => 0,
+  'webbtopic_topic' => 'Location',
+  'webbtopic_nodetypes' => 
+  array (
+    'note' => 'note',
+    'character' => 0,
+    'board' => 0,
+    'fleet' => 0,
+    'logentry' => 0,
+    'news' => 0,
+    'page' => 0,
+  ),
+  'positions' => 
+  array (
+    38 => 38,
+    40 => 40,
+    41 => 41,
+    34 => 34,
+    42 => 42,
+    43 => 43,
+    35 => 35,
+    44 => 44,
+    53 => 53,
+    52 => 52,
+    45 => 45,
+    36 => 36,
+    48 => 48,
+    49 => 49,
+    37 => 37,
+    50 => 50,
+    51 => 51,
+    39 => 0,
+    46 => 0,
+    47 => 0,
+  ),
+  'ranks' => 
+  array (
+    61 => 61,
+    62 => 62,
+    13 => 13,
+    64 => 64,
+    63 => 63,
+    1 => 1,
+    2 => 2,
+    3 => 3,
+    4 => 4,
+    5 => 5,
+    6 => 6,
+    8 => 8,
+    9 => 9,
+    10 => 10,
+  ),
+);
+$macro[0]['parameters']  = 'a:1:{i:0;a:3:{s:3:"uid";s:1:"1";s:4:"name";s:5:"admin";s:4:"type";s:5:"board";}}';
+
+*/
+
+
+/*
+ // Character
+$macro[0]['form_id'] = 'character_node_form';
+$macro[0]['values']  = array (
+  'nid' => NULL,
+  'vid' => NULL,
+  'uid' => '1',
+  'created' => 1200178047,
+  'type' => 'character',
+  'changed' => '',
+  'title' => 'Character name',
+  'body' => 'bio',
+  'format' => 5,
+  'log' => '',
+  'name' => 'admin',
+  'date' => '',
+  'status' => 1,
+  'promote' => 0,
+  'sticky' => 0,
+  'revision' => 0,
+  'preview' => 'Preview',
+  'op' => 'Submit',
+  'submit' => 'Submit',
+  'form_token' => '87bddf268672ee798b2186b0cf89d4eb',
+  'form_id' => 'character_node_form',
+  'menu' => 
+  array (
+    'title' => '',
+    'description' => '',
+    'pid' => '1',
+    'path' => NULL,
+    'weight' => '0',
+    'mid' => 0,
+    'type' => 86,
+  ),
+  'field_rank' => 
+  array (
+    'tid' => '4',
+  ),
+  'field_position' => 
+  array (
+    'tid' => '52',
+  ),
+  'field_custom_position' => 
+  array (
+    0 => 
+    array (
+      'value' => '',
+    ),
+  ),
+  'field_rostered' => 
+  array (
+    'keys' => 'Rostered',
+  ),
+  'field_species' => 
+  array (
+    0 => 
+    array (
+      'value' => 'species',
+    ),
+  ),
+  'field_display_name' => 
+  array (
+    0 => 
+    array (
+      'value' => '',
+    ),
+  ),
+  'field_position_label' => 
+  array (
+    0 => 
+    array (
+      'value' => '',
+    ),
+  ),
+  'field_age' => 
+  array (
+    0 => 
+    array (
+      'value' => 'age',
+    ),
+  ),
+  'field_character_height' => 
+  array (
+    0 => 
+    array (
+      'value' => 'height',
+    ),
+  ),
+  'field_weight' => 
+  array (
+    0 => 
+    array (
+      'value' => 'weight',
+    ),
+  ),
+  'og_public' => 1,
+  'og_groups' => 
+  array (
+    10 => 10,
+    132 => 0,
+    116 => 0,
+    3 => 0,
+    75 => 0,
+  ),
+);
+$macro[0]['parameters']  = 'a:1:{i:0;a:3:{s:3:"uid";s:1:"1";s:4:"name";s:5:"admin";s:4:"type";s:9:"character";}}';
+*/
+
+
+/*
+ // User
+ $macro[0]['form_id'] = 'user_register';
+$macro[0]['values']  = array (
+  'name' => 'testusername',
+  'mail' => 'test@example.com',
+  'pass' => 'qwerty',
+  'status' => '1',
+  'roles' => 
+  array (
+    5 => 0,
+    3 => 0,
+    4 => 0,
+    6 => 0,
+  ),
+  'current_id' => '2',
+  'profile_activity' => 'Infrequent (once per week or less)',
+  'profile_academy' => 'Yes - sign me up for the Academy Ship as a Cadet',
+  'profile_mentor' => 'No - I do not need a mentor.',
+  'profile_position_1' => 'Medical Officer',
+  'profile_position_2' => 'Medical Officer',
+  'profile_position_3' => 'Medical Officer',
+  'profile_howfind' => '',
+  'profile_character_name' => '',
+  'current_date' => '1197523740',
+  'conditions' => 'Star-Fleet ("STF") is a membership based role play game hosted at www.star-fleet.com and related resources maintained by STF. Your use of this service and continued membership is subject to your agreement to the following terms and conditions. STF ("we") wants each visitor to STF ("you") and members of STF ("members") to have a safe and enjoyable experience, so we have established the following terms and conditions so that all parties know what to expect from each other. By using STF you agree to and are bound by the terms set forth herein. We may make changes to STF, these Terms of Service, or the policies and conditions that govern the use of STF at any time. We encourage you to review these terms periodically for any updates or changes. Your continued access to STF shall be deemed your acceptance of these changes and the reasonableness of these standards for notice of changes.
+ 
+ YOUR CONDUCT
+ 
+ Any conduct by you that in our sole discretion restricts or inhibits any other party from using or enjoying STF will not be permitted. You agree to use STF only for lawful purposes. You are prohibited from posting on or transmitting through STF any unlawful, harmful, threatening, abusive, harassing, defamatory, vulgar, obscene, sexually explicit, profane, hateful, fraudulent, racially, ethnically, or otherwise objectionable material of any kind, including but not limited to any material that encourages conduct that would constitute a criminal offense, give rise to civil liability, or otherwise violate any applicable local, state, national, or international law. These terms also apply to all STF controlled resources, including but not limited to our official STF chat channel. You agree not to reproduce, duplicate, copy, sell, resell or exploit for any commercial purposes, any portion of STF, use of STF, or access to STF (including but not limited to use of graphics, CGI code, Perl, JavaScript, PHP, HTML, text, or data contained within STF) without the permission of the material\'s copyright holder.
+ 
+ STF CONTENT
+ 
+ You acknowledge that STF contains or may contain information, data, software, photographs, graphics, videos, text, images, typefaces, sounds, and other material (collectively "Content") that are protected by copyrights, trademarks, or other proprietary rights, and that these rights are valid and protected in all forms, media and technologies existing now or hereinafter developed. All Content is copyrighted as a collective work under the U.S. copyright laws, and we own a copyright in the selection, coordination, arrangement, and enhancement of such Content. You may not modify, remove, delete, participate in the sale of, create derivative works from, or in any way exploit any of the Content, in whole or in part, without the permission of the material\'s copyright holder. If no specific restrictions are displayed, you may make copies of select portions of the Content, provided that the copies are made only for your personal, information and non-commercial use and that you do not alter or modify the Content in any way, and maintain any notices contained in the Content, such as all copyright notices, trademark legends, or other proprietary rights notices. Except as provided in the preceding sentence or as permitted by the fair use privilege under the U.S. copyright laws (see e.g. 17 U.S.C. Section 107), you may not upload, post, reproduce, or distribute in any way Content protected by copyright, or other proprietary right, without obtaining permission of the owner of the copyright or other proprietary right.
+ 
+ DISCLAIMERS
+ 
+ YOU EXPRESSLY AGREE THAT USE OF STF IS AT YOUR SOLE RISK. NEITHER WE, NOR OUR AFFILIATES, NOR ANY OF OUR OFFICERS, DIRECTORS, NOR EMPLOYEES, AGENTS, THIRD-PARTY CONTENT PROVIDERS ("PROVIDERS"), MERCHANTS ("MERCHANTS"), SPONSORS ("SPONSORS"), LICENSORS ("LICENSORS"), MEMBERS ("MEMBERS") OR THE LIKE (COLLECTIVELY, "ASSOCIATES"), WARRANT THAT STF WILL BE UNINTERRUPTED OR ERROR-FREE; NOR DO THEY MAKE ANY WARRANTY AS TO THE RESULTS THAT MAY BE OBTAINED FROM THE USE OF STF, OR AS TO THE ACCURACY, RELIABILITY, OR CURRENCY OF ANY INFORMATION, CONTENT, OR SERVICE, PROVIDED THROUGH STF.STF IS PROVIDED ON AN "AS IS," "AS AVAILABLE" BASIS AND WE SPECIFICALLY DISCLAIM WARRANTIES OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF TITLE OR IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. NO ORAL ADVICE OR WRITTEN INFORMATION GIVEN BY US NOR OUR AFFILIATES, NOR ANY OF OUR OFFICERS, DIRECTORS, EMPLOYEES, AGENTS, PROVIDERS, MERCHANTS, SPONSORS, LICENSORS, MEMBERS OR THE LIKE, SHALL CREATE A WARRANTY.
+ 
+ Further, we explicitly disclaim any responsibility for the accuracy, content, or availability of information found on sites that link to or from STF from third parties not associated with us. We encourage discretion when browsing the Internet using our or anyone else\'s service. Because some sites employ automated search results or otherwise link you to sites containing information that may be deemed inappropriate or offensive, we cannot be held responsible for the accuracy, copyright compliance, legality, or decency of material contained in third-party sites, and you hereby irrevocably waive any claim against us with respect to such sites.
+ 
+ LIMITATION OF LIABILITY
+ 
+ UNDER NO CIRCUMSTANCES SHALL WE OR ANY OTHER PARTY INVOLVED IN CREATING, PRODUCING, OR DISTRIBUTING STF BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES FOR LOSS OF PROFITS, GOOD WILL, USE, DATA OR OTHER INTANGIBLE LOSSES (EVEN IF WE HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES) THAT RESULT FROM (i) THE USE OF OR INABILITY TO USE STF, (ii) UNAUTHORIZED ACCESS TO OR ALTERATION OF YOUR TRANSMISSIONS OR DATA; (iii) STATEMENTS OR CONDUCT OF ANY THIRD PARTY ON STF; OR (iv) ANY OTHER MATTER RELATING TO THE SERVICE. YOU HEREBY ACKNOWLEDGE THAT THIS PARAGRAPH SHALL APPLY TO ALL CONTENT AND SERVICES AVAILABLE THROUGH STF. BECAUSE SOME STATES DO NOT ALLOW THE EXCLUSION OR LIMITATION OF LIABILITY FOR CONSEQUENTIAL OR INCIDENTAL DAMAGES, IN SUCH STATES LIABILITY IS LIMITED TO THE FULLEST EXTENT PERMITTED BY LAW.
+ 
+ You agree to indemnify and hold us, and our subsidiaries, affiliates, officers, directors, agents, co-branders or other partners, and employees, harmless from any claim or demand, including reasonable attorneys\' fees, made by any third party due to or arising out of Content you submit, post to or transmit through STF, your use of STF, your connection to STF, your violation of the Terms of Service, or your violation of any rights of another.
+ 
+ OUR RIGHTS
+ 
+ We may elect to electronically monitor areas of STF and may disclose any Content, records, or electronic communication of any kind (i) to satisfy any law, regulation, or government request; (ii) if such disclosure is necessary or appropriate to operate STF; or (iii) to protect our rights or property or the rights of the users, Sponsors, Providers, Licensors, or Merchants. We are not responsible for screening, policing, editing, or monitoring such Content. If notified of allegedly infringing, defamatory, damaging, illegal, or offensive Content, we may investigate the allegation and determine in our sole discretion whether to remove or request the removal of such Content from STF, and determine the consequences to be applied to the individual or individuals who created such content.We may terminate your access, or suspend or alter your access to all or part of STF and related services such as chat channels, without notice, for any conduct that we, in our sole discretion, believe is in violation of any applicable law or is harmful to the interests of another user, a third-party Provider, Merchant, Sponsor, Licensor, service provider, or us, or is a violation of our terms of service (this document).
+ 
+ LINKS TO THIRD PARTY SITES
+ 
+ Occasionally, we may make available a link to a third party\'s web site. These links will let you leave the Site. The linked sites are not under our control and we are not responsible for the contents of any linked site or any link contained in a linked site, or any changes or updates to such sites. We provide the links to you only as a convenience. We do not endorse the site or its use or contents.It is highly likely that any third party site we link to will have its\' own set of terms and conditions and privacy policy which may differ from our own. You are advised to familiarize yourself with their terms and conditions, before entering into any business or other relationship with them.
+ 
+ SUBMISSIONS
+ 
+ If you send us comments, suggestions, ideas, materials, notes, drawings, concepts, or other information, or post graphics, data, text, HTML or code (collectively, "Submissions"), the Submissions shall remain your property and you shall retain all rights, including copyright, to the Submissions and STF shall be granted a perpetual non-exclusive license to use the Submissions. None of the Submissions shall be subject to any obligation of confidence on our part, and we shall not be liable for any use or disclosure of any Submissions. Without limiting the foregoing, you agree that we shall be entitled to unrestricted use of the Submissions for any reasonable purpose whatsoever. Examples of reasonable use include: Modification of executable submissions to correct flaws is reasonable, while distribution to third parties is not reasonable. Archival of textual and graphical submissions is reasonable, while distribution to fan publications is not reasonable. In recognition that not every case can be codified, the president of STF shall make the final determination over what constitutes reasonable use. Other rights may be granted by statute (for example, "Fair Use"). This clause does not revoke rights already present under the law, whether stated explicitly or not.
+ 
+ APPLICABLE LAW
+ 
+ We control STF from within the United States of America. We make no representation that the Content in STF is appropriate or available for use in other locations, and access to them from territories where their content is illegal is prohibited. Those who choose to access STF from other locations do so on their own initiative and are responsible for compliance with applicable local laws. You may not use or export the Content in violation of U.S. export laws and regulations. Any claim relating to STF, the services provided through STF or the Content shall be governed by the internal laws of the state of Washington, without reference to its choice of law provisions.
+ 
+ TERMINATION
+ 
+ These terms are effective until terminated by either party. If you no longer agree to be bound by the Terms of Service, you must cease your use of STF and inform STF of same. Subject to applicable law, we reserve the right to suspend or deny, in our sole discretion, your access to all or any portion of STF with or without notice. You agree that any termination of your access to STF may be effected without prior notice or subsequent notification. Further, you agree that we shall not be liable to you or any third-party for any termination of your access to STF.
+ 
+ GENERAL INFORMATION
+ 
+ These Terms of Service constitute the entire agreement between us (you and us) and govern the use of STF. You also may be subject to additional terms and conditions that may apply when you use affiliate services, third-party content or third-party software. Our failure to exercise or enforce any right or provision of the Terms of Service shall not constitute a waiver of such right or provision. If any provision of the Terms of Service is found by a court of competent jurisdiction to be invalid, the parties nevertheless agree that the court should endeavor to give effect to the parties\' intentions as reflected in the provision, and the other provisions of the Terms of Service remain in full force and effect. You agree that regardless of any statute or law to the contrary, any claim or cause of action arising out of or related to use of STF or the Terms of Service must be filed within one year after such claim or cause of action arose or be forever barred. The section titles in the Terms of Service are for convenience only and have no legal or contractual effect. 
+ 
+ PRIVACY
+ 
+ We will store any information, including email addresses, which you provide us with. Information you give us will be made available to other members (some or all) on the understanding that they do not abuse this information. Although we do not accept liability for the actions of these members we will take action against them if we feel they have violated our Terms of Service or the law. The severity of such action will be decided by the club president or in his/her absence Vice President and his/her decision will be final.
+ 
+ ADDITIONAL SPECIFIC TERMS OF SERVICE
+ 
+ The following actions are specifically banned and breach of these rules may result in disciplinary action, which may include a temporary or permanent ban from the club, or the withdrawal of some of all of the services we provide. In all cases the decision of the club president or his appointed representative shall be final.
+ 
+ The following actions, in addition to those described elsewhere in this document are specifically prohibited within the club:
+ 
+ 1) Collection of e-mail addresses for unsolicited mailings (spam). Such mailings include but are not limited to:
+ 
+ I) Advertising for other RPG services
+ II) Any form of advertising
+ III) Dissemination of patently obscene or illegal material
+ 
+ Should you contact any member or former member of STF for any reason using an email address obtained from the club you must if asked (by them) cease contact with them using that email address or any other mode of contact derived from STF.
+ 
+ 2) Harassment of any STF members or former members.Violation of any or all of these policies can lead to penalties, including but not limited to removal from STF and banning from its servers and related resources. STF is, furthermore, at liberty to contact your Internet Service Provider (ISP) with complaints regarding the violation of these guidelines if such action is determined to be necessary. Any illegal activity will be reported to appropriate law enforcement officials.
+ 
+ STF reserves the right to alter this agreement at any time without prior notice, as well as the right to set and enforce penalties for violations of these policies, which are to be determined solely by STF. In all cases the decision of the current club president will be final.
+ 
+ Where the circumstances require, the singular shall refer to the plural, the plural the singular, and the use of any gender shall be applicable to all genders. These Terms of Service are severable such that the invalidity or unenforceability of any provision hereof shall not affect or impair the validity or enforceability of the remaining provisions.
+ 
+ Last Updated: 29 NOV 2001',
+  'legal_accept' => 0,
+  'display' => '0',
+  'profile_first_name' => 'First name',
+  'profile_last_name' => 'Last name',
+);
+$macro[0]['parameters']  = 'a:0:{}';
+
+*/
+
+
+
+/*
+$macro[0]['form_id'] = 'note_node_form';
+$macro[0]['values']  = array (
+  'nid' => NULL,
+  'vid' => NULL,
+  'uid' => '1',
+  'created' => 1200036424,
+  'type' => 'note',
+  'changed' => '',
+  'title' => 'Note',
+  'body' => ': Posted by Ensign Guido and/or Nunzio (Red Shirt) in 
+: 
+: This is a new note.  Isn\'t it awesome?
+
+',
+  'format' => 1,
+  'log' => '',
+  'name' => '',
+  'date' => '',
+  'status' => 1,
+  'promote' => 0,
+  'sticky' => 0,
+  'revision' => 0,
+  'preview' => 'Preview',
+  'op' => 'Submit',
+  'submit' => 'Submit',
+  'form_token' => '5025488589472112fa47bf0e58cdbb30',
+  'form_id' => 'note_node_form',
+  'menu' => 
+  array (
+    'title' => '',
+    'description' => '',
+    'pid' => '1',
+    'path' => NULL,
+    'weight' => '0',
+    'mid' => 0,
+    'type' => 86,
+  ),
+  'field_character' => 
+  array (
+    'nids' => '0',
+  ),
+  'field_character_name' => 
+  array (
+    0 => 
+    array (
+      'value' => '',
+    ),
+  ),
+  'field_parent_note' => 
+  array (
+    0 => 
+    array (
+      'node_name' => 'Engineering on USS Montgomery [nid:130]',
+    ),
+  ),
+  'og_public' => 1,
+  'og_groups' => 
+  array (
+    10 => '10',
+  ),
+  'webbtopic_topic' => 'Engineering',
+);
+$macro[0]['parameters']  = 'a:1:{i:0;a:3:{s:3:"uid";s:1:"1";s:4:"name";s:5:"admin";s:4:"type";s:4:"note";}}';
+
+*/
+
+
+/* // Log entry
+ $macro[1]['form_id'] = 'logentry_node_form';
+$macro[1]['values']  = array (
+  'nid' => NULL,
+  'vid' => NULL,
+  'uid' => '1',
+  'created' => 1200165027,
+  'type' => 'logentry',
+  'changed' => '',
+  'title' => 'Log Entry',
+  'body' => 'A log goes here.',
+  'format' => 7,
+  'log' => '',
+  'name' => 'admin',
+  'date' => '',
+  'status' => 1,
+  'promote' => 0,
+  'sticky' => 0,
+  'revision' => 0,
+  'preview' => 'Preview',
+  'op' => 'Submit',
+  'submit' => 'Submit',
+  'form_token' => 'f22b73298a1a28c271037014e767765e',
+  'form_id' => 'logentry_node_form',
+  'menu' => 
+  array (
+    'title' => '',
+    'description' => '',
+    'pid' => '1',
+    'path' => NULL,
+    'weight' => '0',
+    'mid' => 0,
+    'type' => 86,
+  ),
+  'og_public' => 1,
+  'og_groups' => 
+  array (
+    131 => 131,
+    116 => 0,
+    3 => 0,
+    75 => 0,
+    10 => 0,
+  ),
+);
+$macro[1]['parameters']  = 'a:1:{i:0;a:3:{s:3:"uid";s:1:"1";s:4:"name";s:5:"admin";s:4:"type";s:8:"logentry";}}';
+
+*/

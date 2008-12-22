@@ -1,0 +1,10 @@
+; $Id: devel.info,v 1.1.4.5 2007/06/13 19:41:05 dww Exp $
+name = Devel
+description = Various blocks, pages, and functions for developers.
+package = Development
+
+; Information added by drupal.org packaging script on 2008-10-12
+version = "5.x-1.0"
+project = "devel"
+datestamp = "1223782806"
+

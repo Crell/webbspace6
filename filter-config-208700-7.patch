@@ -1,0 +1,26 @@
+Index: modules/filter/filter.module
+===================================================================
+RCS file: /cvs/drupal/drupal/modules/filter/filter.module,v
+retrieving revision 1.160.2.5
+diff -u -p -r1.160.2.5 filter.module
+--- modules/filter/filter.module	10 Jan 2008 22:14:24 -0000	1.160.2.5
++++ modules/filter/filter.module	11 Jan 2008 19:01:48 -0000
+@@ -604,8 +604,8 @@ function filter_admin_configure() {
+ 
+   if (!empty($form)) {
+     $form = system_settings_form($form);
+-    $form['format'] = array('#type' => 'hidden', '#value' => $format->format);
+-    $form['#submit'][] = 'filter_admin_configure_submit';
++    $form['format'] = array('#type' => 'hidden', '#value' => $format);
++    $form['#submit']['filter_admin_configure_submit'] = array();
+   }
+   else {
+     $form['error'] = array('#value' => t('No settings are available.'));
+@@ -618,6 +618,7 @@ function filter_admin_configure() {
+  * Clear the filter's cache when configuration settings are saved.
+  */
+ function filter_admin_configure_submit($form_id, $form_values) {
++  system_settings_form_submit($form_id, $form_values);
+   cache_clear_all($form_values['format'] .':', 'cache_filter', TRUE);
+ }
+ 

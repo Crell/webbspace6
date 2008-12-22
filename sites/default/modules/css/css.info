@@ -1,0 +1,3 @@
+; $Id$
+name = css
+description = "Adds customizable CSS support."

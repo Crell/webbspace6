@@ -1,0 +1,299 @@
+<?php
+// $Id: og_vocab.module,v 1.11.2.2 2007/01/01 20:31:14 weitzman Exp $
+
+/**
+ * @file
+ * Give each group its own system controlled vocabularies
+ */
+ 
+/**
+ * Implementation of hook_help().
+ */
+function og_vocab_help($section) {
+  switch ($section) {
+    case arg(2) == 'og' && arg(3) == 'vocab' && is_null(arg(4)):
+      return t('Add or edit vocabularies that pertain only to this group. Each vocabulary will be shown on the post authoring form. Use categories to organize content within your group.');
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function og_vocab_menu($may_cache) {
+  $items = array();
+  global $user;
+
+  if ($may_cache) {
+    //
+  }
+  else {
+    $gid = arg(1);
+    if ($user->uid && arg(0) == 'node' && is_numeric($gid)) {
+      $node = node_load($gid);
+      if (og_is_group_type($node->type) && node_access('update', $node)) {
+        $items[] = array('path' => "node/$gid/og/vocab", 
+          'title' => t('Categories'), 
+          'callback' => 'og_vocab_overview_vocabularies', 
+          'callback arguments' => array($gid), 
+          'weight' => 6, 
+          'type' => MENU_LOCAL_TASK);
+
+        $items[] = array('path' => "node/$gid/og/vocab/add/vocabulary",
+          'title' => t('Create vocabulary'),
+          'callback' => 'drupal_get_form',
+          'callback arguments' => array('taxonomy_form_vocabulary'),
+          'type' => MENU_CALLBACK);  
+      
+        foreach ($node->og_vocabularies as $vid => $vocabulary) {
+          $items[] = array('path' => "node/$gid/og/vocab/terms/$vid",
+            'title' => $vocabulary->name,
+            'callback' => 'taxonomy_overview_terms', 
+            'callback arguments' => array($vid), 
+            'type' => MENU_CALLBACK,
+            'weight' => -10);
+    
+          $items[] = array('path' => "node/$gid/og/vocab/terms/$vid/list",
+            'title' => t('List'),
+            'type' => MENU_DEFAULT_LOCAL_TASK,
+            'weight' => -10);
+
+          $items[] = array('path' => "node/$gid/og/vocab/terms/$vid/add/term",
+            'title' => t('Add term'),
+            'callback' => 'drupal_get_form',
+            'callback arguments' => array('taxonomy_form_term', 'vid' => $vid),
+            'type' => MENU_LOCAL_TASK);
+    
+          $items[] = array('path' => "node/$gid/og/vocab/edit/vocabulary/$vid",
+            'title' => t('Edit vocabulary'),
+            'callback' => 'taxonomy_admin_vocabulary_edit',
+            'callback arguments' => array($vid),
+            'type' => MENU_CALLBACK);  
+        }
+      }
+    }
+  }
+  return $items;
+}
+
+// since this module has to run after taxonomy and before og_menu(), we just set og context in hook_init()
+function og_vocab_init() {
+  if (function_exists('drupal_set_content')) {
+    // set group context if we own this term
+    if (arg(0) == 'taxonomy' && arg(1) == 'term' && is_numeric(arg(2))) {
+      $sql = "SELECT ogv.nid FROM {term_data} td INNER JOIN {og_vocab} ogv ON td.vid = ogv.vid WHERE td.tid = %d";
+      // arg(2) is known numeric. see 2 lines above
+      if ($gid = db_result(db_query($sql, arg(2)))) {
+        og_set_group_context(node_load($gid));
+        // again, breadcrumb is not correct here but menu system hasn't built yet.
+      } 
+    }
+  }
+}
+
+function og_vocab_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      $blocks[0]['info'] = t('Group categories');
+      return $blocks;
+    case 'view':
+      switch ($delta) {
+        case 0:
+          $block = og_vocab_block_view();
+          break;
+      }
+      return $block;
+  }
+}
+
+function og_vocab_block_view() {
+  $group_node = og_get_group_context();
+  if ($group_node && node_access('view', $group_node)) {
+    foreach ((array)$group_node->og_vocabularies as $vid => $vocab) {
+      
+      $tree = taxonomy_get_tree($vid);
+      // TODO. link to full page view. maybe views provides this?
+      // only show first 20 terms. wary of huge vocabs. not ideal. 
+      $tree = array_slice($tree, 0, 20);
+      $items = og_vocab_build_list_items($index = 0, $tree);
+      if ($items) {  
+        $output .= theme('item_list', $items, $vocab->name);
+      }
+    }
+    $block['content'] = $output;
+    $block['subject'] = t('Group categories');
+    return $block;
+  }
+}
+
+function og_vocab_build_list_items(&$index, $tree) {
+  $items = array();
+  $current_depth = $tree[$index]->depth;
+  while ($index < count($tree) && $tree[$index]->depth >= $current_depth) {
+    $term = $tree[$index];
+    $count = taxonomy_term_count_nodes($term->tid);
+    if ($count) {
+      $term_path = "taxonomy/term/$term->tid";
+      $term_link = l(t($term->name), $term_path, array('title' => t($term->description)));
+      $item = $term_link . " ($count)";
+      if ($tree[$index+1]->depth > $current_depth) {
+        $index++;
+        $items[] = array('data' => $item, 'children' => og_vocab_build_list_items($index, $tree));
+      }
+      else {
+        $items[] = $item;
+        $index++;
+      }
+    }
+    else {
+      $index++;
+    }
+  }
+  return $items;
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function og_vocab_form_alter($form_id, &$form) {
+  switch ($form_id) {
+    case 'taxonomy_form_vocabulary':
+      if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'og') {
+        $form['module'] = array('#type' => 'value', '#value' => 'og_vocab');
+        $form['og'] = array('#type' => 'value', '#value' => arg(1));
+        $omit = array_merge(variable_get('og_node_types', array('og')), variable_get('og_omitted', array()));
+        foreach ($omit as $type) {
+          unset($form['nodes']['#options'][$type]);
+        }
+      }
+      break;
+    case (isset($form['type']) && $form['type']['#value'] .'_node_form' == $form_id):
+      if (isset($form['taxonomy'])) {
+        // remove from node form those vocabs that belong to groups other than us (if we even have a group)
+        $groupnode = og_get_group_context();
+        $where = "(v.module = 'og_vocab' AND ov.nid != %d)";
+        $sql = "SELECT v.vid, v.tags FROM {vocabulary} v LEFT JOIN {og_vocab} ov ON v.vid = ov.vid WHERE $where";
+        $result = db_query($sql, $groupnode->nid);
+        while ($row = db_fetch_object($result)) {
+          if ($row->tags) {
+            unset($form['taxonomy']['tags'][$row->vid]);
+          }
+          else {
+            unset($form['taxonomy'][$row->vid]);  
+          }
+        }
+        // remove categories fieldset if no vocabularies remain
+        // first, unset tags if needed
+        if (!count($form['taxonomy']['tags'])) {
+          unset($form['taxonomy']['tags']);
+        }
+        
+        if (!count(element_children($form['taxonomy']))) {
+          unset($form['taxonomy']);
+        }
+      }
+      break;  
+  }
+}
+
+// TODO: this could be a submit handler if I had a way to know the inserted vid
+function og_vocab_taxonomy($op, $type, $edit = NULL) {
+  if ($type == 'vocabulary') {
+    switch ($op) {
+      case 'update':
+        if ($edit['og']) {
+          $sql = "UPDATE {og_vocab} SET nid=%d WHERE vid=%d";
+          db_query($sql, $edit['og'], $edit['vid']);
+        }
+        break;
+      case 'insert':
+        if ($edit['og']) {
+          $sql = "INSERT {og_vocab} (nid, vid) VALUES (%d, %d)";
+          db_query($sql, $edit['og'], $edit['vid']);
+        }
+        break;
+      case 'delete':
+        $sql = "DELETE FROM {og_vocab} WHERE vid = %d";
+        db_query($sql, $edit['vid']);
+    }
+  }
+}
+
+/**
+ * List and manage vocabularies for a given group.
+ */
+function og_vocab_overview_vocabularies($gid) {
+  $groupnode = node_load((int)$gid);
+  drupal_set_title($groupnode->title);
+  // i tried fixing breadcrumb here with drupal_set_breadcrumb() and menu_set_location() but neither is satisfactory
+  
+  $links[] = l(t('add vocabulary'), "node/$gid/og/vocab/add/vocabulary", array(), drupal_get_destination());
+  $output = theme('item_list', $links);
+  $vocabularies = og_vocab_load_vocabularies($gid);
+  foreach ($vocabularies as $vid => $vocabulary) {
+    $types = array();
+    foreach ($vocabulary->nodes as $type) {
+      $node_type = node_get_types('name', $type);
+      $types[] = $node_type ? $node_type : $type;
+    }
+    $rows[] = array(
+        check_plain($vocabulary->name),
+        implode(', ', $types),
+        l(t('edit vocabulary'), "node/$gid/og/vocab/edit/vocabulary/$vocabulary->vid", array(), drupal_get_destination()),
+        l(t('list terms'), "node/$gid/og/vocab/terms/$vocabulary->vid"),
+        l(t('add terms'), "node/$gid/og/vocab/terms/$vocabulary->vid/add/term"),
+    );
+  }
+  if (!$rows) {
+    $rows[] = array(array('data' => t('No categories'), 'colspan' => 5));
+  }
+  $header = array(t('Name'), t('Type'), array('data' => 'Operations', 'colspan' => 3));
+  return $output. theme('table', $header, $rows);
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function og_vocab_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+  switch ($op) {
+    case 'load':
+      if (og_is_group_type($node->type)) {
+        $node->og_vocabularies = og_vocab_load_vocabularies($node->nid);
+      }
+      break;
+  }
+}
+
+// helper function for nodeapi('load')
+function og_vocab_load_vocabularies($nid) {
+  $sql = "SELECT * FROM {og_vocab} WHERE nid = %d";
+  $result = db_query($sql, $nid);
+  while ($row = db_fetch_object($result)) {
+    $vocabs[$row->vid] = taxonomy_get_vocabulary($row->vid);
+  } 
+  return $vocabs ? $vocabs : array();
+}
+
+// contributed by http://drupal.org/node/70462
+// pathauto.module integration
+function og_vocab_pathauto_taxonomy($op, $category = NULL) {
+  switch ($op) {
+    case 'placeholders':
+      $placeholders = array();
+      $placeholders[t('[ogname]')] = t('The name of the organic group this category belongs to.');
+      return $placeholders;
+    case 'values':
+      $results = array();
+      $results[t('[ogname]')] = '';
+      
+      $where = ' ov.vid = %d';
+      $sql = "SELECT n.title FROM {node} n INNER JOIN {og_vocab} ov ON ov.nid = n.nid WHERE $where";
+      $result = db_query($sql, $category->vid);
+      while ($row = db_fetch_object($result)) {
+        $name = $row->title;
+        $results[t('[ogname]')] = pathauto_cleanstring($name);
+      } 
+      return $results;
+    default:
+      break;
+  }
+}

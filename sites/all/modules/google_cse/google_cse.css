@@ -1,0 +1,4 @@
+/* $Id: google_cse.css,v 1.1.2.2 2007/03/29 23:09:04 mfb Exp $ */
+#google-cse-searchbox-form div, #google-cse-searchbox-form input { margin: 0; display: inline; }
+#google-cse-results-searchbox-form div, #google-cse-results-searchbox-form input { margin: 0; display: inline; }
+#google-cse-results-gadget img { margin-left: 2em; }

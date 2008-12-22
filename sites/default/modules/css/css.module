@@ -1,0 +1,154 @@
+<?php
+// $Id: css.module,v 1.1.2.3 2006/05/15 18:39:51 fax8 Exp $
+
+/**
+ * @file
+ * Adds the support for css on node creation.
+ * We will add the ability for each node to have an attached css
+ *
+ */
+
+/**
+ * Implementation of hook_menu()
+ */
+function css_menu($may_cache) {
+  $items = array();
+  if($may_cache) {
+    // defines the callback for getting the css file. we use
+    // css/get as path instead of only css to avoid that in some
+    // installs users have yet a directory called css
+    $items[] = array(
+      'path' => 'css/get', 
+      'title' => t('css'),
+      'access' => user_access('access content'),
+      'type' => MENU_CALLBACK,
+      'callback' => 'css_get'
+    );
+  }
+  return $items;
+}
+
+/**
+ * Implementation of hook_perm()
+ */
+function css_perm() {
+  return array('create css for nodes');
+} 
+
+/**
+ * Implementation of hook_form_alter()
+ */
+function css_form_alter($form_id, &$form) {
+  if (variable_get('css_use_css_' . $form['type']['#value'], 0)) {
+    if (isset($form['type']) && $form['type']['#value'] . '_node_form' == $form_id) {
+      $css = $form['#node']->css_css;
+      $form['css_css'] = array (
+        '#type' => 'fieldset',
+        '#title' => t('CSS'),
+        '#collapsible' => TRUE,
+        '#collapsed' => empty($css),
+        '#access' => user_access('create css for nodes'),
+        '#weight' => 35,
+      );
+      $form['css_css']['css_css'] = array (
+        '#type' => 'textarea',
+        '#default_value' => $css,
+        '#description' => t('Insert here the css rules for this node. You can use css defined for other nodes using @import "css/get/x" where x is the node identification number.'),
+        '#rows' => 20,
+        '#required' => FALSE,
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      );
+    }
+  }
+  if ('node_type_form' == $form_id) {
+    $node_type = $form['#node_type'];
+    $form['workflow']['css_use_css'] = array (
+      '#type' => 'radios',
+      '#title' => t('CSS Editing'),
+      '#default_value' => variable_get('css_use_css_' . $node_type->type, 0),
+      '#options' => array(t('Disable'), t('Enable')),
+    );
+    $form['#submit']['css_node_type_form_submit'] = array();
+  }
+		
+}  
+
+function css_node_type_form_submit($form_id, $form_values) {
+  variable_set('css_use_css_' . $form_values['type'], (int)$form_values['css_use_css']);
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function css_nodeapi(&$node, $op, $teaser, $page) {
+  switch ($op) {
+
+    case 'load':
+      if (variable_get('css_use_css_' . $node->type, FALSE)) {
+        $object = db_fetch_object(db_query('SELECT css FROM {css} WHERE vid = %d', $node->vid));
+        return array('css_css' => $object->css);
+      }
+      break;
+	  
+    case 'validate':
+      if (variable_get('css_use_css_' . $node->type, FALSE) || !user_access('create css for nodes')) {
+        ;//do some input check here..
+      }
+      break;
+
+    case 'insert':
+      if (variable_get('css_use_css_' . $node->type, FALSE)) {
+        db_query('INSERT INTO {css} (nid, vid, css) VALUES (%d, %d, "%s")', $node->nid, $node->vid, $node->css_css);
+      }
+      break;
+
+    case 'update':
+      if (variable_get('css_use_css_' . $node->type, FALSE)) {
+        db_query('DELETE FROM {css} WHERE vid = %d', $node->vid);
+        db_query('INSERT INTO {css} (nid, vid, css) VALUES (%d, %d, "%s")', $node->nid, $node->vid, $node->css_css);
+      }
+      break;
+
+    case 'delete':
+      if (variable_get('css_use_css_' . $node->type, FALSE)) {
+        db_query('DELETE FROM {css} WHERE nid = %d', $node->nid);
+      }
+      break;
+      
+    case 'delete revision':
+      if (variable_get('css_use_css_'. $node->type, FALSE)) {
+        db_query('DELETE FROM {css} WHERE vid = %d', $node->vid);
+      }
+      break;
+
+    case 'view':
+      if (variable_get('css_use_css_'. $node->type, FALSE)) {
+        theme('css_import', $node->nid);
+      }
+      break;
+  }
+}
+
+/**
+ * Return the css attached to the node
+ * Last-Modified header is set to let browsers cache the css.
+ */
+function css_get($vid = 0) {
+  if(is_numeric($vid) && $vid > 0) {
+    $object = db_fetch_object(db_query('SELECT css, changed FROM {css} c, {node} n WHERE n.vid = %d AND n.vid = c.vid', $vid));
+    $date = gmdate('D, d M Y H:i:s', $object->changed) .' GMT';
+    header("Last-Modified: $date");
+    drupal_set_header('Content-Type: text/css; charset=utf-8');
+    print($object->css);
+  }
+}
+
+/**
+ * Adds @import for the css in the head tag of page
+ * We use a theme function for this to let themers able
+ * to customize the behaviour of importing.
+ */
+function theme_css_import($nid) {
+  drupal_set_html_head('<style type="text/css" media="all"> @import "' . url('css/get/' . $nid) . '";</style>');
+}

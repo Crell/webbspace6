@@ -1,0 +1,24 @@
+/* $Id: advpoll.css,v 1.2.2.5 2007/10/04 07:02:52 fajerstarter Exp $ */
+
+.node-form .choices {
+  width: 87%;
+  margin-right: 0.2em;
+  display:inline;
+}
+
+a.remove-choice {
+  font-size: 0.85em;
+  cursor:pointer;
+}
+
+html.js .writein-choice, html.js .edit-settings-show-writeins {
+  display: none;
+}
+
+html.js input.writein-choice {
+  margin-left: 0.6em;
+}
+
+.poll-question {
+  font-weight: bold;
+}

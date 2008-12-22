@@ -1,0 +1,25 @@
+<?php
+
+function og_vocab_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+        db_query("CREATE TABLE {og_vocab} (
+            nid INT NOT NULL DEFAULT 0,
+            vid INT NOT NULL DEFAULT 0,
+            KEY `nid` (`nid`)
+          )
+          /*!40100 DEFAULT CHARACTER SET utf8 */ COMMENT = 'relate group nodes to vocabularies';");
+
+        // Update 1
+        db_query("UPDATE {system} SET weight = %d WHERE name = '%s'", 5, 'og_vocab');
+
+  }
+}
+
+/**
+ * Need to increase the weight so that this module will execute after taxonomy
+ */
+function og_vocab_update_1() {
+  db_query("UPDATE {system} SET weight = %d WHERE name = '%s'", 5, 'og_vocab');
+}

@@ -1,0 +1,14 @@
+; $Id: computed_field.info,v 1.2 2007/05/16 03:45:34 agileware Exp $
+name = Computed Field
+description = Allows the user to define computed values in custom content types.
+dependencies = content
+package = CCK
+
+; version added by drupal.org packaging script on 2006-11-27
+version = "5.x-1.1"
+
+; Information added by drupal.org packaging script on 2007-05-16
+version = "5.x-1.2"
+project = "computed_field"
+datestamp = "1179288302"
+

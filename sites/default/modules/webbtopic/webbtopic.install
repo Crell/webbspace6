@@ -1,0 +1,32 @@
+<?php
+
+/**
+ * Implementation of hook_install().
+ */
+function webbtopic_install() {
+  // Create tables.
+  drupal_install_schema('webbtopic');
+}
+
+/**
+ * Implementation of hook_schema();
+ */
+function webbtopic_schema() {
+  $schema['webbtopic_nodetypes'] = array(
+    'fields' => array(
+         'nid' => array('type' => 'int', 'not null' => TRUE, 'disp-width' => '11'),
+         'vid' => array('type' => 'int', 'not null' => TRUE, 'disp-width' => '11'),
+         'type' => array('type' => 'varchar', 'length' => '255', 'not null' => TRUE)),
+    'primary key' => array('nid', 'vid', 'type'),
+  );
+
+  $schema['webbtopic_topic'] = array(
+    'fields' => array(
+         'nid' => array('type' => 'int', 'not null' => TRUE, 'disp-width' => '11'),
+         'vid' => array('type' => 'int', 'not null' => TRUE, 'disp-width' => '11'),
+         'topic' => array('type' => 'varchar', 'length' => '255', 'not null' => TRUE)),
+    'primary key' => array('vid'),
+  );
+
+  return $schema;
+}

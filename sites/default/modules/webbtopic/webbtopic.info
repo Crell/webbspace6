@@ -1,0 +1,5 @@
+name = WeBB topic
+description = Handles topic/location fields for boards
+depends = webb og
+package = STF
+core = 6.x

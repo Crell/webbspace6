@@ -28,5 +28,13 @@ function webbtopic_schema() {
     'primary key' => array('vid'),
   );
 
+  $schema['webbtopic_label'] = array(
+    'fields' => array(
+         'nid' => array('type' => 'int', 'not null' => TRUE, 'disp-width' => '11'),
+         'vid' => array('type' => 'int', 'not null' => TRUE, 'disp-width' => '11'),
+         'label' => array('type' => 'varchar', 'length' => '255', 'not null' => TRUE)),
+    'primary key' => array('nid', 'vid'),
+  );
+
   return $schema;
 }

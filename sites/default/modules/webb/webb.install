@@ -1,0 +1,158 @@
+<?php
+
+function webb_install() {
+  // Create tables.
+  drupal_install_schema('webb');
+}
+
+/**
+ * Add the denormalization table for the note listing.
+ */
+function webb_update_5001() {
+
+  $ret[] = update_sql("CREATE TABLE {webb_note_lookup} (
+      nid int(10) NOT NULL,
+      group_nid int(10) NOT NULL,
+      created int(11) NOT NULL,
+      PRIMARY KEY (nid, group_nid),
+      KEY (group_nid, created, nid)
+    ) COMMENT='Denormalization lookup table'
+    /*!40100 DEFAULT CHARACTER SET utf8 */");
+
+  return $ret;
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function webb_schema() {
+
+  $schema['webb_board_positions'] = array(
+    'fields' => array(
+         'nid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, 'disp-width' => '10'),
+         'tid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, 'disp-width' => '10')),
+    'primary key' => array('nid', 'tid'),
+  );
+
+  $schema['webb_board_ranks'] = array(
+    'fields' => array(
+         'nid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, 'disp-width' => '10'),
+         'tid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, 'disp-width' => '10')),
+    'primary key' => array('nid', 'tid'),
+  );
+
+  $schema['webb_note_lookup'] = array(
+    'fields' => array(
+         'nid' => array('type' => 'int', 'not null' => TRUE, 'disp-width' => '10'),
+         'group_nid' => array('type' => 'int', 'not null' => TRUE, 'disp-width' => '10'),
+         'created' => array('type' => 'int', 'not null' => TRUE, 'disp-width' => '11')),
+    'primary key' => array('nid', 'group_nid'),
+    'indexes' => array(
+         'group_nid' => array('group_nid', 'created', 'nid')),
+  );
+
+}
+
+/**
+ * Populate the denormalization table.
+ */
+function webb_update_5002() {
+    // See if we are being called for the first time
+  if (!isset($_SESSION['webb_update_5002_nid'])) {
+    // These variables keep track of our progress
+    $_SESSION['webb_update_5002_nid'] = 0;
+    $_SESSION['webb_update_5002_max'] = db_result(db_query("SELECT MAX(nid) FROM {node} WHERE type='note'"));
+  }
+
+  // Fetch the next N note nodes and populate the lookup table.
+  $limit = 100;
+  $result = db_query_range("SELECT n.nid, created, group_nid
+    FROM {node} n
+      INNER JOIN {og_ancestry} oa ON n.nid=oa.nid
+    WHERE n.type = 'note'
+      AND n.status = 1
+      AND n.nid > %d
+    ORDER BY n.nid ASC", $_SESSION['webb_update_5002_nid'], 0, 100);
+  while ($record = db_fetch_object($result)) {
+    db_query("INSERT INTO {webb_note_lookup} (nid, group_nid, created) VALUES (%d, %d, %d)", array(
+      $record->nid, $record->group_nid, $record->created,
+    ));
+    $_SESSION['webb_update_5002_nid'] = $record->nid;
+  }
+
+  // See if we are done
+  if ($_SESSION['webb_update_5002_nid'] < $_SESSION['webb_update_5002_max']) {
+    // Not done yet. Return the progress.
+    $return = array('#finished' => $_SESSION['webb_update_5002_nid'] / $_SESSION['webb_update_5002_max']);
+    return $return;
+  }
+  else {
+    // Done. Clean up and indicate we're finished.
+    unset($_SESSION['webb_update_5002_nid']);
+    unset($_SESSION['webb_update_5002_max']);
+    return array('#finished' => 1);
+  }
+}
+
+/**
+ * Auto-set some settings needed by OG 7.x.
+ */
+function webb_update_5003() {
+  $ret = array();
+
+  variable_set('og_content_type_usage_character', 'group_post_standard_nomail');
+  variable_set('og_content_type_usage_logentry', 'group_post_standard_nomail');
+  variable_set('og_content_type_usage_note', 'group_post_standard_nomail');
+  variable_set('og_content_type_usage_page', 'group_post_standard_nomail');
+
+  return $ret;
+}
+
+/**
+ * Force all users to not be subscribed to OG email notifications by default.
+ */
+function webb_update_5004() {
+  $ret = array();
+
+  $ret[] = update_sql("UPDATE {og_uid_global} SET og_email=0");
+
+  return $ret;
+}
+
+/**
+ * TEMP update for clearing older nodes for testing.
+ *
+ * DO NOT RUN THIS DURING A REAL UPGRADE!
+ */
+/*
+function webb_update_5007() {
+
+  if (!isset($_SESSION['webb_update_5005_time'])) {
+    // These variables keep track of our progress
+
+    $_SESSION['webb_update_5005_time'] = strtotime('-2 weeks');
+
+    $_SESSION['webb_update_5005_num_nodes'] = db_result(db_query("SELECT COUNT(*) FROM {node} n WHERE n.type = 'note' AND created < %d", $_SESSION['webb_update_5005_time']));
+  }
+
+  $limit = 100;
+  $result = db_query_range("SELECT n.nid FROM {node} n WHERE n.type = 'note' AND created < %d ORDER BY nid", $_SESSION['webb_update_5005_time'], 0, $limit);
+  while ($record = db_fetch_object($result)) {
+    node_delete($record->nid);
+  }
+
+  $count = db_result(db_query("SELECT COUNT(*) FROM {node} n WHERE n.type = 'note' AND created < %d", $_SESSION['webb_update_5005_time']));
+
+  if ($count) {
+    // Not done yet. Return the progress.
+    $return = array('#finished' => 1 - ($count / $_SESSION['webb_update_5005_num_nodes']));
+    return $return;
+  }
+  else {
+    // Done. Clean up and indicate we're finished.
+    unset($_SESSION['webb_update_5005_time']);
+    unset($_SESSION['webb_update_5005_num_nodes']);
+    return array('#finished' => 1);
+  }
+}
+*/

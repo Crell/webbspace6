@@ -14,6 +14,17 @@ function webb_init() {
 }
 
 /**
+ * Implementation of hook_views_api().
+ */
+function webb_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'webb'),
+    //'path' => drupal_get_path('module', 'webb') . '/includes',
+  );
+}
+
+/**
  * Implementation of hook_perm().
  */
 function webb_perm() {
@@ -210,6 +221,13 @@ function _webb_nodeapi_board(&$node, $op, $a3 = NULL, $a4 = NULL) {
 
 /* ------------------- Menu -------------------*/
 
+function og_webb_menu_alter(&$items) {
+  // We're providing our own way to create new bnote nodes,
+  // so get rid of the default one.
+  unset($items['node/add/note']);
+}
+
+
 /**
  * Implementation of hook_menu().
  */
@@ -228,6 +246,33 @@ function webb_menu() {
     'file' => 'webb.admin.inc',
   );
 
+  // We're moving the node add form to a tab of the board.
+  $type = node_get_types('type', 'note', TRUE);
+  $items["node/%node/post"] = array(
+    'title' => 'New note',
+    'page callback' => 'node_add',
+    'page arguments' => array($type->type),
+    'access callback' => 'webb_menu_access_allow_posting',
+    'access arguments' => array(1, $type->type),
+    'description' => $type->description,
+    'file' => 'node.pages.inc',
+    'file path' => drupal_get_path('module', 'node'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 3,
+  );
+
+  // Add a tab link to the view of notes.
+  // Fix this once we have the actual view figured out. :-)
+  /*$items["node/%node/notes"] = array(
+    'title' => 'Notes',
+    'page callback' => 'views_view_page',
+    'page arguments' => array('og_notes', 1),
+    'access callback' => 'webb_menu_access_supports_posting',
+    'access arguments' => array(1),
+    'description' => 'View recent notes on this board',
+    'type' => MENU_LOCAL_TASK,
+  );
+*/
 
 /* TODO
    Non menu code that was placed in hook_menu under the '!$may_cache' block
@@ -378,6 +423,30 @@ function webb_menu() {
 
   return $items;
 }
+
+/**
+ * Menu access callback for the Notes tab on postable OGs.
+ *
+ * @param $node
+ */
+function webb_menu_access_supports_posting($node) {
+  return webb_is_post_type($node->type) && user_access('read notes');
+}
+
+/**
+ * Menu access callback for the custom node add page for notes.
+ */
+function webb_menu_access_allow_posting($board, $type) {
+  return webb_is_post_type($board->type) && node_access('create', $type);
+}
+
+/**
+ * Determine if the specified type is an OG node that supports the posting system.
+ */
+function webb_is_post_type($type) {
+  return in_array($type, variable_get('webb_og_posting_types', array()));
+}
+
 
 /**
  * This pair of functions is identical to the system module versions,
@@ -953,7 +1022,7 @@ function _webb_form_alter_character_node_form($form_id, &$form) {
   $form['field_rostered']['#access'] = $access;
 }
 
-
+/*
 function webb_views_query_alter(&$query, &$view, $summary, $level) {
 
   if ($view->name == 'og_notes' && !empty($_SESSION['webb']['default_notes_filter_time'])) {
@@ -982,6 +1051,7 @@ function webb_views_query_alter(&$query, &$view, $summary, $level) {
     $query->where_args[9] = strtotime($view->used_filters['filter1']);
   }
 }
+*/
 
 /**
  * Helper function for form_alter for the og_nodes filter form.
@@ -1361,6 +1431,7 @@ function _webb_taxonomy_get_terms($vid) {
 /**
  * Implementation of hook_views_default_views().
  */
+/*
 function webb_views_default_views() {
   $views = array();
   foreach(glob(drupal_get_path('module', 'webb') .'/views/*.view.inc') as $file) {
@@ -1369,6 +1440,7 @@ function webb_views_default_views() {
 
   return $views;
 }
+*/
 
 /**
  * Implementation of hook_profile_alter().

@@ -666,22 +666,8 @@ function webb_form_alter(&$form, &$form_state, $form_id) {
   elseif ('views_filters' == $form_id && $form['view']['#value']->name == 'og_notes') {
     _webb_form_alter_og_notes_filter_form($form_id, $form);
   }
-  elseif ('user_edit' == $form_id) {
-    _webb_form_alter_user_edit($form_id, $form);
-  }
-  elseif ('node_type_form' == $form_id) {
-    _webb_form_alter_node_type_form($form_id, $form);
-  }
-  elseif ('og_confirm_unsubscribe' == $form_id) {
-    _webb_form_alter_og_confirm_unsubscribe($form_id, $form);
-  }
 }
 
-function _webb_form_alter_og_confirm_unsubscribe($form_id, &$form) {
-
-//  $form['#redirect'] = 'node/'. $form['gid']['#value'];
-
-}
 
 function _webb_form_alter_advpoll_binary_node_form($form_id, &$form) {
 
@@ -690,9 +676,9 @@ function _webb_form_alter_advpoll_binary_node_form($form_id, &$form) {
 }
 
 /**
- * Helper function for hook_form_alter on node type forms.
+ * Implementation of hook_form_alter().
  */
-function _webb_form_alter_node_type_form($form_id, &$form) {
+function _webb_form_node_type_form_alter(&$form, &$form_state) {
 /*
   $form['webb'] = array(
     '#type' => 'fieldset',
@@ -703,9 +689,9 @@ function _webb_form_alter_node_type_form($form_id, &$form) {
 }
 
 /**
- * Helper function for hook_form_alter on user-edit forms.
+ * Implementation of hook_form_alter();
  */
-function _webb_form_alter_user_edit($form_id, &$form) {
+function webb_form_user_edit_alter(&$form, &$form_state) {
 
   // Always make sure the contact form is enabled.
   $form['contact'] = array(

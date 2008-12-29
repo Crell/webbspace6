@@ -218,6 +218,17 @@ function webb_menu() {
   global $language;
   global $user;
 
+  // Admin form to configure what our postable node types are.
+  $items['admin/og/webb-post'] = array(
+    'title' => 'WeBB posting',
+    'description' => 'Configure the WeBBspace posting system.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webb_settings'),
+    'access arguments' => array('administer WeBB posting'),
+    'file' => 'webb.admin.inc',
+  );
+
+
 /* TODO
    Non menu code that was placed in hook_menu under the '!$may_cache' block
    so that it could be run during initialization, should now be moved to hook_init.

@@ -16,16 +16,45 @@ function webbtopic_menu() {
     'access arguments' => array('access content'),
   );
 
+  $items['admin/og/webbtopic'] = array(
+    'title' => 'WeBB posting topics',
+    'description' => 'Configure the WeBBspace posting system topics.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webbtopic_settings'),
+    'access arguments' => array('administer WeBB topics'),
+    'file' => 'webbtopic.admin.inc',
+  );
+
   return $items;
 }
-
 
 /**
  * Implementation of hook_perm().
  */
 function webbtopic_perm() {
-  return array('administer note topics');
+  return array('administer WeBB topics');
 }
+
+/**
+ * Determine if the specified type is an OG node that supports topics.
+ */
+function webbtopic_is_topic_og($type) {
+  return in_array($type, variable_get('webbtopic_og_types', array()));
+}
+
+/**
+ * Determine if the specified type supports topics in the specified group.
+ *
+ * @param $group_nid
+ *   The nid of the group node related to this node type.
+ * @param $type
+ *   The type of node to check.
+ */
+/*
+function webbtopic_supports_topic($group_type, $type) {
+  return in_array($type, variable_get('webbtopic_og_types', array()));
+}
+*/
 
 /**
  * Autocomplete callback; Returns possible topics for the given group.
@@ -67,21 +96,32 @@ function webbtopic_autocomplete($gid, $string) {
  */
 function webbtopic_form_alter(&$form, &$form_state, $form_id) {
 
-  if (isset($form['type']) && 'board_node_form' == $form_id) {
-    _webbtopic_form_alter_board_node_form($form_id, $form);
+  if ($form['#id'] == 'node-form' && webbtopic_is_topic_og($form['type']['#value'])) {
+    _webbtopic_form_alter_topic_og($form, $form_state, $form_id);
   }
 
-  if (isset($form['type']) && $form['type']['#value'] .'_node_form' == $form_id) {
+  // If it's a node form and the node type is listed as taking topics for the
+  // current group (is that logic complex enough for you?), show the topic field.
+  if ($form['#id'] == 'node-form') {
+    $group = og_get_group_context();
+    if (in_array($form['#node']->type, $group->webb['topic_nodetypes'])) {
+      return _webbtopic_form_alter_withtopic($form_id, $form, $group->nid);
+    }
+
+    /* Old way that was clunkier, and I think the above works. :-)
     $gids = $_GET['gids'];
     if (empty($gids)) {
       $gids = $form['#node']->og_groups;
     }
-    if (!empty($gids[0])) {
-      $group = node_load($gids[0]);
+
+    if (!empty($gids)) {
+      $gid = current($gids);
+      $group = node_load($gid);
       if (in_array($form['#node']->type, $group->webb['topic_nodetypes'])) {
-        return _webbtopic_form_alter_withtopic($form_id, $form, $gids[0]);
+        return _webbtopic_form_alter_withtopic($form_id, $form, $gid);
       }
     }
+    */
   }
 }
 
@@ -110,6 +150,11 @@ function _webbtopic_form_alter_withtopic($form_id, &$form, $gid) {
     '#autocomplete_path' => 'webbtopic/autocomplete/'. $group->nid,
   	'#description' => t('Recently used: ') . _webbtopic_form_alter_withtopic_get_suggestions($group),
   );
+
+  if (module_exists('content')) {
+    $form['webb']['webbtopic_topic']['#weight'] = content_extra_field_weight($form['#node']->type, 'webbtopic_topic');
+  }
+
 }
 
 function _webbtopic_form_alter_withtopic_get_suggestions($group) {
@@ -160,7 +205,7 @@ function theme_webbtopic_topic($name) {
   return "<span class='webbtopic-topic'>{$name}</span>";
 }
 
-function _webbtopic_form_alter_board_node_form($form_id, &$form) {
+function _webbtopic_form_alter_topic_og(&$form, &$form_state, $form_id) {
 
   // Allow an admin (only) to configure what the topic label is and on what nodes
   // it applies for nodes in this group.
@@ -170,7 +215,7 @@ function _webbtopic_form_alter_board_node_form($form_id, &$form) {
     '#title' => t('Topics'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
-    '#access' => user_access('administer note topics'),
+    '#access' => user_access('adminster WeBB topics'),
   );
   $form['webbtopic']['webbtopic_topic'] = array(
     '#type' => 'textfield',
@@ -179,8 +224,8 @@ function _webbtopic_form_alter_board_node_form($form_id, &$form) {
     '#default_value' => $form['#node']->webb['topic_label'],
   );
 
-  foreach (node_get_types() as $type => $type_object) {
-    $options[$type] = $type_object->name;
+  foreach (og_get_types('group_post_standard')as $type) {
+    $options[$type] = node_get_types('name', $type);
     if (is_array($form['#node']->webb['topic_nodetypes']) && in_array($type, $form['#node']->webb['topic_nodetypes'])) {
       $defaults[] = $type;
     }
@@ -193,11 +238,15 @@ function _webbtopic_form_alter_board_node_form($form_id, &$form) {
     '#default_value' => $defaults,
   );
 
+  if (module_exists('content')) {
+    $form['webbtopic']['#weight'] = content_extra_field_weight($form['#node']->type, 'webbtopic');
+  }
+
   $form['#submit'][] = 'webbtopic_board_node_form_submit';
 
 }
 
-function _webbtopic_nodeapi_board(&$node, $op, $a3 = NULL, $a4 = NULL) {
+function _webbtopic_nodeapi_topic_og(&$node, $op, $a3 = NULL, $a4 = NULL) {
   switch ($op) {
     case 'load':
       $node->webb['topic_label'] = db_result(db_query("SELECT label FROM {webbtopic_label} WHERE vid=%d", $node->vid));
@@ -287,16 +336,42 @@ function _webbtopic_nodeapi_withtopic(&$node, $op, $a3 = NULL, $a4 = NULL) {
 }
 
 /**
+ * Implementation of hook_content_extra_fields.
+ */
+function webbtopic_content_extra_fields($type_name) {
+  $extras = array();
+
+  // Because whether or not the topic field shows is very contextual,
+  // we'll just report it to CCK always.  It doesn't hurt anything, I think. :-)
+  $extra['webbtopic_topic'] = array(
+    'label' => t('WeBB topic'),
+    'description' => t('Topic selection field for the WeBB posting system.'),
+    'weight' => 0,
+  );
+
+  if (webbtopic_is_topic_og($type_name)) {
+    $extra['webbtopic'] = array(
+      'label' => t('WeBB topic configuration'),
+      'description' => t('Configuration form for topics on a given Group.'),
+      'weight' => 0,
+    );
+  }
+
+  return $extra;
+}
+
+
+/**
  * Implementation of hook_nodeapi().
  */
 function webbtopic_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
 
-  if ($node->type == 'board') {
-    return _webbtopic_nodeapi_board($node, $op, $a3, $a4);
+  if (webbtopic_is_topic_og($node->type)) {
+    return _webbtopic_nodeapi_topic_og($node, $op, $a3, $a4);
   }
 
-  if (!empty($node->og_groups[0])) {
-    $group = node_load($node->og_groups[0]);
+  if (!empty($node->og_groups)) {
+    $group = node_load(current($node->og_groups));
     if (!empty($group->webb['topic_nodetypes']) && in_array($node->type, $group->webb['topic_nodetypes'])) {
       return _webbtopic_nodeapi_withtopic($node, $op, $a3, $a4);
     }
@@ -358,4 +433,51 @@ function webbtopic_views_handler_field_topic($fieldinfo, $fielddata, $value, &$d
 
 function webbtopic_views_handler_topic_default() {
   // I'm not entirely sure what is supposed to go here... :-)
+}
+
+
+/* ---------- Move these elsewhere later --------------- */
+
+/**
+ * Returns the first column of a query result as an array.
+ * Does not do a rewrite sql for you!
+ * Call similar to db_query().
+ */
+function db_fetch_column($query) {
+  $results = array();
+  $args = func_get_args();
+  array_shift($args);
+  if (isset($args[0]) and is_array($args[0])) { // 'All arguments in one array' syntax
+    $args = $args[0];
+  }
+  $res = db_query($query, $args);
+
+  while ($row = db_fetch_array($res)) {
+    $results[] = current($row);
+  }
+
+  return $results;
+}
+
+/**
+ * Returns an associative array, with the first column of the result set
+ * as the key and the second as the value.
+ * Does not do a rewrite sql for you!
+ * Call similar to db_query().
+ */
+function db_fetch_assoc($query) {
+  $results = array();
+  $args = func_get_args();
+  array_shift($args);
+  if (isset($args[0]) and is_array($args[0])) { // 'All arguments in one array' syntax
+    $args = $args[0];
+  }
+  $res = db_query($query, $args);
+
+  while ($row = db_fetch_array($res)) {
+    $keys = array_keys($row);
+    $results[$row[$keys[0]]] = $row[$keys[1]];
+  }
+
+  return $results;
 }

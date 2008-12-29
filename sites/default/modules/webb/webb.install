@@ -51,6 +51,7 @@ function webb_schema() {
          'group_nid' => array('group_nid', 'created', 'nid')),
   );
 
+  return $schema;
 }
 
 /**

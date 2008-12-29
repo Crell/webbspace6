@@ -9,8 +9,8 @@
  * always needed.
  */
 function webb_init() {
-  module_load_include('inc', webb, 'webb_nodes');
-  module_load_include('inc', webb, 'dbhelpers');
+  module_load_include('inc', 'webb', 'webb_nodes');
+  //module_load_include('inc', webb, 'dbhelpers');
 }
 
 /**

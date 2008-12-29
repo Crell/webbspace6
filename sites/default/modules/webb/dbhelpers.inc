@@ -3,9 +3,9 @@
 /**
  * @file
  * This is a library of useful database functions and methods.
- * 
+ *
  * Shamelessly copied from helpers module, which has no real Drupal 5 release.
- * 
+ *
  */
 
 /**
@@ -229,6 +229,7 @@ function db_fetch_all_as_arrays($query) {
  * Does not do a rewrite sql for you!
  * Call similar to db_query().
  */
+/*
 function db_fetch_column($query) {
   $results = array();
   $args = func_get_args();
@@ -244,6 +245,7 @@ function db_fetch_column($query) {
 
   return $results;
 }
+*/
 
 /**
  * Returns an associative array, with the first column of the result set
@@ -251,6 +253,7 @@ function db_fetch_column($query) {
  * Does not do a rewrite sql for you!
  * Call similar to db_query().
  */
+/*
 function db_fetch_assoc($query) {
   $results = array();
   $args = func_get_args();
@@ -267,3 +270,4 @@ function db_fetch_assoc($query) {
 
   return $results;
 }
+*/

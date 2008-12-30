@@ -185,7 +185,6 @@ function _webbtopic_nodeapi_topic_og(&$node, $op, $a3 = NULL, $a4 = NULL) {
   switch ($op) {
     case 'load':
       $node->webb['topic_label'] = db_result(db_query("SELECT label FROM {webbtopic_label} WHERE vid=%d", $node->vid));
-      $node->webb['topic_nodetypes'] = db_fetch_column("SELECT type FROM {webbtopic_nodetypes} WHERE vid=%d", $node->vid);
       break;
     case 'insert':
       // Set the label for topics in this group.
@@ -194,14 +193,6 @@ function _webbtopic_nodeapi_topic_og(&$node, $op, $a3 = NULL, $a4 = NULL) {
         'vid' => $node->vid,
         'label' => $node->webbtopic_topic,
       ));
-      // Set the node types that will get a topic applied.
-      foreach (array_keys(array_filter($node->webbtopic_nodetypes)) as $type) {
-        db_insert('webbtopic_nodetypes', array(
-          'nid' => $node->nid,
-          'vid' => $node->vid,
-          'type' => $type,
-        ));
-      }
       break;
     case 'update':
       // Set the label for topics in this group, with the good old delete/insert cycle.
@@ -211,16 +202,6 @@ function _webbtopic_nodeapi_topic_og(&$node, $op, $a3 = NULL, $a4 = NULL) {
         'vid' => $node->vid,
         'label' => $node->webbtopic_topic,
       ));
-
-      // Set the node types that will get a topic applied.
-      db_query("DELETE FROM {webbtopic_nodetypes} WHERE vid=%d", $node->vid);
-      foreach (array_keys(array_filter($node->webbtopic_nodetypes)) as $type) {
-        db_insert('webbtopic_nodetypes', array(
-          'nid' => $node->nid,
-          'vid' => $node->vid,
-          'type' => $type,
-        ));
-      }
       break;
     case 'delete':
       db_query("DELETE FROM {webbtopic_label} WHERE nid=%d", $node->nid);

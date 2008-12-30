@@ -35,8 +35,10 @@ function webb_perm() {
 
   foreach (array_keys(webb_node_info()) as $type) {
     $perms[] = 'create '. $type .' content';
-    $perms[] = 'edit '. $type .' content';
+    $perms[] = 'edit any '. $type .' content';
     $perms[] = 'edit own '. $type .' content';
+    $perms[] = 'delete any '. $type .' content';
+    $perms[] = 'delete own '. $type .' content';
   }
 
   return $perms;

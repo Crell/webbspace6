@@ -11,6 +11,8 @@
 function webb_init() {
   module_load_include('inc', 'webb', 'webb_nodes');
   module_load_include('inc', 'webb', 'webb.filters');
+  module_load_include('inc', 'webb', 'webb.computed_field');
+  module_load_include('inc', 'webb', 'webb.utility');
   //module_load_include('inc', webb, 'dbhelpers');
 }
 
@@ -1127,90 +1129,6 @@ function _webb_og_notes_filter_form_time_options($view) {
   return $options;
 }
 
-
-/* ------------------- Computed Field calculation functions -------------------*/
-
-/**
- * Computing function for the Note::field_character field.
- *
- * The saved character name is either the name of the character, if applcable,
- * or the name of the user if no character is specified.
- *
- */
-function webb_character_name_format(&$node, $field, &$node_field) {
-  if ($node->field_character[0]['nid']) {
-    // There is a character, so return its formatted full name.
-    $character = node_load($node->field_character[0]['nid']);
-
-    return $character->field_display_name[0]['value'];
-  }
-  else {
-    // We're posting as a normal user.  The user's name will already be listed by the theme.
-    $account = _webb_user_load($node->uid);
-
-    $name = array();
-    if (!empty($account->profile_first_name)) {
-      $name[] = $account->profile_first_name;
-    }
-    if (!empty($account->profile_last_name)) {
-      $name[] = $account->profile_last_name;
-    }
-
-    $name = count($name) ? implode($name, ' ') : $account->name;
-
-    return $name;
-  }
-}
-
-/**
- * Computing function for the Character::field_display_name field.
- *
- * The character's display name is based off of its rank, name, and position.
- *
- */
-function webb_character_display_name_format(&$node, $field, &$node_field) {
-
-    $ranks = array();
-    foreach ($node->field_rank as $rank) {
-      $term = taxonomy_get_term($rank['tid']);
-      if ($term->name) {
-        $ranks[] = $term->name;
-      }
-    }
-
-    $rank = sizeof($ranks) ? implode(', ', $ranks) . ' ' : '';
-    $position = trim(webb_character_position_format($node, $field, $node_field));
-    if ($position) {
-      $position = ' (' . $position . ')';
-    }
-
-    return  $rank . $node->title . $position;
-}
-
-/**
- * Computing function for the Character::field_position field.
- *
- * The computed position is simply all pre-defined and custom positions
- * concatenated and comma-delimited.
- *
- */
-function webb_character_position_format(&$node, $field, &$node_field) {
-  $positions = array();
-  foreach ($node->field_position as $position) {
-    $term = taxonomy_get_term($position['tid']);
-    if ($term->name) {
-      $positions[] = $term->name;
-    }
-  }
-  foreach ($node->field_custom_position as $position) {
-    if ($position['value']) {
-      $positions[] = $position['value'];
-    }
-  }
-
-  return implode(', ', $positions);
-}
-
 /*------------------- Theme functions -------------------*/
 
 function hook_theme($existing, $type, $theme, $path) {
@@ -1242,113 +1160,6 @@ function theme_webb_note_quoted_line($line, $quote_char = ':') {
 }
 
 
-/* ------------------- Utility Functions -------------------*/
-
-/**
- * Utility function to load a cck field instance object.
- *
- * Why this doesn't exist in CCK, I don't know...
- *
- * @param string $field_name
- * @param string $type_name
- * @return object
- */
-function webb_get_field_instance($field_name, $type_name) {
-  $field = db_fetch_object(db_query("SELECT * FROM {node_field_instance} WHERE field_name='%s' AND type_name='%s'", $field_name, $type_name));
-  $field->widget_settings = unserialize($field->widget_settings);
-  $field->display_settings = unserialize($field->display_settings);
-  return $field;
-}
-
-/**
- * Formats a note as the default body string for replies to it.
- */
-function webb_quote_note($node) {
-
-  $body = trim($node->body);
-
-  // build the "header" portion of the quote, saying where it came from and when
-  $characters = array();
-  foreach ($node->field_character_name as $character) {
-    $characters[] = $character['value'];
-  }
-  $character = implode(', ', $characters);
-  $locations = array();
-  foreach ($node->taxonomy as $location) {
-    $locations[] = $location->name;
-  }
-  $location = implode(', ', $locations);
-  $header = t('Posted by @character in @location', array(
-    '@character' => $character,
-    '@location' => (empty($node->webb['webbtopic_topic']) ? '' : $node->webb['webbtopic_topic']),
-  ));
-  $body = $header . "\n" . $body;
-
-  // Now quote it by prefixing every line with a magic value
-  $quote_char = variable_get('webb_note_quote_char', ':');
-  $quote_replace = "\n{$quote_char} ";
-  $body = $quote_char . ' ' . preg_replace("/\n/", $quote_replace, $body) . "\n\n";
-
-  return $body;
-}
-
-function _webb_is_og_admin($og_nids, $uid=NULL) {
-  return _webb_og_is_subscriber($og_nids, $uid, TRUE);
-}
-
-function _webb_og_is_subscriber($og_nids, $uid=NULL, $check_admin = FALSE) {
-  if (!isset($uid)) {
-    global $user;
-    $uid = $user->uid;
-  }
-  // We want to allow both single and multi-og checks.
-  if (!is_array($og_nids)) {
-    $og_nids = array($og_nids);
-  }
-  $account = _webb_user_load($uid);
-
-  if ($check_admin) {
-    foreach ($account->og_groups as $og => $settings) {
-      if ((in_array($og, $og_nids) && isset($settings['is_admin']) && $settings['is_admin']) || user_access('administer organic groups', $account)) {
-        return TRUE;
-      }
-    }
-    return FALSE;
-  }
-  else {
-    $subscribed_ogs = array_keys($account->og_groups);
-    return (boolean)array_intersect($subscribed_ogs, $og_nids);
-  }
-}
-
-
-
-/**
- * Loads a user by uid, cached
- *
- * user_load() doesn't do caching, because it's dumb, so we wrap a layer of caching around it.
- */
-function _webb_user_load($uid) {
-  static $users = array();
-
-  if (!isset($users[$uid])) {
-    $users[$uid] = user_load(array('uid' => $uid));
-  }
-  return $users[$uid];
-}
-
-/**
- * Gets an associative array of taxonomy terms in a vocabulary.
- */
-function _webb_taxonomy_get_terms($vid) {
-  $terms = array();
-  $select = _taxonomy_term_select('', 'vid', 0, $vid, '', FALSE, FALSE, array());
-  foreach ($select['#options'] as $option) {
-    list($tid, $term) = each($option->option);
-    $terms[$tid] = $term;
-  }
-  return $terms;
-}
 
 
 /**

@@ -143,7 +143,7 @@ function _webbtopic_form_alter_withtopic(&$form, &$form_state, $gid) {
 
 }
 
-function _webbtopic_form_alter_withtopic_get_suggestions($group, $field_name) {
+function webbtopic_suggestions($group, $field_name) {
   $topics = array();
 
   // This is almost the same as the autocomplete logic, except that
@@ -202,20 +202,6 @@ function _webbtopic_form_alter_topic_og(&$form, &$form_state, $form_id) {
     '#title' => t('Topic label'),
     '#description' => t('Specify the topic label to be applied to posts in this group.'),
     '#default_value' => $form['#node']->webb['topic_label'],
-  );
-
-  foreach (og_get_types('group_post_standard')as $type) {
-    $options[$type] = node_get_types('name', $type);
-    if (is_array($form['#node']->webb['topic_nodetypes']) && in_array($type, $form['#node']->webb['topic_nodetypes'])) {
-      $defaults[] = $type;
-    }
-  }
-  $form['webbtopic']['webbtopic_nodetypes'] = array(
-    '#type' => 'checkboxes',
-    '#title' => t('Applies to'),
-    '#options' => $options,
-    '#description' => t('Specify content types to which topics should be applied within this group.'),
-    '#default_value' => $defaults,
   );
 
   if (module_exists('content')) {
@@ -280,17 +266,8 @@ function _webbtopic_nodeapi_topic_og(&$node, $op, $a3 = NULL, $a4 = NULL) {
  * Implementation of hook_nodeapi().
  */
 function webbtopic_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
-
   if (webbtopic_is_topic_og($node->type)) {
     return _webbtopic_nodeapi_topic_og($node, $op, $a3, $a4);
-  }
-
-  if (!empty($node->og_groups)) {
-    $group = node_load($node->og_groups[0]);
-    if (!empty($group->webb['topic_nodetypes']) && in_array($node->type, $group->webb['topic_nodetypes'])) {
-      //dpm(__FUNCTION__ .' / '. __LINE__ .' op='. $op);
-      //return _webbtopic_nodeapi_withtopic($node, $op, $a3, $a4);
-    }
   }
 }
 
@@ -468,7 +445,7 @@ function webbtopic_textfield_ogsuggest_process($element, $edit, $form_state, $fo
   if (trim($element[$field_key]['#description'])) {
     $element[$field_key]['#description'] .= '<br />';
   }
-  $element[$field_key]['#description'] .= t('Recently used: ') . _webbtopic_form_alter_withtopic_get_suggestions($group, $element['#field_name']);
+  $element[$field_key]['#description'] .= t('Recently used: ') . webbtopic_suggestions($group, $element['#field_name']);
 
   return $element;
 }

@@ -58,6 +58,8 @@ function webbtopic_update_6001() {
 
   content_field_instance_create($field);
 
+  content_clear_type_cache();
+
   return $ret;
 }
 

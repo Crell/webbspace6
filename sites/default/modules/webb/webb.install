@@ -157,3 +157,69 @@ function webb_update_5007() {
   }
 }
 */
+
+/**
+ * Add the new topic field to the Note node type, since we're deprecating webbtopic.
+ */
+function webb_update_6001() {
+  $ret = array();
+
+  module_load_include('inc', 'content', 'includes/content.crud');
+
+  $field = array(
+    'label' => 'Location',
+    'field_name' => 'field_topic',
+    'type' => 'text',
+    'widget_type' => 'text_textfield',
+    'type_name' => 'note',
+  );
+
+  content_field_instance_create($field);
+
+  return $ret;
+}
+
+/**
+ * Move the note topic data to the new CCK field.
+ */
+function webb_update_6002() {
+  // See if we are being called for the first time
+  if (!isset($_SESSION['webb_update_6002_nid'])) {
+    // These variables keep track of our progress
+    $_SESSION['webb_update_6002_vid'] = 0;
+    $_SESSION['webb_update_6002_max'] = db_result(db_query("SELECT MAX(vid) FROM {webbtopic_topic}"));
+  }
+
+  // Fetch the next N note nodes and convert their topic field.
+  $limit = 100;
+  $result = db_query("SELECT nid, vid, topic FROM {webbtopic_topic} ORDER BY nid ASC", 0, $limit);
+  $vids = array();
+  while ($record = db_fetch_object($result)) {
+    // First insert the data into the CCK node table.
+    db_query("UPDATE {content_type_note} SET field_topic_value='%s' WHERE vid=%d", array($record->topic, $record->vid));
+    $vids[] = $record->vid;
+    $_SESSION['webb_update_6002_vid'] = $record->vid;
+  }
+
+  // Then delete it from the old table so we don't process it again.
+  $placeholders = db_placeholders($vids);
+  db_query("DELETE FROM {webbtopic_topic} WHERE vid IN ($placeholders)", $vids);
+
+  // See if we are done
+  if ($_SESSION['webb_update_6002_vid'] < $_SESSION['webb_update_6002_max']) {
+    // Not done yet. Return the progress.
+    $return = array('#finished' => $_SESSION['webb_update_6002_nid'] / $_SESSION['webb_update_6002_max']);
+    return $return;
+  }
+  else {
+    // Done. Clean up and indicate we're finished.
+    unset($_SESSION['webb_update_6002_nid']);
+    unset($_SESSION['webb_update_6002_max']);
+
+    // Drop the old table.
+    $ret = array();
+    db_drop_table($ret, 'webbtopic_topic');
+
+    return array('#finished' => 1);
+  }
+}

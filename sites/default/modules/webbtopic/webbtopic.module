@@ -105,7 +105,7 @@ function webbtopic_form_alter(&$form, &$form_state, $form_id) {
   if ($form['#id'] == 'node-form') {
     $group = og_get_group_context();
     if (in_array($form['#node']->type, $group->webb['topic_nodetypes'])) {
-      return _webbtopic_form_alter_withtopic($form_id, $form, $group->nid);
+      //return _webbtopic_form_alter_withtopic($form, $form_state, $group->nid);
     }
 
     /* Old way that was clunkier, and I think the above works. :-)
@@ -125,7 +125,7 @@ function webbtopic_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
-function _webbtopic_form_alter_withtopic($form_id, &$form, $gid) {
+function _webbtopic_form_alter_withtopic(&$form, &$form_state, $gid) {
 
   $node = $form['#node'];
   $group = node_load($gid);
@@ -298,7 +298,7 @@ function _webbtopic_nodeapi_topic_og(&$node, $op, $a3 = NULL, $a4 = NULL) {
 
 
 function _webbtopic_nodeapi_withtopic(&$node, $op, $a3 = NULL, $a4 = NULL) {
-
+dpm(__FUNCTION__ .' / '. __LINE__ .' op='. $op);
   switch ($op) {
     case 'prepare':
       break;
@@ -308,6 +308,7 @@ function _webbtopic_nodeapi_withtopic(&$node, $op, $a3 = NULL, $a4 = NULL) {
       $node->webb['webbtopic_topic'] = db_result(db_query("SELECT topic FROM {webbtopic_topic} WHERE vid=%d", $node->vid));
       break;
     case 'insert':
+      dpm($node);
       db_insert('webbtopic_topic', array(
         'nid' => $node->nid,
       	'vid' => $node->vid,
@@ -315,9 +316,8 @@ function _webbtopic_nodeapi_withtopic(&$node, $op, $a3 = NULL, $a4 = NULL) {
       ));
       break;
     case 'update':
-      db_delete('webbtopic_topic', array(
-      	'vid' => $node->vid,
-      ));
+      dpm(__FUNCTION__ .' / '. __LINE__ .': '. $node->vid, 'Node vid');
+      db_query("DELETE FROM {webbtopic_topic} WHERE vid=%d", $node->vid);
       db_insert('webbtopic_topic', array(
         'nid' => $node->nid,
       	'vid' => $node->vid,
@@ -332,6 +332,25 @@ function _webbtopic_nodeapi_withtopic(&$node, $op, $a3 = NULL, $a4 = NULL) {
       break;
     case 'view':
       break;
+  }
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function webbtopic_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+
+  if (webbtopic_is_topic_og($node->type)) {
+    return _webbtopic_nodeapi_topic_og($node, $op, $a3, $a4);
+  }
+
+  if (!empty($node->og_groups)) {
+    $group = node_load($node->og_groups[0]);
+    if ($op == 'update') dpm($group);
+    if (!empty($group->webb['topic_nodetypes']) && in_array($node->type, $group->webb['topic_nodetypes'])) {
+      //dpm(__FUNCTION__ .' / '. __LINE__ .' op='. $op);
+      //return _webbtopic_nodeapi_withtopic($node, $op, $a3, $a4);
+    }
   }
 }
 
@@ -358,24 +377,6 @@ function webbtopic_content_extra_fields($type_name) {
   }
 
   return $extra;
-}
-
-
-/**
- * Implementation of hook_nodeapi().
- */
-function webbtopic_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
-
-  if (webbtopic_is_topic_og($node->type)) {
-    return _webbtopic_nodeapi_topic_og($node, $op, $a3, $a4);
-  }
-
-  if (!empty($node->og_groups)) {
-    $group = node_load(current($node->og_groups));
-    if (!empty($group->webb['topic_nodetypes']) && in_array($node->type, $group->webb['topic_nodetypes'])) {
-      return _webbtopic_nodeapi_withtopic($node, $op, $a3, $a4);
-    }
-  }
 }
 
 /**

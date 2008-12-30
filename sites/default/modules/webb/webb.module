@@ -730,7 +730,7 @@ function _webb_link_board($node, $teaser) {
  */
 function webb_form_alter(&$form, &$form_state, $form_id) {
   if (isset($form['type']) && 'note_node_form' == $form_id) {
-    _webb_form_alter_note_node_form($form_id, $form);
+    //_webb_form_alter_note_node_form($form_id, $form);
   }
   elseif (isset($form['type']) && 'advpoll_binary_node_form' == $form_id) {
     _webb_form_alter_advpoll_binary_node_form($form_id, $form);
@@ -782,21 +782,30 @@ function webb_form_user_edit_alter(&$form, &$form_state) {
 }
 
 /**
- * Helper function for form_alter for the note form.
+ * Implementation of hook_form_alter();
  */
-function _webb_form_alter_note_node_form($form_id, &$form) {
+function webb_form_note_node_form_alter(&$form, &$form_state) {
+
+  // We're going to bastardize $_GET to force OG to think that this post is
+  // being made to the group in the path.  Yes, this is ugly.
+  if (empty($form['nid']['#value'])) {
+    // This is a new posting.
+    $group = menu_get_object('node');
+    og_set_group_context($group);
+    $_GET['gids'] = array($group->nid);
+  }
 
   // Pre-fill the parent id field from the GET query, then hide it
   $parent_nid = (int)$_GET['parent_nid'];
-  $form['field_parent_note'][0]['node_name']['#type'] = 'value';
+  $form['field_parent_note'][0]['#type'] = 'value';
   if ($parent_nid) {
     $parent = node_load($parent_nid);
 
     //Note 2 [nid:13]
-    $form['field_parent_note'][0]['node_name']['#value'] = "{$parent->title} [nid:{$parent->nid}]";
+    $form['field_parent_note'][0]['#value'] = "{$parent->title} [nid:{$parent->nid}]";
 
     // Also set the default value of the note to the quoted version of the parent's body
-    $body = &$form['body_filter']['body'];
+    $body = &$form['body_field']['body'];
     if (! $body['#default_value']) {
       $parent = node_load($parent_nid);
       $body['#default_value'] = webb_quote_note($parent);
@@ -808,7 +817,7 @@ function _webb_form_alter_note_node_form($form_id, &$form) {
   $form['title']['#type'] = 'value';
   $form['title']['#value'] = 'Note';
 
-
+/*
   // Set the options for the character to post as manually, because this is too complex to do via configuration.
   // We want all characters owned by the current user (or the user that posted the note if it's an edit), ordered
   // alphabetically.  The default character is whichever was most recently used.
@@ -854,6 +863,7 @@ function _webb_form_alter_note_node_form($form_id, &$form) {
   else {
     $form['field_character']['nids']['#default_value'] = array(0);
   }
+*/
 }
 
 /**

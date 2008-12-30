@@ -97,52 +97,21 @@ function webbtopic_autocomplete($gid, $field_name, $string) {
  * Implementation of hook_form_alter().
  */
 function webbtopic_form_alter(&$form, &$form_state, $form_id) {
-
   if ($form['#id'] == 'node-form' && webbtopic_is_topic_og($form['type']['#value'])) {
     _webbtopic_form_alter_topic_og($form, $form_state, $form_id);
   }
-
-  // If it's a node form and the node type is listed as taking topics for the
-  // current group (is that logic complex enough for you?), show the topic field.
-  if ($form['#id'] == 'node-form') {
-    $group = og_get_group_context();
-    if (in_array($form['#node']->type, $group->webb['topic_nodetypes'])) {
-      //return _webbtopic_form_alter_withtopic($form, $form_state, $group->nid);
-    }
-  }
 }
 
-function _webbtopic_form_alter_withtopic(&$form, &$form_state, $gid) {
-
-  $node = $form['#node'];
-  $group = node_load($gid);
-
-  $default = $node->webb['webbtopic_topic'];
-  if (!empty($_GET['parent_nid'])) {
-    $parent_nid = (int)$_GET['parent_nid'];
-    $parent = node_load($parent_nid);
-    $default = $parent->webb['webbtopic_topic'];
-  }
-
-  $form['webb'] = array(
-    '#tree' => TRUE,
-  	'#weight' => -4,
-  );
-  $form['webb']['webbtopic_topic'] = array(
-    '#type' => 'textfield',
-  	'#title' => $group->webb['topic_label'],
-    '#default_value' => $default,
-    '#required' => TRUE,
-    '#autocomplete_path' => 'webbtopic/autocomplete/'. $group->nid,
-  	'#description' => t('Recently used: ') . _webbtopic_form_alter_withtopic_get_suggestions($group),
-  );
-
-  if (module_exists('content')) {
-    $form['webb']['webbtopic_topic']['#weight'] = content_extra_field_weight($form['#node']->type, 'webbtopic_topic');
-  }
-
-}
-
+/**
+ * Utility function to generate the clickable suggestions array for the widget.
+ *
+ * @param $group
+ *   The OG node of the group we want to suggest within.
+ * @param $field_name
+ *   The field we are suggesting a value for.
+ * @return
+ *   A formatted and themed list of suggestions.
+ */
 function webbtopic_suggestions($group, $field_name) {
   $topics = array();
 
@@ -446,6 +415,13 @@ function webbtopic_textfield_ogsuggest_process($element, $edit, $form_state, $fo
     $element[$field_key]['#description'] .= '<br />';
   }
   $element[$field_key]['#description'] .= t('Recently used: ') . webbtopic_suggestions($group, $element['#field_name']);
+
+  // If there's a parent specified, use the parent's field value as the default.
+  if (!empty($_GET['parent_nid'])) {
+    $parent = node_load((int)$_GET['parent_nid']);
+    $node_field = $parent->$element['#field_name'];
+    $element[$field_key]['#default_value'] = $node_field[0]['value'];
+  }
 
   return $element;
 }

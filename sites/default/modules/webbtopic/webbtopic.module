@@ -109,21 +109,6 @@ function webbtopic_form_alter(&$form, &$form_state, $form_id) {
     if (in_array($form['#node']->type, $group->webb['topic_nodetypes'])) {
       //return _webbtopic_form_alter_withtopic($form, $form_state, $group->nid);
     }
-
-    /* Old way that was clunkier, and I think the above works. :-)
-    $gids = $_GET['gids'];
-    if (empty($gids)) {
-      $gids = $form['#node']->og_groups;
-    }
-
-    if (!empty($gids)) {
-      $gid = current($gids);
-      $group = node_load($gid);
-      if (in_array($form['#node']->type, $group->webb['topic_nodetypes'])) {
-        return _webbtopic_form_alter_withtopic($form_id, $form, $gid);
-      }
-    }
-    */
   }
 }
 
@@ -191,24 +176,13 @@ function webbtopic_theme($existing, $type, $theme, $path) {
   return array(
     'webbtopic_topic' => array(
       'arguments' => array('name' => ''),
+      'file' => 'webbtopic.theme.inc',
     ),
     'text_textfield_ogsuggest' => array(
       'arguments' => array('element' => NULL),
+      'file' => 'webbtopic.theme.inc',
     ),
-    );
-}
-
-/**
- * Build tags for each topic.
- *
- * @ingroup themeable
- */
-function theme_webbtopic_topic($name) {
-  if (FALSE !== strpos($name, ',')) {
-    $name = '"'. $name .'"';
-  }
-  $name = check_plain($name);
-  return "<span class='webbtopic-topic'>{$name}</span>";
+  );
 }
 
 function _webbtopic_form_alter_topic_og(&$form, &$form_state, $form_id) {
@@ -298,45 +272,6 @@ function _webbtopic_nodeapi_topic_og(&$node, $op, $a3 = NULL, $a4 = NULL) {
       break;
     case 'delete revision':
       db_query("DELETE FROM {webbtopic_label} WHERE vid=%d", $node->vid);
-      break;
-  }
-}
-
-
-function _webbtopic_nodeapi_withtopic(&$node, $op, $a3 = NULL, $a4 = NULL) {
-dpm(__FUNCTION__ .' / '. __LINE__ .' op='. $op);
-  switch ($op) {
-    case 'prepare':
-      break;
-    case 'submit':
-      break;
-    case 'load':
-      $node->webb['webbtopic_topic'] = db_result(db_query("SELECT topic FROM {webbtopic_topic} WHERE vid=%d", $node->vid));
-      break;
-    case 'insert':
-      dpm($node);
-      db_insert('webbtopic_topic', array(
-        'nid' => $node->nid,
-      	'vid' => $node->vid,
-        'topic' => $node->webb['webbtopic_topic'],
-      ));
-      break;
-    case 'update':
-      dpm(__FUNCTION__ .' / '. __LINE__ .': '. $node->vid, 'Node vid');
-      db_query("DELETE FROM {webbtopic_topic} WHERE vid=%d", $node->vid);
-      db_insert('webbtopic_topic', array(
-        'nid' => $node->nid,
-      	'vid' => $node->vid,
-        'topic' => $node->webb['webbtopic_topic'],
-      ));
-        break;
-    case 'delete':
-      db_query("DELETE FROM {webbtopic_topic} WHERE nid=%d", $node->nid);
-      break;
-    case 'delete revision':
-      db_query("DELETE FROM {webbtopic_topic} WHERE vid=%d", $node->vid);
-      break;
-    case 'view':
       break;
   }
 }
@@ -537,24 +472,6 @@ function webbtopic_textfield_ogsuggest_process($element, $edit, $form_state, $fo
 
   return $element;
 }
-
-
-/**
- * FAPI theme for an individual text elements.
- *
- * The textfield or textarea is already rendered by the
- * textfield or textarea themes and the html output
- * lives in $element['#children']. Override this theme to
- * make custom changes to the output.
- *
- * $element['#field_name'] contains the field name
- * $element['#delta]  is the position of this element in the group
- */
-function theme_text_textfield_ogsuggest($element) {
-    drupal_add_js(drupal_get_path('module', 'webbtopic') . '/webbtopic.js', 'module');
-  return $element['#children'];
-}
-
 
 /* ---------- Move these elsewhere later --------------- */
 

@@ -139,7 +139,6 @@ function _webbtopic_form_alter_withtopic(&$form, &$form_state, $gid) {
     $default = $parent->webb['webbtopic_topic'];
   }
 
-  drupal_add_js(drupal_get_path('module', 'webbtopic') . '/webbtopic.js', 'module');
   $form['webb'] = array(
     '#tree' => TRUE,
   	'#weight' => -4,
@@ -353,7 +352,6 @@ function webbtopic_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
 
   if (!empty($node->og_groups)) {
     $group = node_load($node->og_groups[0]);
-    if ($op == 'update') dpm($group);
     if (!empty($group->webb['topic_nodetypes']) && in_array($node->type, $group->webb['topic_nodetypes'])) {
       //dpm(__FUNCTION__ .' / '. __LINE__ .' op='. $op);
       //return _webbtopic_nodeapi_withtopic($node, $op, $a3, $a4);
@@ -367,14 +365,6 @@ function webbtopic_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
 function webbtopic_content_extra_fields($type_name) {
   $extras = array();
 
-  // Because whether or not the topic field shows is very contextual,
-  // we'll just report it to CCK always.  It doesn't hurt anything, I think. :-)
-  $extra['webbtopic_topic'] = array(
-    'label' => t('WeBB topic'),
-    'description' => t('Topic selection field for the WeBB posting system.'),
-    'weight' => 0,
-  );
-
   if (webbtopic_is_topic_og($type_name)) {
     $extra['webbtopic'] = array(
       'label' => t('WeBB topic configuration'),
@@ -385,65 +375,6 @@ function webbtopic_content_extra_fields($type_name) {
 
   return $extra;
 }
-
-/**
- * Implementation of hook_views_tables().
- */
-/*
-function webbtopic_views_tables() {
-  return array(
-    'webbtopic_topic' => array(
-      'name' => 'webbtopic_topic',
-      'join' => array(
-        'left' => array(
-          'table' => 'node',
-          'field' => 'vid',
-        ),
-        'right' => array(
-          'field' => 'vid',
-        ),
-      ),
-      'handler' => array(
-        'webbtopic_views_handler_topic_default' => t('Default handler'),
-      ),
-      'fields' => array(
-        'topic' => array(
-          'name' => t('WeBB Topic: Topic'),
-          'sortable' => TRUE,
-          'handler' => 'webbtopic_views_handler_field_topic',
-          'help' => t('Display the topic in which this node is filed.'),
-        ),
-      ),
-      'filters' => array(
-        'topic' => array(
-           'name' => t('WeBB Topic: Topic'),
-           //'list' => 'webbtopic_views_handler_filter_topic',
-           //'value' => webbtopic_views_filter_form_topic(),
-           'operator' => 'views_handler_operator_like',
-           'handler' => 'views_handler_filter_like',
-           'help' => t('Filter nodes based on the WeBB topic with which they are tagged.'),
-        ),
-      ),
-      'sorts' => array(
-        'topic' => array(
-          'name' => t('WeBB Topic: Topic'),
-          'help' => t('Sort by the WeBB topic of the node.'),
-        ),
-      ),
-    ),
-  );
-}
-
-function webbtopic_views_handler_field_topic($fieldinfo, $fielddata, $value, &$data) {
-  return $value;
-}
-
-
-
-function webbtopic_views_handler_topic_default() {
-  // I'm not entirely sure what is supposed to go here... :-)
-}
-*/
 
 /* ---------- CCK widget --------------- */
 
@@ -620,6 +551,7 @@ function webbtopic_textfield_ogsuggest_process($element, $edit, $form_state, $fo
  * $element['#delta]  is the position of this element in the group
  */
 function theme_text_textfield_ogsuggest($element) {
+    drupal_add_js(drupal_get_path('module', 'webbtopic') . '/webbtopic.js', 'module');
   return $element['#children'];
 }
 

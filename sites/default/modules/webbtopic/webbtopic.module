@@ -61,19 +61,22 @@ function webbtopic_supports_topic($group_type, $type) {
  *
  * @param int $gid
  * 	The group id of the group we want to autocomplete within.
+ * @param $field_name
+ *   The name of the field we're autocompleting.
  * @param string $string
  * 	The string to auto-complete if possible.
  */
-function webbtopic_autocomplete($gid, $string) {
+function webbtopic_autocomplete($gid, $field_name, $string) {
 
   $matches = array();
   if ($string) {
-    $result = db_query_range("SELECT DISTINCT wt.topic
-      FROM {webbtopic_topic} wt
-        INNER JOIN {node} n ON wt.nid=n.nid
-  	  WHERE wt.nid IN (SELECT nid FROM {og_ancestry} WHERE group_nid=%d)
+    $dbinfo = content_database_info(content_fields($field_name));
+    $result = db_query_range("SELECT DISTINCT {$dbinfo['columns']['value']['column']} as topic
+      FROM {{$dbinfo['table']}} f
+        INNER JOIN {node} n ON f.nid=n.nid
+  	  WHERE f.nid IN (SELECT nid FROM {og_ancestry} WHERE group_nid=%d)
   	    AND %d-n.changed < %d
-  	    AND topic LIKE ('%s%%')
+  	    AND {$dbinfo['columns']['value']['column']} LIKE ('%s%%')
   	  ORDER BY topic", array(
         $gid,
         time(),
@@ -87,8 +90,7 @@ function webbtopic_autocomplete($gid, $string) {
     }
 
   }
-  print drupal_to_js($matches);
-  exit();
+  drupal_json($matches);
 }
 
 /**
@@ -157,16 +159,17 @@ function _webbtopic_form_alter_withtopic(&$form, &$form_state, $gid) {
 
 }
 
-function _webbtopic_form_alter_withtopic_get_suggestions($group) {
+function _webbtopic_form_alter_withtopic_get_suggestions($group, $field_name) {
   $topics = array();
 
   // This is almost the same as the autocomplete logic, except that
   // we order by the last use and have a different set of limits.
   // We also don't restrict on the name pattern at all.
-  $result = db_query_range("SELECT DISTINCT wt.topic
-    FROM {webbtopic_topic} wt
-      INNER JOIN {node} n ON wt.nid=n.nid
-    WHERE wt.nid IN (SELECT nid FROM {og_ancestry} WHERE group_nid=%d)
+  $dbinfo = content_database_info(content_fields($field_name));
+  $result = db_query_range("SELECT DISTINCT {$dbinfo['columns']['value']['column']} as topic
+    FROM {{$dbinfo['table']}} f
+      INNER JOIN {node} n ON f.nid=n.nid
+    WHERE f.nid IN (SELECT nid FROM {og_ancestry} WHERE group_nid=%d)
       AND %d-n.changed < %d
     ORDER BY n.changed", array(
       $group->nid,
@@ -190,7 +193,10 @@ function webbtopic_theme($existing, $type, $theme, $path) {
     'webbtopic_topic' => array(
       'arguments' => array('name' => ''),
     ),
-  );
+    'text_textfield_ogsuggest' => array(
+      'arguments' => array('element' => NULL),
+    ),
+    );
 }
 
 /**
@@ -202,6 +208,7 @@ function theme_webbtopic_topic($name) {
   if (FALSE !== strpos($name, ',')) {
     $name = '"'. $name .'"';
   }
+  $name = check_plain($name);
   return "<span class='webbtopic-topic'>{$name}</span>";
 }
 
@@ -382,6 +389,7 @@ function webbtopic_content_extra_fields($type_name) {
 /**
  * Implementation of hook_views_tables().
  */
+/*
 function webbtopic_views_tables() {
   return array(
     'webbtopic_topic' => array(
@@ -434,6 +442,185 @@ function webbtopic_views_handler_field_topic($fieldinfo, $fielddata, $value, &$d
 
 function webbtopic_views_handler_topic_default() {
   // I'm not entirely sure what is supposed to go here... :-)
+}
+*/
+
+/* ---------- CCK widget --------------- */
+
+/**
+ * Implementation of hook_widget_info().
+ *
+ * Here we indicate that the content module will handle
+ * the default value and multiple values for these widgets.
+ *
+ * Callbacks can be omitted if default handing is used.
+ * They're included here just so this module can be used
+ * as an example for custom modules that might do things
+ * differently.
+ */
+function webbtopic_widget_info() {
+  return array(
+    'text_textfield_ogsuggest' => array(
+      'label' => t('Text field (OG auto-suggest)'),
+      'field types' => array('text'),
+      'multiple values' => CONTENT_HANDLE_CORE,
+      'callbacks' => array(
+        'default value' => CONTENT_CALLBACK_DEFAULT,
+      ),
+    ),
+  );
+}
+
+/**
+ * Implementation of FAPI hook_elements().
+ *
+ * Any FAPI callbacks needed for individual widgets can be declared here,
+ * and the element will be passed to those callbacks for processing.
+ *
+ * Drupal will automatically theme the element using a theme with
+ * the same name as the hook_elements key.
+ *
+ * Autocomplete_path is not used by text_widget but other widgets can use it
+ * (see nodereference and userreference).
+ */
+function webbtopic_elements() {
+  return array(
+    'text_textfield_ogsuggest' => array(
+      '#input' => TRUE,
+      '#columns' => array('value'), '#delta' => 0,
+      '#process' => array('webbtopic_textfield_ogsuggest_process'),
+      '#autocomplete_path' => FALSE,
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_widget_settings().
+ */
+function webbtopic_widget_settings($op, $widget) {
+  switch ($op) {
+    case 'form':
+      $form = array();
+      $size = (isset($widget['size']) && is_numeric($widget['size'])) ? $widget['size'] : 60;
+      if ($widget['type'] == 'text_textfield_ogsuggest') {
+        $form['size'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Size of textfield'),
+          '#default_value' => $size,
+          '#element_validate' => array('_text_widget_settings_size_validate'),  // Reusing the function from text.module.
+          '#required' => TRUE,
+        );
+      }
+      return $form;
+
+    case 'save':
+      return array('size');
+  }
+}
+
+/**
+ * Implementation of hook_widget().
+ *
+ * Attach a single form element to the form. It will be built out and
+ * validated in the callback(s) listed in hook_elements. We build it
+ * out in the callbacks rather than here in hook_widget so it can be
+ * plugged into any module that can provide it with valid
+ * $field information.
+ *
+ * Content module will set the weight, field name and delta values
+ * for each form element. This is a change from earlier CCK versions
+ * where the widget managed its own multiple values.
+ *
+ * If there are multiple values for this field, the content module will
+ * call this function as many times as needed.
+ *
+ * @param $form
+ *   the entire form array, $form['#node'] holds node information
+ * @param $form_state
+ *   the form_state, $form_state['values'][$field['field_name']]
+ *   holds the field's form values.
+ * @param $field
+ *   the field array
+ * @param $items
+ *   array of default values for this field
+ * @param $delta
+ *   the order of this item in the array of subelements (0, 1, 2, etc)
+ *
+ * @return
+ *   the form item for a single element for this field
+ */
+function webbtopic_widget(&$form, &$form_state, $field, $items, $delta = 0) {
+  $element = array(
+    '#type' => $field['widget']['type'],
+    '#default_value' => isset($items[$delta]) ? $items[$delta] : '',
+  );
+  return $element;
+}
+
+/**
+ * Process an individual element.
+ *
+ * Build the form element. When creating a form using FAPI #process,
+ * note that $element['#value'] is already set.
+ *
+ * The $fields array is in $form['#field_info'][$element['#field_name']].
+ */
+function webbtopic_textfield_ogsuggest_process($element, $edit, $form_state, $form) {
+
+  // This is all copied verbatim from text_textfield_process():
+  $field = $form['#field_info'][$element['#field_name']];
+  $field_key = $element['#columns'][0];
+  $delta = $element['#delta'];
+  $element[$field_key] = array(
+    '#type' => 'textfield',
+    '#default_value' => isset($element['#value'][$field_key]) ? $element['#value'][$field_key] : NULL,
+    '#autocomplete_path' => $element['#autocomplete_path'],
+    '#size' => !empty($field['widget']['size']) ? $field['widget']['size'] : 60,
+    '#attributes' => array('class' => 'text'),
+    // The following values were set by the content module and need
+    // to be passed down to the nested element.
+    '#title' => $element['#title'],
+    '#description' => $element['#description'],
+    '#required' => $element['#required'],
+    '#field_name' => $element['#field_name'],
+    '#type_name' => $element['#type_name'],
+    '#delta' => $element['#delta'],
+    '#columns' => $element['#columns'],
+  );
+
+  $element[$field_key]['#maxlength'] = !empty($field['max_length']) ? $field['max_length'] : NULL;
+
+  // Used so that hook_field('validate') knows where to flag an error.
+  $element['_error_element'] = array(
+    '#type' => 'value',
+    '#value' => implode('][', array_merge($element['#parents'], array($field_key))),
+  );
+
+  // This is the new stuff relevant to us.
+  $group = og_get_group_context();
+  $element[$field_key]['#autocomplete_path'] = 'webbtopic/autocomplete/'. $group->nid .'/'. $element['#field_name'];
+  if (trim($element[$field_key]['#description'])) {
+    $element[$field_key]['#description'] .= '<br />';
+  }
+  $element[$field_key]['#description'] .= t('Recently used: ') . _webbtopic_form_alter_withtopic_get_suggestions($group, $element['#field_name']);
+
+  return $element;
+}
+
+
+/**
+ * FAPI theme for an individual text elements.
+ *
+ * The textfield or textarea is already rendered by the
+ * textfield or textarea themes and the html output
+ * lives in $element['#children']. Override this theme to
+ * make custom changes to the output.
+ *
+ * $element['#field_name'] contains the field name
+ * $element['#delta]  is the position of this element in the group
+ */
+function theme_text_textfield_ogsuggest($element) {
+  return $element['#children'];
 }
 
 

@@ -1303,3 +1303,50 @@ function webb_og_views_break_phrase($string, &$query) {
     og_set_group_context($node);
   }
 }
+
+
+/* ---------- Move these elsewhere later --------------- */
+
+/**
+ * Returns the first column of a query result as an array.
+ * Does not do a rewrite sql for you!
+ * Call similar to db_query().
+ */
+function db_fetch_column($query) {
+  $results = array();
+  $args = func_get_args();
+  array_shift($args);
+  if (isset($args[0]) and is_array($args[0])) { // 'All arguments in one array' syntax
+    $args = $args[0];
+  }
+  $res = db_query($query, $args);
+
+  while ($row = db_fetch_array($res)) {
+    $results[] = current($row);
+  }
+
+  return $results;
+}
+
+/**
+ * Returns an associative array, with the first column of the result set
+ * as the key and the second as the value.
+ * Does not do a rewrite sql for you!
+ * Call similar to db_query().
+ */
+function db_fetch_assoc($query) {
+  $results = array();
+  $args = func_get_args();
+  array_shift($args);
+  if (isset($args[0]) and is_array($args[0])) { // 'All arguments in one array' syntax
+    $args = $args[0];
+  }
+  $res = db_query($query, $args);
+
+  while ($row = db_fetch_array($res)) {
+    $keys = array_keys($row);
+    $results[$row[$keys[0]]] = $row[$keys[1]];
+  }
+
+  return $results;
+}

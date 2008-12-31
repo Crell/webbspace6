@@ -54,6 +54,7 @@ function webbtopic_update_6001() {
     'type' => 'text',
     'widget_type' => 'text_textfield_ogsuggest',
     'type_name' => 'note',
+    'required' => 1,
   );
 
   content_field_instance_create($field);

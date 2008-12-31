@@ -198,3 +198,144 @@ return t('@topic on @board', array(
 
   return array();
 }
+
+/**
+ * Create the new rank system..
+ *
+ * 1) Create the Rank node type.
+ * 2) Create the Rank set vocabulary.
+ * 3) Create our one existing Rank st (Starfleet).
+ * 4) Create a Rank node for each existing rank.
+ * 5) Build a map of rank terms to rank nodes.
+ * 6) Add a new rank noderef field to character nodes.
+ * 7) Associate all characters with the new rank nodes.
+ * 8) Remove the old rank vocabulary.
+ *
+ */
+function webb_update_6003() {
+  $ret = array();
+
+  // Create the node type itself.
+  $info = (object)array(
+    'type' => 'rank',
+    'name' => 'Rank',
+    'description' => 'A rank held by a character',
+    'module' => 'node',
+    'has_title' => TRUE,
+    'title_label' => 'Rank name',
+    'has_body' => FALSE,
+    'body_label' => '',
+    'custom' => TRUE,
+    'modified' => TRUE,
+    'locked' => FALSE,
+  );
+  node_type_save($info);
+  variable_set('node_options_rank', array('status'));
+  variable_set('comment_rank', COMMENT_NODE_DISABLED);
+
+  content_clear_type_cache();
+  module_load_include('inc', 'content', 'includes/content.crud');
+
+  // The sortorder field already exists, so we'll just reuse it.
+  content_field_instance_create(array(
+    'field_name' => 'field_sortorder',
+    'type_name' => 'rank',
+  ));
+
+  // Create the rankset vocabulary.
+  $edit = array(
+    'name' => 'Rank set',
+    'description' => 'A rank set is a collection of ranks that should be available together.',
+    'help' => 'Pick the related rank sets',
+    'tags' => 0,
+    'multiple' => '1',
+    'relations' => '1',
+    'nodes' => array('rank' => 'rank', 'board' => 'board'),
+  );
+  taxonomy_save_vocabulary($edit);
+  $vid = $edit['vid'];
+
+  // Create our one rank set for now (Starfleet).
+  $edit = array(
+    'name' => 'Starfleet',
+    'description' => '',
+    'parent' => array(),
+    'relations' => array(),
+    'weight' => 0,
+    'vid' => $vid,
+  );
+  taxonomy_save_term($edit);
+  $tid = $edit['tid'];
+
+  // Associate all Boards to the Starfleet rank set.
+  $result = db_query("SELECT nid, vid FROM {node} WHERE type='board'");
+  while ($record = db_fetch_object($result)) {
+    taxonomy_node_save($record, array($tid));
+  }
+
+  // For each existing rank term, create a corresponding Rank node.  For now
+  // we can safely assume that all ranks are Starfleet ranks.  Then delete the
+  // old vocabulary so we don't have stale data lying around.
+  $conversion_map = array();
+  $old_rank_vid = 1;  // We just sorta know this. :-)
+  $result = db_query("SELECT tid, name, description, weight FROM {term_data} WHERE vid = %d", $old_rank_vid);
+    while ($record = db_fetch_object($result)) {
+    $node = new stdClass();
+    $node->status = 1;
+    $node->uid = 1;
+    $node->type = 'rank';
+    $node->created = time();
+    $node->updated = $node->created;
+    $node->title = $record->name;
+    $node->body = '';
+    $node->field_sortorder[0]['value'] = $record->weight;
+    $node->taxonomy = array(
+      $tid => (object)array(
+        'tid' => $tid,
+        'vid' => $vid,
+      ),
+    );
+    node_save($node);
+    $conversion_map[$record->tid] = $node->nid;
+
+    drupal_set_message(t('Creating rank %rank', array(
+      '%rank' => $record->name,
+    )));
+  }
+
+  // Create the rank reference field on Character nodes.
+  content_clear_type_cache();
+  module_load_include('inc', 'content', 'includes/content.crud');
+  $field = content_field_instance_create(array(
+    'label' => 'Rank',
+    'field_name' => 'field_rankref',
+    'type' => 'nodereference',
+    'widget_type' => 'nodereference_select',
+    'type_name' => 'character',
+    'required' => 0,
+    'weight' => -3,
+  ));
+  $field['referenceable_types'] = array('rank' => 'rank');
+  $field['advanced_view'] = 'og_supported_ranks'; // Replace with view name later.
+  content_field_instance_update($field);
+  content_clear_type_cache();
+
+  // Migrate the existing rank info from cck_taxonomy to the noderef field.  Yay, hacky!
+  foreach ($conversion_map as $tid => $nid) {
+    db_query('UPDATE {content_type_character} SET field_rankref_nid = %d WHERE field_rank_tid = %d', $nid, $tid);
+  }
+
+  // Remove the now defunct cck_taxonomy field for ranks.  Because the managing
+  // module is not used anymore, we can't go through CCK for this.  Instead we
+  // futz with CCK's tables manually.  Yeah, we're totally being rebels about it.
+  db_drop_field($ret, 'content_type_character', 'field_rank_tid');
+  db_query("DELETE FROM {content_node_field_instance} WHERE field_name = '%s'", 'field_rank');
+  db_query("DELETE FROM {content_node_field} WHERE field_name = '%s'", 'field_rank');
+  content_clear_type_cache();
+
+  // Now, finally remove the old vocabularly as we no longer need it.
+  taxonomy_del_vocabulary($old_rank_vid);
+
+  return $ret;
+}
+

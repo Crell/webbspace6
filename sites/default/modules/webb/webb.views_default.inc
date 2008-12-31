@@ -7,7 +7,7 @@ function webb_views_default_views() {
   $view = new view;
   $view->name = 'og_notes';
   $view->description = 'A list of notes on a given OG.';
-  $view->tag = '';
+  $view->tag = 'webb';
   $view->view_php = '';
   $view->base_table = 'node';
   $view->is_cacheable = FALSE;
@@ -191,6 +191,103 @@ function webb_views_default_views() {
     'title' => '',
     'weight' => 0,
   ));
+  $views[$view->name] = $view;
+
+  $view = new view;
+  $view->name = 'og_supported_ranks';
+  $view->description = 'A list of ranks supported by a given OG.';
+  $view->tag = 'webb';
+  $view->view_php = '';
+  $view->base_table = 'node';
+  $view->is_cacheable = FALSE;
+  $view->api_version = 2;
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+  $handler = $view->new_display('default', 'Defaults', 'default');
+  $handler->override_option('relationships', array(
+    'group_nid' => array(
+      'label' => 'Group node (post)',
+      'required' => 0,
+      'id' => 'group_nid',
+      'table' => 'og_ancestry',
+      'field' => 'group_nid',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('fields', array(
+    'title' => array(
+      'label' => '',
+      'link_to_node' => 0,
+      'exclude' => 0,
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('sorts', array(
+    'field_sortorder_value' => array(
+      'order' => 'ASC',
+      'delta' => -1,
+      'id' => 'field_sortorder_value',
+      'table' => 'node_data_field_sortorder',
+      'field' => 'field_sortorder_value',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('filters', array(
+    'status' => array(
+      'operator' => '=',
+      'value' => '1',
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'status',
+      'table' => 'node',
+      'field' => 'status',
+      'relationship' => 'none',
+    ),
+    'type' => array(
+      'operator' => 'in',
+      'value' => array(
+        'rank' => 'rank',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'type',
+      'table' => 'node',
+      'field' => 'type',
+      'relationship' => 'none',
+    ),
+    'tid' => array(
+      'operator' => 'or',
+      'value' => '',
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'type' => 'textfield',
+      'vid' => '14',
+      'id' => 'tid',
+      'table' => 'term_node',
+      'field' => 'tid',
+      'relationship' => 'group_nid',
+      'hierarchy' => 0,
+      'reduce_duplicates' => 0,
+    ),
+  ));
+  $handler->override_option('access', array(
+    'type' => 'none',
+  ));
+  $handler->override_option('items_per_page', 0);
   $views[$view->name] = $view;
 
   return $views;

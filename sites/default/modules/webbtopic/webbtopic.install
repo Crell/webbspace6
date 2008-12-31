@@ -47,7 +47,6 @@ function webbtopic_update_6001() {
   $ret = array();
 
   content_clear_type_cache();
-
   module_load_include('inc', 'content', 'includes/content.crud');
 
   $field = array(
@@ -58,7 +57,6 @@ function webbtopic_update_6001() {
     'type_name' => 'note',
     'required' => 1,
   );
-
   content_field_instance_create($field);
 
   content_clear_type_cache();

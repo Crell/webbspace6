@@ -959,6 +959,7 @@ function _webb_form_alter_character_node_form($form_id, &$form) {
   }
 
   if ($ogs) {
+    /*
     // Now, take the position field and group it into optgroups.
     $placeholders = array_fill(0, count($ogs), '%d');
     $new_options = array();
@@ -991,7 +992,9 @@ function _webb_form_alter_character_node_form($form_id, &$form) {
       }
     }
     $form['field_position']['tid']['#options'] = $new_options;
+    */
 
+    /*
     // Filter the rank selector to only show those ranks allowed on this board.
     $new_options = array();
     $allowed_ranks = db_fetch_column("SELECT tid FROM {webb_board_ranks} WHERE nid IN (" . implode(',', $placeholders) . ")", $ogs);
@@ -1007,6 +1010,7 @@ function _webb_form_alter_character_node_form($form_id, &$form) {
       }
     }
     $form['field_rank']['tid']['#options'] = $new_options;
+    */
   }
 
   // Hide some fields from non-admins, because we don't want people editing

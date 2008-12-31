@@ -158,3 +158,30 @@ function webb_update_5007() {
 }
 */
 
+/**
+ * Enable modules that we now are using.
+ */
+function webb_update_6001() {
+  // Legal seemed to turn itself off somewhere, so just to be safe we'll force
+  // it to enable again.
+  module_enable(array('auto_nodetitle', 'legal', 'helpers_database'));
+
+  return array();
+}
+
+/**
+ * Set the auto_nodetitle configurations we want.
+ */
+function webb_update_6002() {
+  // For Note nodes.
+  variable_set('ant_note', 1);
+  variable_set('ant_php_note', 1);
+  variable_set('ant_pattern_note', "<?php
+return t('@topic on @board', array(
+  '@topic' => $node->field_topic[0]['value'],
+  '@board' => og_get_group_context()->title,
+));
+?>");
+
+
+}

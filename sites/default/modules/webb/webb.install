@@ -178,10 +178,15 @@ function webb_update_6002() {
   variable_set('ant_php_note', 1);
   variable_set('ant_pattern_note', "<?php
 return t('@topic on @board', array(
-  '@topic' => $node->field_topic[0]['value'],
+  '@topic' => \$node->field_topic[0]['value'],
   '@board' => og_get_group_context()->title,
 ));
 ?>");
 
+  // For CO Log nodes.
+  variable_set('ant_logentry', 1);
+  variable_set('ant_php_logentry', 1);
+  variable_set('ant_pattern_logentry', "<?php return format_date(\$node->created, 'custom', 'd M Y') ?>");
 
+  return array();
 }

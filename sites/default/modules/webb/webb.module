@@ -103,23 +103,7 @@ function _webb_nodeapi_note(&$node, $op, $a3 = NULL, $a4 = NULL) {
   switch ($op) {
     case 'insert':
     case 'update':
-      // Force the title of "note" nodes to be a custom label
-      $groups = array();
-      foreach ($node->og_groups as $group) {
-        $groups[] = db_result(db_query_range("SELECT title FROM {node} n WHERE nid=%d", $group, 0, 1));
-      }
-
-      $group = implode(', ', $groups);
-      $topic = $node->webb['webbtopic_topic'];
-      $label = t('!topic on !groups', array(
-        '!topic' => $topic,
-        '!groups' => $group,
-      ));
-      db_query("UPDATE {node} SET title='%s' WHERE nid=%d", $label, $node->nid);
-      db_query("UPDATE {node_revisions} SET title='%s' WHERE nid=%d", $label, $node->nid);
-
       // Save the denormalization data so that we can run a query in less than an hour.
-      //dsm($node);
       db_query("DELETE FROM {webb_note_lookup} WHERE nid=%d", $node->nid);
       if ($node->status == 1) {
         foreach ($node->og_groups as $group_nid) {

@@ -46,6 +46,8 @@ function webbtopic_schema() {
 function webbtopic_update_6001() {
   $ret = array();
 
+  content_clear_type_cache();
+
   module_load_include('inc', 'content', 'includes/content.crud');
 
   $field = array(

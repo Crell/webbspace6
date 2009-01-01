@@ -958,69 +958,14 @@ function _webb_form_alter_character_node_form($form_id, &$form) {
     $ogs = array(arg(1)); // Use whatever the current OG is, since we'll be assigning to that anyway.
   }
 
-  if ($ogs) {
-    /*
-    // Now, take the position field and group it into optgroups.
-    $placeholders = array_fill(0, count($ogs), '%d');
-    $new_options = array();
-    $allowed_positions = db_fetch_column("SELECT tid FROM {webb_board_positions} WHERE nid IN (" . implode(',', $placeholders) . ")", $ogs);
-    foreach ($form['field_position']['tid']['#options'] as $option) {
-      if ($option == t('<none>')) {
-        $new_options[t('Empty')][] = $option;
-      }
-      else {
-        list($key, $value) = each($option->option);
-        if ($value[0] != '-') {
-          // This is a top-level option, so it becomes an optgroup.
-          $new_options[t($value)] = array();
-          $last = $value;
-        }
-        else {
-          // Non-top level items get folded into the correct optgroup.
-          // If it's not checked as allowed, skip it.
-          if (in_array($key, $allowed_positions)) {
-            $option->option[$key] = substr($option->option[$key], 1);
-            $new_options[$last][] = $option;
-          }
-        }
-      }
-    }
-    // And now remove any empty optgroups.
-    foreach ($new_options as $key => $optgroup) {
-      if (empty($optgroup))  {
-        unset($new_options[$key]);
-      }
-    }
-    $form['field_position']['tid']['#options'] = $new_options;
-    */
-
-    /*
-    // Filter the rank selector to only show those ranks allowed on this board.
-    $new_options = array();
-    $allowed_ranks = db_fetch_column("SELECT tid FROM {webb_board_ranks} WHERE nid IN (" . implode(',', $placeholders) . ")", $ogs);
-    foreach ($form['field_rank']['tid']['#options'] as $option) {
-      if ($option == t('<none>')) {
-        $new_options[] = $option;
-      }
-      else {
-        list($key, $value) = each($option->option);
-        if (in_array($key, $allowed_ranks)) {
-          $new_options[] = $option;
-        }
-      }
-    }
-    $form['field_rank']['tid']['#options'] = $new_options;
-    */
-  }
-
   // Hide some fields from non-admins, because we don't want people editing
   // their own rank.
   // Note that we cannot do this for checkboxes, only select boxes, due to
   // a ridiculously obscure bug in optionwidget that I can't even figure out.
   $access = _webb_is_og_admin($ogs);
   //dsm($form);
-  $form['field_rank']['#access'] = $access;
-  $form['field_position']['#access'] = $access;
+  $form['field_rankref']['#access'] = $access;
+  $form['field_positionref']['#access'] = $access;
   $form['field_custom_position']['#access'] = $access;
   $form['field_rostered']['#access'] = $access;
 }

@@ -5,6 +5,188 @@
  */
 function webb_views_default_views() {
   $view = new view;
+  $view->name = 'og_user_characters';
+  $view->description = 'A list of characters owned by the current user on the current OG.';
+  $view->tag = 'webb';
+  $view->view_php = '';
+  $view->base_table = 'node';
+  $view->is_cacheable = FALSE;
+  $view->api_version = 2;
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+  $handler = $view->new_display('default', 'Defaults', 'default');
+  $handler->override_option('fields', array(
+    'field_display_name_value' => array(
+      'label' => '',
+      'link_to_node' => 0,
+      'label_type' => 'none',
+      'format' => 'computed_value',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_display_name_value',
+      'table' => 'node_data_field_display_name',
+      'field' => 'field_display_name_value',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('sorts', array(
+    'field_display_name_value' => array(
+      'order' => 'ASC',
+      'delta' => -1,
+      'id' => 'field_display_name_value',
+      'table' => 'node_data_field_display_name',
+      'field' => 'field_display_name_value',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('arguments', array(
+    'group_nid' => array(
+      'default_action' => 'default',
+      'style_plugin' => 'default_summary',
+      'style_options' => array(),
+      'wildcard' => 'all',
+      'wildcard_substitution' => 'All',
+      'title' => '',
+      'default_argument_type' => 'node',
+      'default_argument' => '',
+      'validate_type' => 'og_group_types',
+      'validate_fail' => 'not found',
+      'break_phrase' => 0,
+      'not' => 0,
+      'id' => 'group_nid',
+      'table' => 'og_ancestry',
+      'field' => 'group_nid',
+      'relationship' => 'none',
+      'default_options_div_prefix' => '',
+      'default_argument_user' => 0,
+      'default_argument_fixed' => '',
+      'default_argument_php' => '',
+      'validate_argument_node_type' => array(
+        'webform' => 0,
+        'character' => 0,
+        'board' => 0,
+        'fleet' => 0,
+        'logentry' => 0,
+        'news' => 0,
+        'note' => 0,
+        'page' => 0,
+      ),
+      'validate_argument_node_access' => 0,
+      'validate_argument_nid_type' => 'nid',
+      'validate_argument_vocabulary' => array(
+        '10' => 0,
+        '11' => 0,
+        '12' => 0,
+        '6' => 0,
+        '13' => 0,
+        '1' => 0,
+      ),
+      'validate_argument_type' => 'tid',
+      'validate_argument_is_member' => 0,
+      'validate_argument_php' => '',
+    ),
+    'uid' => array(
+      'default_action' => 'default',
+      'style_plugin' => 'default_summary',
+      'style_options' => array(),
+      'wildcard' => 'all',
+      'wildcard_substitution' => 'All',
+      'title' => '',
+      'default_argument_type' => 'php',
+      'default_argument' => '',
+      'validate_type' => 'none',
+      'validate_fail' => 'not found',
+      'break_phrase' => 0,
+      'not' => 0,
+      'id' => 'uid',
+      'table' => 'users',
+      'field' => 'uid',
+      'relationship' => 'none',
+      'default_options_div_prefix' => '',
+      'default_argument_user' => 0,
+      'default_argument_fixed' => '',
+      'default_argument_php' => 'if ($node = menu_get_item(\'node\') && $node->type == \'note\') {
+        return $node->uid;
+      }
+      else {
+        return $GLOBALS[\'user\']->uid;
+      }',
+      'validate_argument_node_type' => array(
+        'webform' => 0,
+        'character' => 0,
+        'board' => 0,
+        'fleet' => 0,
+        'logentry' => 0,
+        'news' => 0,
+        'note' => 0,
+        'page' => 0,
+      ),
+      'validate_argument_node_access' => 0,
+      'validate_argument_nid_type' => 'nid',
+      'validate_argument_vocabulary' => array(
+        '10' => 0,
+        '11' => 0,
+        '12' => 0,
+        '6' => 0,
+        '13' => 0,
+        '1' => 0,
+      ),
+      'validate_argument_type' => 'tid',
+      'validate_argument_is_member' => 0,
+      'validate_argument_php' => '',
+    ),
+  ));
+  $handler->override_option('filters', array(
+    'status' => array(
+      'operator' => '=',
+      'value' => '1',
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'status',
+      'table' => 'node',
+      'field' => 'status',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
+    ),
+    'type' => array(
+      'operator' => 'in',
+      'value' => array(
+        'character' => 'character',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'type',
+      'table' => 'node',
+      'field' => 'type',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('access', array(
+    'type' => 'none',
+  ));
+  $views[$view->name] = $view;
+
+  $view = new view;
   $view->name = 'og_notes';
   $view->description = 'A list of notes on a given OG.';
   $view->tag = 'webb';
@@ -194,6 +376,103 @@ function webb_views_default_views() {
   $views[$view->name] = $view;
 
   $view = new view;
+  $view->name = 'og_supported_positions';
+  $view->description = 'A list of positions supported by a given OG.';
+  $view->tag = 'webb';
+  $view->view_php = '';
+  $view->base_table = 'node';
+  $view->is_cacheable = FALSE;
+  $view->api_version = 2;
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+  $handler = $view->new_display('default', 'Defaults', 'default');
+  $handler->override_option('relationships', array(
+    'group_nid' => array(
+      'label' => 'Group node (post)',
+      'required' => 0,
+      'id' => 'group_nid',
+      'table' => 'og_ancestry',
+      'field' => 'group_nid',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('fields', array(
+    'title' => array(
+      'label' => '',
+      'link_to_node' => 0,
+      'exclude' => 0,
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('sorts', array(
+    'field_sortorder_value' => array(
+      'order' => 'ASC',
+      'delta' => -1,
+      'id' => 'field_sortorder_value',
+      'table' => 'node_data_field_sortorder',
+      'field' => 'field_sortorder_value',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('filters', array(
+    'status' => array(
+      'operator' => '=',
+      'value' => '1',
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'status',
+      'table' => 'node',
+      'field' => 'status',
+      'relationship' => 'none',
+    ),
+    'type' => array(
+      'operator' => 'in',
+      'value' => array(
+        'position' => 'position',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'type',
+      'table' => 'node',
+      'field' => 'type',
+      'relationship' => 'none',
+    ),
+    'tid' => array(
+      'operator' => 'or',
+      'value' => '',
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'type' => 'textfield',
+      'vid' => '15',
+      'id' => 'tid',
+      'table' => 'term_node',
+      'field' => 'tid',
+      'relationship' => 'group_nid',
+      'hierarchy' => 0,
+      'reduce_duplicates' => 0,
+    ),
+  ));
+  $handler->override_option('access', array(
+    'type' => 'none',
+  ));
+  $handler->override_option('items_per_page', 0);
+  $views[$view->name] = $view;
+
+  $view = new view;
   $view->name = 'og_supported_ranks';
   $view->description = 'A list of ranks supported by a given OG.';
   $view->tag = 'webb';
@@ -292,5 +571,3 @@ function webb_views_default_views() {
 
   return $views;
 }
-
-

@@ -545,6 +545,818 @@ function webb_views_default_views() {
   $views[$view->name] = $view;
 
   $view = new view;
+  $view->name = 'og_roster';
+  $view->description = 'A roster of characters on a given Group.';
+  $view->tag = 'webb';
+  $view->view_php = '';
+  $view->base_table = 'node';
+  $view->is_cacheable = FALSE;
+  $view->api_version = 2;
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+  $handler = $view->new_display('default', 'Defaults', 'default');
+  $handler->override_option('relationships', array(
+    'field_positionref_nid' => array(
+      'label' => 'Position',
+      'required' => 0,
+      'delta' => -1,
+      'id' => 'field_positionref_nid',
+      'table' => 'node_data_field_positionref',
+      'field' => 'field_positionref_nid',
+      'relationship' => 'none',
+    ),
+    'field_rankref_nid' => array(
+      'label' => 'Rank',
+      'required' => 0,
+      'delta' => -1,
+      'id' => 'field_rankref_nid',
+      'table' => 'node_data_field_rankref',
+      'field' => 'field_rankref_nid',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('fields', array(
+    'title_1' => array(
+      'label' => 'Rank',
+      'link_to_node' => 0,
+      'exclude' => 0,
+      'id' => 'title_1',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'field_rankref_nid',
+    ),
+    'title' => array(
+      'label' => 'Character',
+      'link_to_node' => 1,
+      'exclude' => 0,
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+    ),
+    'field_position_label_value' => array(
+      'label' => 'Position',
+      'link_to_node' => 0,
+      'label_type' => 'custom',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_position_label_value',
+      'table' => 'node_data_field_position_label',
+      'field' => 'field_position_label_value',
+      'relationship' => 'none',
+    ),
+    'field_species_value' => array(
+      'label' => 'Species',
+      'link_to_node' => 0,
+      'label_type' => 'widget',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_species_value',
+      'table' => 'node_data_field_species',
+      'field' => 'field_species_value',
+      'relationship' => 'none',
+    ),
+    'field_character_height_value' => array(
+      'label' => 'Height',
+      'link_to_node' => 0,
+      'label_type' => 'widget',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_character_height_value',
+      'table' => 'node_data_field_character_height',
+      'field' => 'field_character_height_value',
+      'relationship' => 'none',
+    ),
+    'field_weight_value' => array(
+      'label' => 'Weight',
+      'link_to_node' => 0,
+      'label_type' => 'widget',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_weight_value',
+      'table' => 'node_data_field_weight',
+      'field' => 'field_weight_value',
+      'relationship' => 'none',
+    ),
+    'name' => array(
+      'label' => 'Member',
+      'link_to_user' => 1,
+      'exclude' => 0,
+      'id' => 'name',
+      'table' => 'users',
+      'field' => 'name',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('sorts', array(
+    'field_sortorder_value' => array(
+      'order' => 'DESC',
+      'delta' => -1,
+      'id' => 'field_sortorder_value',
+      'table' => 'node_data_field_sortorder',
+      'field' => 'field_sortorder_value',
+      'relationship' => 'field_rankref_nid',
+    ),
+    'field_sortorder_value_1' => array(
+      'order' => 'DESC',
+      'delta' => -1,
+      'id' => 'field_sortorder_value_1',
+      'table' => 'node_data_field_sortorder',
+      'field' => 'field_sortorder_value',
+      'relationship' => 'field_positionref_nid',
+    ),
+    'title' => array(
+      'order' => 'ASC',
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('arguments', array(
+    'group_nid' => array(
+      'default_action' => 'default',
+      'style_plugin' => 'default_summary',
+      'style_options' => array(),
+      'wildcard' => 'all',
+      'wildcard_substitution' => 'All',
+      'title' => '',
+      'default_argument_type' => 'node',
+      'default_argument' => '',
+      'validate_type' => 'og_group_types',
+      'validate_fail' => 'not found',
+      'break_phrase' => 0,
+      'not' => 0,
+      'id' => 'group_nid',
+      'table' => 'og_ancestry',
+      'field' => 'group_nid',
+      'relationship' => 'none',
+      'default_options_div_prefix' => '',
+      'default_argument_user' => 0,
+      'default_argument_fixed' => '',
+      'default_argument_php' => '',
+      'validate_argument_node_type' => array(
+        'webform' => 0,
+        'character' => 0,
+        'board' => 0,
+        'fleet' => 0,
+        'logentry' => 0,
+        'news' => 0,
+        'note' => 0,
+        'page' => 0,
+        'position' => 0,
+        'rank' => 0,
+      ),
+      'validate_argument_node_access' => 0,
+      'validate_argument_nid_type' => 'nid',
+      'validate_argument_vocabulary' => array(
+        '10' => 0,
+        '11' => 0,
+        '12' => 0,
+        '15' => 0,
+        '13' => 0,
+        '14' => 0,
+      ),
+      'validate_argument_type' => 'tid',
+      'validate_argument_is_member' => 0,
+      'validate_argument_php' => '',
+    ),
+  ));
+  $handler->override_option('filters', array(
+    'status' => array(
+      'operator' => '=',
+      'value' => '1',
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'status',
+      'table' => 'node',
+      'field' => 'status',
+      'relationship' => 'none',
+    ),
+    'type' => array(
+      'operator' => 'in',
+      'value' => array(
+        'character' => 'character',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'type',
+      'table' => 'node',
+      'field' => 'type',
+      'relationship' => 'none',
+    ),
+    'field_rostered_value_many_to_one' => array(
+      'operator' => 'or',
+      'value' => array(
+        'Rostered' => 'Rostered',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'field_rostered_value_many_to_one',
+      'table' => 'node_data_field_rostered',
+      'field' => 'field_rostered_value_many_to_one',
+      'relationship' => 'none',
+      'reduce_duplicates' => 0,
+    ),
+  ));
+  $handler->override_option('access', array(
+    'type' => 'none',
+  ));
+  $handler->override_option('use_ajax', TRUE);
+  $handler->override_option('items_per_page', 0);
+  $handler->override_option('use_pager', '0');
+  $handler->override_option('style_plugin', 'table');
+  $handler->override_option('style_options', array(
+    'grouping' => '',
+    'override' => 1,
+    'sticky' => 0,
+    'order' => 'asc',
+    'columns' => array(
+      'title_1' => 'title_1',
+      'title' => 'title',
+      'field_position_label_value' => 'field_position_label_value',
+      'field_species_value' => 'field_species_value',
+      'name' => 'name',
+      'title_2' => 'title_2',
+    ),
+    'info' => array(
+      'title_1' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+      'title' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+      'field_position_label_value' => array(
+        'sortable' => 0,
+        'separator' => '',
+      ),
+      'field_species_value' => array(
+        'sortable' => 0,
+        'separator' => '',
+      ),
+      'name' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+      'title_2' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+    ),
+    'default' => '-1',
+  ));
+  $handler = $view->new_display('page', 'Roster', 'page_1');
+  $handler->override_option('path', 'views/roster');
+  $handler->override_option('menu', array(
+    'type' => 'none',
+    'title' => '',
+    'weight' => 0,
+    'name' => 'navigation',
+  ));
+  $handler->override_option('tab_options', array(
+    'type' => 'none',
+    'title' => '',
+    'weight' => 0,
+  ));
+  $handler = $view->new_display('page', 'Admin Roster', 'page_2');
+  $handler->override_option('fields', array(
+    'title_1' => array(
+      'label' => 'Rank',
+      'link_to_node' => 0,
+      'exclude' => 0,
+      'id' => 'title_1',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'field_rankref_nid',
+    ),
+    'title' => array(
+      'label' => 'Character',
+      'link_to_node' => 1,
+      'exclude' => 0,
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+    ),
+    'field_position_label_value' => array(
+      'label' => 'Position',
+      'link_to_node' => 0,
+      'label_type' => 'custom',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_position_label_value',
+      'table' => 'node_data_field_position_label',
+      'field' => 'field_position_label_value',
+      'relationship' => 'none',
+    ),
+    'field_species_value' => array(
+      'label' => 'Species',
+      'link_to_node' => 0,
+      'label_type' => 'widget',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_species_value',
+      'table' => 'node_data_field_species',
+      'field' => 'field_species_value',
+      'relationship' => 'none',
+    ),
+    'field_character_height_value' => array(
+      'label' => 'Height',
+      'link_to_node' => 0,
+      'label_type' => 'widget',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_character_height_value',
+      'table' => 'node_data_field_character_height',
+      'field' => 'field_character_height_value',
+      'relationship' => 'none',
+    ),
+    'field_weight_value' => array(
+      'label' => 'Weight',
+      'link_to_node' => 0,
+      'label_type' => 'widget',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_weight_value',
+      'table' => 'node_data_field_weight',
+      'field' => 'field_weight_value',
+      'relationship' => 'none',
+    ),
+    'name' => array(
+      'label' => 'Member',
+      'link_to_user' => 1,
+      'exclude' => 0,
+      'id' => 'name',
+      'table' => 'users',
+      'field' => 'name',
+      'relationship' => 'none',
+    ),
+    'field_rostered_value' => array(
+      'label' => 'Rostered',
+      'link_to_node' => 0,
+      'label_type' => 'widget',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_rostered_value',
+      'table' => 'node_data_field_rostered',
+      'field' => 'field_rostered_value',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+    'edit_node' => array(
+      'label' => 'Edit',
+      'text' => '',
+      'exclude' => 0,
+      'id' => 'edit_node',
+      'table' => 'node',
+      'field' => 'edit_node',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('filters', array(
+    'status' => array(
+      'operator' => '=',
+      'value' => '1',
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'status',
+      'table' => 'node',
+      'field' => 'status',
+      'relationship' => 'none',
+    ),
+    'type' => array(
+      'operator' => 'in',
+      'value' => array(
+        'character' => 'character',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'type',
+      'table' => 'node',
+      'field' => 'type',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('style_options', array(
+    'grouping' => '',
+    'override' => 1,
+    'sticky' => 0,
+    'order' => 'asc',
+    'columns' => array(
+      'title_1' => 'title_1',
+      'title' => 'title',
+      'field_position_label_value' => 'field_position_label_value',
+      'field_species_value' => 'field_species_value',
+      'field_character_height_value' => 'field_character_height_value',
+      'field_weight_value' => 'field_weight_value',
+      'name' => 'name',
+      'field_rostered_value' => 'field_rostered_value',
+    ),
+    'info' => array(
+      'title_1' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+      'title' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+      'field_position_label_value' => array(
+        'sortable' => 0,
+        'separator' => '',
+      ),
+      'field_species_value' => array(
+        'sortable' => 0,
+        'separator' => '',
+      ),
+      'field_character_height_value' => array(
+        'sortable' => 0,
+        'separator' => '',
+      ),
+      'field_weight_value' => array(
+        'sortable' => 0,
+        'separator' => '',
+      ),
+      'name' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+      'field_rostered_value' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+    ),
+    'default' => '-1',
+  ));
+  $handler->override_option('path', 'node/%/edit/adminroster');
+  $handler->override_option('menu', array(
+    'type' => 'tab',
+    'title' => 'Full roster',
+    'weight' => '0',
+    'name' => 'navigation',
+  ));
+  $handler->override_option('tab_options', array(
+    'type' => 'none',
+    'title' => '',
+    'weight' => 0,
+  ));
+  $handler = $view->new_display('page', 'Master Roster', 'page_3');
+  $handler->override_option('relationships', array(
+    'field_positionref_nid' => array(
+      'label' => 'Position',
+      'required' => 0,
+      'delta' => -1,
+      'id' => 'field_positionref_nid',
+      'table' => 'node_data_field_positionref',
+      'field' => 'field_positionref_nid',
+      'relationship' => 'none',
+    ),
+    'field_rankref_nid' => array(
+      'label' => 'Rank',
+      'required' => 0,
+      'delta' => -1,
+      'id' => 'field_rankref_nid',
+      'table' => 'node_data_field_rankref',
+      'field' => 'field_rankref_nid',
+      'relationship' => 'none',
+    ),
+    'group_nid' => array(
+      'label' => 'Board',
+      'required' => 0,
+      'id' => 'group_nid',
+      'table' => 'og_ancestry',
+      'field' => 'group_nid',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('fields', array(
+    'title_1' => array(
+      'label' => 'Rank',
+      'link_to_node' => 0,
+      'exclude' => 0,
+      'id' => 'title_1',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'field_rankref_nid',
+    ),
+    'title' => array(
+      'label' => 'Character',
+      'link_to_node' => 1,
+      'exclude' => 0,
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+    ),
+    'field_position_label_value' => array(
+      'label' => 'Position',
+      'link_to_node' => 0,
+      'label_type' => 'custom',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_position_label_value',
+      'table' => 'node_data_field_position_label',
+      'field' => 'field_position_label_value',
+      'relationship' => 'none',
+    ),
+    'field_species_value' => array(
+      'label' => 'Species',
+      'link_to_node' => 0,
+      'label_type' => 'widget',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_species_value',
+      'table' => 'node_data_field_species',
+      'field' => 'field_species_value',
+      'relationship' => 'none',
+    ),
+    'name' => array(
+      'label' => 'Member',
+      'link_to_user' => 1,
+      'exclude' => 0,
+      'id' => 'name',
+      'table' => 'users',
+      'field' => 'name',
+      'relationship' => 'none',
+    ),
+    'title_2' => array(
+      'label' => '',
+      'link_to_node' => 1,
+      'exclude' => 1,
+      'id' => 'title_2',
+      'table' => 'node',
+      'field' => 'title',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'group_nid',
+    ),
+  ));
+  $handler->override_option('sorts', array(
+    'title' => array(
+      'order' => 'ASC',
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'group_nid',
+    ),
+    'field_sortorder_value' => array(
+      'order' => 'DESC',
+      'delta' => -1,
+      'id' => 'field_sortorder_value',
+      'table' => 'node_data_field_sortorder',
+      'field' => 'field_sortorder_value',
+      'relationship' => 'field_rankref_nid',
+    ),
+    'field_sortorder_value_1' => array(
+      'order' => 'DESC',
+      'delta' => -1,
+      'id' => 'field_sortorder_value_1',
+      'table' => 'node_data_field_sortorder',
+      'field' => 'field_sortorder_value',
+      'relationship' => 'field_positionref_nid',
+    ),
+    'title_1' => array(
+      'order' => 'ASC',
+      'id' => 'title_1',
+      'table' => 'node',
+      'field' => 'title',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('arguments', array());
+  $handler->override_option('filters', array(
+    'status' => array(
+      'operator' => '=',
+      'value' => '1',
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'status',
+      'table' => 'node',
+      'field' => 'status',
+      'relationship' => 'none',
+    ),
+    'type' => array(
+      'operator' => 'in',
+      'value' => array(
+        'character' => 'character',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'type',
+      'table' => 'node',
+      'field' => 'type',
+      'relationship' => 'none',
+    ),
+    'field_rostered_value_many_to_one' => array(
+      'operator' => 'or',
+      'value' => array(
+        'Rostered' => 'Rostered',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'field_rostered_value_many_to_one',
+      'table' => 'node_data_field_rostered',
+      'field' => 'field_rostered_value_many_to_one',
+      'relationship' => 'none',
+      'reduce_duplicates' => 0,
+    ),
+    'status_1' => array(
+      'operator' => '=',
+      'value' => '1',
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'status_1',
+      'table' => 'node',
+      'field' => 'status',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'group_nid',
+    ),
+  ));
+  $handler->override_option('access', array(
+    'type' => 'role',
+    'role' => array(
+      '3' => 3,
+      '4' => 4,
+    ),
+  ));
+  $handler->override_option('items_per_page', 100);
+  $handler->override_option('use_pager', '1');
+  $handler->override_option('style_options', array(
+    'grouping' => 'title_2',
+    'override' => 1,
+    'sticky' => 1,
+    'order' => 'asc',
+    'columns' => array(
+      'title_1' => 'title_1',
+      'title' => 'title',
+      'field_position_label_value' => 'field_position_label_value',
+      'field_species_value' => 'field_species_value',
+      'name' => 'name',
+      'title_2' => 'title_2',
+    ),
+    'info' => array(
+      'title_1' => array(
+        'sortable' => 0,
+        'separator' => '',
+      ),
+      'title' => array(
+        'sortable' => 0,
+        'separator' => '',
+      ),
+      'field_position_label_value' => array(
+        'sortable' => 0,
+        'separator' => '',
+      ),
+      'field_species_value' => array(
+        'sortable' => 0,
+        'separator' => '',
+      ),
+      'name' => array(
+        'sortable' => 0,
+        'separator' => '',
+      ),
+      'title_2' => array(
+        'sortable' => 0,
+        'separator' => '',
+      ),
+    ),
+    'default' => '-1',
+  ));
+  $handler->override_option('path', 'master-roster');
+  $handler->override_option('menu', array(
+    'type' => 'none',
+    'title' => '',
+    'weight' => 0,
+    'name' => 'navigation',
+  ));
+  $handler->override_option('tab_options', array(
+    'type' => 'none',
+    'title' => '',
+    'weight' => 0,
+  ));
+  $views[$view->name] = $view;
+
+  $view = new view;
   $view->name = 'og_supported_positions';
   $view->description = 'A list of positions supported by a given OG.';
   $view->tag = 'webb';

@@ -281,16 +281,6 @@ function webb_menu() {
       // Only OG node types get these extra menu items
       if (og_is_group_type($node->type)) {
 
-        // Add the extra tab that points to the Captain's Log for this board
-        $items["node/{$node->nid}/colog"] = array(
-          'title' => "Captain's Log",
-          'page callback' => 'views_view_page',
-          'page arguments' => array('og_co_log', $node->nid),
-          'access arguments' => array('create logentry content'),
-          'description' => "View Captain's Log",
-          'type' => MENU_LOCAL_TASK,
-          'weight' => 3,
-        );
         $items["node/{$node->nid}/add"] = array(
           'title' => 'Add',
           'page callback' => 'system_admin_menu_block_page',

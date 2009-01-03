@@ -271,20 +271,7 @@ function webb_menu() {
    because translation of these happen in a later stage in the menu system.
 */
   if ($may_cache) {
-    foreach (node_get_types() as $type) {
-      if (function_exists($type->module .'_form')) {
-        $name = check_plain($type->name);
-        $type_url_str = str_replace('_', '-', $type->type);
-        global $user;
-        $account = _webb_user_load($user->uid);
-        $access = _webb_is_og_admin(array_keys($user->og_groups));
-        $items['webb/node/add/'. $type_url_str] = array(
-          'title' => drupal_ucfirst($name),
-          'access arguments' => $access,
-          'type' => MENU_LOCAL_TASK,
-        );
-      }
-    }
+
   }
   else {
     // The following apply only to certain node types
@@ -294,15 +281,6 @@ function webb_menu() {
       // Only OG node types get these extra menu items
       if (og_is_group_type($node->type)) {
 
-        // Add the extra tab that points to the notes on this board
-        $items["node/{$node->nid}/notes"] = array(
-          'title' => 'Notes',
-          'page callback' => 'views_view_page',
-          'page arguments' => array('og_notes', $node->nid),
-          'access arguments' => array('read notes'),
-          'description' => 'View recent notes on this board',
-          'type' => MENU_LOCAL_TASK,
-        );
         // Add the extra tab that points to the Captain's Log for this board
         $items["node/{$node->nid}/colog"] = array(
           'title' => "Captain's Log",

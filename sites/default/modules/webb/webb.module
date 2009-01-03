@@ -507,7 +507,7 @@ function _webb_link_note($node, $teaser) {
 
   $links = array();
 
-  $group_nid = $node->og_groups[0];
+  $group_nid = current($node->og_groups);
   if ($group_nid) {
     $group = node_load($group_nid);
 
@@ -570,7 +570,7 @@ function _webb_link_note($node, $teaser) {
       );
     }
 
-    // Add a link to the next note chronologically on this board
+    // Add a link to the next note chronologically on this board.
     $next_by_time = db_result(
       db_query_range("SELECT n.nid
         FROM {node} n INNER JOIN {og_ancestry} oa ON n.nid=oa.nid
@@ -592,19 +592,20 @@ function _webb_link_note($node, $teaser) {
       drupal_add_link(array('rel' => 'next', 'href' => url('node/'. $next_nid)));
     }
 
-    // Add a link to the next note in the same webbtopic.
+    // Add a link to the next note in the same topic.
+    $dbinfo = content_database_info(content_fields('field_topic'));
     $next_in_topic = db_result(
         db_query_range("SELECT n.nid
           FROM {node} n
             INNER JOIN {og_ancestry} oa ON n.nid=oa.nid
-            INNER JOIN {webbtopic_topic} wt ON wt.nid=n.nid
+            INNER JOIN {{$dbinfo['table']}} f ON f.nid=n.nid
           WHERE n.type='%s'
             AND oa.group_nid=%d
             AND n.created > %d
-            AND n.status = 1
-            AND wt.topic='%s'
+            AND n.status <> 0
+            AND f.{$dbinfo['columns']['value']['column']}='%s'
           ORDER By created",
-          array($node->type, $group_nid, $node->created, $node->webb['webbtopic_topic']), 0, 1)
+          array($node->type, $group_nid, $node->created, $node->field_topic[0]['value']), 0, 1)
       );
     if ($next_in_topic) {
       $topic_label = db_result(db_query("SELECT label FROM {webbtopic_label} WHERE nid=%d", array($group_nid)));
@@ -617,7 +618,7 @@ function _webb_link_note($node, $teaser) {
       );
     }
 
-    // Add a link to the next unread note chronologically on this board
+    // Add a link to the next unread note chronologically on this board.
     if ($user->uid) {
       $next_unread = db_result(
         db_query_range("SELECT n.nid

@@ -250,19 +250,6 @@ function webb_menu() {
     'weight' => 3,
   );
 
-  // Add a tab link to the view of notes.
-  // Fix this once we have the actual view figured out. :-)
-  /*$items["node/%node/notes"] = array(
-    'title' => 'Notes',
-    'page callback' => 'views_view_page',
-    'page arguments' => array('og_notes', 1),
-    'access callback' => 'webb_menu_access_supports_posting',
-    'access arguments' => array(1),
-    'description' => 'View recent notes on this board',
-    'type' => MENU_LOCAL_TASK,
-  );
-*/
-
 /* TODO
    Non menu code that was placed in hook_menu under the '!$may_cache' block
    so that it could be run during initialization, should now be moved to hook_init.
@@ -491,8 +478,8 @@ function webb_link($type, $node=NULL, $teaser=FALSE) {
     $links = array_merge($links, _webb_link_note($node, $teaser));
   }
 
-  if ($type == 'node' && $node->type == 'board') {
-    $links = array_merge($links, _webb_link_board($node, $teaser));
+  if ($type == 'node' && webb_is_post_type($node->type)) {
+    $links = array_merge($links, _webb_link_post_type($node, $teaser));
   }
 
   return $links;
@@ -651,7 +638,7 @@ function _webb_link_note($node, $teaser) {
 /**
  * Helper function for hook_link() on "board" nodes.
  */
-function _webb_link_board($node, $teaser) {
+function _webb_link_post_type($node, $teaser) {
   $links = array();
 
   // Add a HEAD LINK to the note list
@@ -662,14 +649,6 @@ function _webb_link_board($node, $teaser) {
     'href' => "node/{$node->nid}/notes",
     'attributes' => array(
       'title' => t("See recently-posted notes on this board"),
-     ),
-  );
-  $links['post_new_note'] = array(
-    'title' => t("Post Note"),
-    'href' => 'node/add/note',
-    'query' => 'gids[]=' . $node->nid,
-    'attributes' => array(
-      'title' => t("Post a note on this board"),
      ),
   );
 

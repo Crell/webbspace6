@@ -344,22 +344,6 @@ function webb_menu() {
           'description' => 'Add a subscriber to this board.',
         );
       }
-
-      // On Note nodes, offer a menu tab to go back to the group (kinda hacky)
-      if ('note' == $node->type) {
-        $group_nid = $node->og_groups[0];
-        if ($group_nid) {
-          $items["node/{$node->nid}/group"] = array(
-            'title' => 'Board',
-            'page callback' => 'drupal_goto',
-            'page arguments' => array('node/'. $group_nid),
-            'access arguments' => array('access content'),
-            'description' => 'View board',
-            'type' => MENU_LOCAL_TASK,
-            'weight' => -1,
-          );
-        }
-      }
     }
 
 

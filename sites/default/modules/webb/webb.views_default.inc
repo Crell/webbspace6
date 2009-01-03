@@ -522,10 +522,7 @@ function webb_views_default_views() {
   ));
   $handler->override_option('use_ajax', TRUE);
   $handler->override_option('use_pager', '1');
-  $handler->override_option('style_plugin', 'list');
-  $handler->override_option('style_options', array(
-    'type' => 'ul',
-  ));
+  $handler->override_option('style_options', NULL);
   $handler->override_option('row_plugin', 'node');
   $handler->override_option('row_options', array(
     'teaser' => 1,
@@ -743,3 +740,4 @@ function webb_views_default_views() {
 
   return $views;
 }
+

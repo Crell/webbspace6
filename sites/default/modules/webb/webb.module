@@ -562,8 +562,8 @@ function _webb_link_note($node, $teaser) {
     if (user_access('post notes')) {
       $links['reply'] = array(
         'title' => t("Reply"),
-        'href' => 'node/add/note',
-        'query' => 'gids[]='. $group->nid . '&parent_nid='. $node->nid,
+        'href' => "node/{$group->nid}/post",
+        'query' => 'parent_nid='. $node->nid,
         'attributes' => array(
           'title' => t("Post a reply to this note"),
          ),

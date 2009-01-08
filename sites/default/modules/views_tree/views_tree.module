@@ -1,0 +1,62 @@
+<?php
+
+/**
+ * Implementation of hook_views_api().
+ */
+function views_tree_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'views_tree'),
+  );
+}
+
+function views_tree_theme($existing, $type, $theme, $path) {
+  return array(
+    'views_tree_inner' => array(
+      'arguments' => array(
+        'view' => NULL,
+        'options' => array(),
+        'rows' => array(),
+        'title' => NULL,
+        'result' => array(),
+        'parent' => NULL,
+      ),
+      'file' => 'views_tree.theme.inc',
+    ),
+  );
+}
+
+/**
+ * Theme function for the tree style plugin.
+ *
+ * We need to do some weirdness that makes more sense as a theme function
+ * than as a template.  Also, this would normally be in views_tree.theme.inc
+ * but due to a bug in Views theme functions for style plugins don't get
+ * registered properly that way.  We'll move this later when that bug gets fixed.
+ *
+ * @ingroup themeable
+ * @link http://drupal.org/node/355919
+ */
+function theme_views_tree($view, $options, $rows, $title) {
+
+  $result = $view->result;
+  $fields = &$view->field;
+
+  $options['main_field_property'] = $fields[$options['main_field']]->field_alias;
+  $options['parent_field_property'] = $fields[$options['parent_field']]->field_alias;
+
+  // Normalize the top level of records to all point to 0 as their parent
+  // We only have to do this once, so we do it here in the wrapping function.
+  $parents = array();
+  foreach ($result as $record) {
+    $parents[] = $record->$options['main_field_property'];
+  }
+  foreach ($result as $record) {
+    if (! in_array($record->$options['parent_field_property'], $parents)) {
+      $record->$options['parent_field_property'] = 0;
+    }
+  }
+
+  return $title . theme('views_tree_inner', $view, $options, $rows, $title, $result, 0);
+}
+

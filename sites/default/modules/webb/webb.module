@@ -83,21 +83,6 @@ function webb_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
 /**
  * Helper function for hook_nodeapi().
  */
-function _webb_nodeapi_logentry(&$node, $op, $a3 = NULL, $a4 = NULL) {
-
-  switch ($op) {
-    case 'insert':
-    case 'update':
-      // Force a title on logentry nodes of the posting date.
-      db_query("UPDATE {node} SET title='%s' WHERE nid=%d", format_date($node->created, 'custom', 'd M Y'), $node->nid);
-      db_query("UPDATE {node_revisions} SET title='%s' WHERE nid=%d", format_date($node->created, 'custom', 'd M Y'), $node->nid);
-      break;
-  }
-}
-
-/**
- * Helper function for hook_nodeapi().
- */
 function _webb_nodeapi_note(&$node, $op, $a3 = NULL, $a4 = NULL) {
 
   switch ($op) {

@@ -234,13 +234,42 @@ function webb_views_default_views() {
       'relationship' => 'none',
     ),
     'created' => array(
-      'label' => 'Post date',
+      'label' => '',
       'date_format' => 'medium',
       'custom_date_format' => '',
       'exclude' => 0,
       'id' => 'created',
       'table' => 'node',
       'field' => 'created',
+      'relationship' => 'none',
+      'override' => array(
+        'button' => 'Override',
+      ),
+    ),
+    'field_parent_note_nid' => array(
+      'label' => '',
+      'link_to_node' => 0,
+      'label_type' => 'none',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 1,
+      'id' => 'field_parent_note_nid',
+      'table' => 'node_data_field_parent_note',
+      'field' => 'field_parent_note_nid',
+      'relationship' => 'none',
+    ),
+    'nid' => array(
+      'label' => '',
+      'link_to_node' => 0,
+      'exclude' => 1,
+      'id' => 'nid',
+      'table' => 'node',
+      'field' => 'nid',
       'relationship' => 'none',
     ),
   ));
@@ -299,7 +328,7 @@ function webb_views_default_views() {
       'operator' => '>=',
       'value' => array(
         'type' => 'offset',
-        'value' => '- 2 weeks',
+        'value' => '- 6 weeks',
         'min' => '',
         'max' => '',
       ),
@@ -313,6 +342,9 @@ function webb_views_default_views() {
       'table' => 'node',
       'field' => 'created',
       'relationship' => 'none',
+      'override' => array(
+        'button' => 'Override',
+      ),
     ),
     'status_extra' => array(
       'operator' => '=',
@@ -349,9 +381,12 @@ function webb_views_default_views() {
     'type' => 'perm',
     'perm' => 'read notes',
   ));
-  $handler->override_option('style_plugin', 'list');
+  $handler->override_option('items_per_page', 20);
+  $handler->override_option('style_plugin', 'tree');
   $handler->override_option('style_options', array(
     'type' => 'ul',
+    'main_field' => 'nid',
+    'parent_field' => 'field_parent_note_nid',
   ));
   $handler->override_option('row_options', array(
     'inline' => array(

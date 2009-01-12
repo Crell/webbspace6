@@ -171,6 +171,7 @@ ini_set('url_rewriter.tags',        '');
  */
 $conf = array(
   'clean_url' => 0,
+  'cache_inc' => 'includes/cache-install.inc',
 #   'site_name' => 'My Drupal site',
 #   'theme_default' => 'minnelli',
 #   'anonymous' => 'Visitor',

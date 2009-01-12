@@ -235,6 +235,34 @@ function webb_menu() {
     'weight' => 3,
   );
 
+  // Set up the administrative area of each Board, underneath the edit tab.
+  $items['node/%webb_postable_node/edit/basic'] = array(
+    'title' => 'Base settings',
+    'page callback' => 'node_page_edit',
+    'page arguments' => array(1),
+    'access callback' => 'node_access',
+    'access arguments' => array('update', 1),
+    'weight' => -1,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  foreach (array('logentry', 'character') as $type_name) {
+    $type = node_get_types('type', $type_name, TRUE);
+    $type->url_str = str_replace('_', '-', $type->type);
+    $items['node/%webb_postable_node/edit/add-'. $type->url_str] = array(
+      'title' => 'Post new '. $type->name,
+      'page callback' => 'node_add',
+      'page arguments' => array($type_name),
+      'access callback' => 'webb_menu_access_allow_posting',
+      'access arguments' => array(1, $type->type),
+      'description' => $type->description,
+      'file' => 'node.pages.inc',
+      'file path' => drupal_get_path('module', 'node'),
+      'type' => MENU_LOCAL_TASK,
+    );
+  }
+
+
 /* TODO
    Non menu code that was placed in hook_menu under the '!$may_cache' block
    so that it could be run during initialization, should now be moved to hook_init.
@@ -335,6 +363,20 @@ function webb_menu() {
   }
 
   return $items;
+}
+
+/**
+ * Menu loader callback. Load a webform node if the given nid is a webform.
+ */
+function webb_postable_node_load($nid) {
+  if (!is_numeric($nid)) {
+    return FALSE;
+  }
+  $node = node_load($nid);
+  if (! webb_is_post_type($node->type)) {
+    return FALSE;
+  }
+  return $node;
 }
 
 /**
@@ -634,6 +676,7 @@ function _webb_link_post_type($node, $teaser) {
  * Implementation of hook_form_alter
  */
 function webb_form_alter(&$form, &$form_state, $form_id) {
+
   if (isset($form['type']) && 'board_node_form' == $form_id) {
     _webb_form_alter_board_node_form($form_id, $form);
   }
@@ -644,9 +687,7 @@ function webb_form_alter(&$form, &$form_state, $form_id) {
 
 
 function webb_form_advpoll_binary_node_form_alter(&$form, &$form_state) {
-
   $form['settings']['#collapsed'] = FALSE;
-
 }
 
 /**
@@ -679,13 +720,8 @@ function webb_form_user_edit_alter(&$form, &$form_state) {
  */
 function webb_form_note_node_form_alter(&$form, &$form_state) {
 
-  // We're going to bastardize $_GET to force OG to think that this post is
-  // being made to the group in the path.  Yes, this is ugly.
   if (empty($form['nid']['#value'])) {
-    // This is a new posting.
-    $group = menu_get_object('node');
-    og_set_group_context($group);
-    $_GET['gids'] = array($group->nid);
+    webb_set_og_context();
   }
 
   // Pre-fill the parent id field from the GET query, then hide it
@@ -833,9 +869,13 @@ function _webb_form_alter_board_node_form($form_id, &$form) {
 }
 
 /**
- * Helper function for form_alter for the character form.
+ * Implementation of hook_form_alter().
  */
-function webb_form_chararacter_node_form_alter(&$form, &$form_state) {
+function webb_form_character_node_form_alter(&$form, &$form_state) {
+  if (empty($form['nid']['#value'])) {
+    webb_set_og_context();
+  }
+
   // Rename the "Author" field and make it accessible to board admins, too.
   if ((isset($form['#node']->og_groups[0]) && _webb_is_og_admin($form['#node']->og_groups)) || _webb_is_og_admin(arg(1))) {
     $form['author']['#access'] = TRUE;
@@ -858,11 +898,16 @@ function webb_form_chararacter_node_form_alter(&$form, &$form_state) {
   // Note that we cannot do this for checkboxes, only select boxes, due to
   // a ridiculously obscure bug in optionwidget that I can't even figure out.
   $access = _webb_is_og_admin($ogs);
-  //dsm($form);
   $form['field_rankref']['#access'] = $access;
   $form['field_positionref']['#access'] = $access;
   $form['field_custom_position']['#access'] = $access;
   $form['field_rostered']['#access'] = $access;
+}
+
+function webb_form_logentry_node_form_alter(&$form, &$form_state) {
+  if (empty($form['nid']['#value'])) {
+    webb_set_og_context();
+  }
 }
 
 /*

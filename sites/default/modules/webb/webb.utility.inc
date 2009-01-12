@@ -6,6 +6,27 @@
  */
 
 /**
+ * Set the OG context based on the path.
+ *
+ * OG is really lousy at keeping track of its context.  Therefore, we set it
+ * manually based on the path at times, such as a node-add form.  To cover
+ * all bases we set the context explicitly as well as fake-out the $_GET array,
+ * even though writing into $_GET is horribly evil.
+ */
+function webb_set_og_context() {
+  // menu_get_object assumes the type maps directly to a load routine, so
+  // we have to allow for multiple possible load routines since we are using
+  // load routines to control access and tab location.  Blargh!
+  foreach (array('node', 'webb_postable_node') as $type) {
+    if ($group = menu_get_object($type)) {
+      break;
+    }
+  }
+  og_set_group_context($group);
+  $_GET['gids'] = array($group->nid);
+}
+
+/**
  * Utility function to load a cck field instance object.
  *
  * Why this doesn't exist in CCK, I don't know...

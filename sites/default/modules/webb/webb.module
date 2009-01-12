@@ -137,10 +137,10 @@ function _webb_nodeapi_character(&$node, $op, $a3 = NULL, $a4 = NULL) {
       break;
     case 'view':
       if ($a4) {  // in $op=view, $a4 is the $page boolean.
-        $node->content['notes'] = array(
+        /*$node->content['notes'] = array(
           '#value' => component_get_view('character_notes', $node->nid),
           '#weight' => 10,
-        );
+        );*/
       }
 
   }
@@ -187,7 +187,7 @@ function _webb_nodeapi_board(&$node, $op, $a3 = NULL, $a4 = NULL) {
       break;
     case 'view':
       $node->content['roster'] = array(
-        '#value' => component_get_view('og_ghp_characters', $node->nid),
+        //'#value' => component_get_view('og_ghp_characters', $node->nid),
       );
       break;
   }
@@ -609,8 +609,22 @@ function _webb_link_post_type($node, $teaser) {
  */
 function webb_form_alter(&$form, &$form_state, $form_id) {
 
-  if (isset($form['type']) && 'board_node_form' == $form_id) {
-    _webb_form_alter_board_node_form($form_id, $form);
+  if ($form['#id'] == 'node-form' && webb_is_post_type($form['type']['#value'])) {
+    _webb_form_alter_postable_node_form($form, $form_state);
+  }
+  elseif ($form_id == 'charater_node_form') {
+    // This has to be done here, rather than in a form-specific hook, because
+    // it has to run after cck does since we're modifying CCK-added form structures.
+
+    // Hide some fields from non-admins, because we don't want people editing
+    // their own rank.
+    // Note that we cannot do this for checkboxes, only select boxes, due to
+    // a ridiculously obscure bug in optionwidget that I can't even figure out.
+    $access = _webb_is_og_admin(og_get_group_context()->nid);
+    $form['field_rankref']['#access'] = $access;
+    $form['field_positionref']['#access'] = $access;
+    $form['field_custom_position']['#access'] = $access;
+    $form['field_rostered']['#access'] = $access;
   }
   elseif ('views_filters' == $form_id && $form['view']['#value']->name == 'og_notes') {
     _webb_form_alter_og_notes_filter_form($form_id, $form);
@@ -728,9 +742,9 @@ function webb_form_note_node_form_alter(&$form, &$form_state) {
 }
 
 /**
- * Helper function for form_alter for the board form.
+ * Helper function for form_alter for postable forms.
  */
-function _webb_form_alter_board_node_form($form_id, &$form) {
+function _webb_form_alter_postable_node_form(&$form, &$form_state) {
 
   // If the user isn't a site-admin, then we don't want to give them access to the OG-specific functionality.
   if (! user_access('administer site configuration')) {
@@ -758,46 +772,8 @@ function _webb_form_alter_board_node_form($form_id, &$form) {
       '#type' => 'value',
       '#value' => $form['og_private']['#default_value'],
     );
-
   }
   $form['og_description']['#title'] = t('Slogan');
-
-  // If and only if the user is a site admin, let them configure what rank/position terms we allow on this board.
-  $form['webb_cck_taxonomy'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Ranks and positions'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#weight' => 5,
-    '#access' => user_access('administer site configuration'),
-  );
-  // Add position checkboxes.
-  $position = webb_get_field_instance('field_position', 'character');
-  $vid = $position->widget_type[13]; // "cck_taxonomy_?" is the widget name.  Yes, weird.
-  $position_options = _webb_taxonomy_get_terms($vid);
-  $default_positions = db_fetch_column("SELECT tid FROM {webb_board_positions} WHERE nid=%d", $form['#node']->nid);
-  $form['webb_cck_taxonomy']['positions'] = array(
-    '#type' => 'checkboxes',
-    '#title' => t('Allowed positions'),
-    '#default_value' => $default_positions,
-    '#options' => $position_options,
-    '#description' => t('Check those positions that will be allowed on this board.'),
-  );
-
-  // Add rank checkboxes.
-  $rank = webb_get_field_instance('field_rank', 'character');
-  $vid = $rank->widget_type[13]; // "cck_taxonomy_?" is the widget name.  Yes, weird.
-  $rank_options = _webb_taxonomy_get_terms($vid);
-  $default_ranks = db_fetch_column("SELECT tid FROM {webb_board_ranks} WHERE nid=%d", $form['#node']->nid);
-  $form['webb_cck_taxonomy']['ranks'] = array(
-    '#type' => 'checkboxes',
-    '#title' => t('Allowed ranks'),
-    '#default_value' => $default_ranks,
-    '#options' => $rank_options,
-    '#description' => t('Check those ranks that will be allowed on this board.'),
-  );
-
-  // This is a node form, so the saving has to happen in hook_nodeapi(), as much as that sucks.
 }
 
 /**
@@ -824,16 +800,6 @@ function webb_form_character_node_form_alter(&$form, &$form_state) {
   else {
     $ogs = array(arg(1)); // Use whatever the current OG is, since we'll be assigning to that anyway.
   }
-
-  // Hide some fields from non-admins, because we don't want people editing
-  // their own rank.
-  // Note that we cannot do this for checkboxes, only select boxes, due to
-  // a ridiculously obscure bug in optionwidget that I can't even figure out.
-  $access = _webb_is_og_admin($ogs);
-  $form['field_rankref']['#access'] = $access;
-  $form['field_positionref']['#access'] = $access;
-  $form['field_custom_position']['#access'] = $access;
-  $form['field_rostered']['#access'] = $access;
 }
 
 function webb_form_logentry_node_form_alter(&$form, &$form_state) {
@@ -994,13 +960,15 @@ function webb_profile_alter(&$account) {
   unset($account->content['Application']);
 
   // Add a list of this user's characters
+  /* TODO: Make this work again.
+   *
   $account->content[t('Characters')] = array(
     array(
       'value' => component_get_view('user_characters', $account->uid),
       'title' => '',
       'class' => 'user_characters',
     )
-  );
+  );*/
 }
 
 /**

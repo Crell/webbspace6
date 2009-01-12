@@ -262,6 +262,17 @@ function webb_menu() {
     );
   }
 
+  /*
+  $items["node/{$node->nid}/admin/add_user"] = array(
+    'title' => 'Add subscribers',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('og_add_users', $node->nid),
+    'type' => MENU_SUGGESTED_ITEM,
+    'weight' => 5,
+    'access arguments' => _webb_is_og_admin($node->nid),
+    'description' => 'Add a subscriber to this board.',
+  );
+  */
 
 /* TODO
    Non menu code that was placed in hook_menu under the '!$may_cache' block

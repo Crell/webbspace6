@@ -187,399 +187,6 @@ function webb_views_default_views() {
   $views[$view->name] = $view;
 
   $view = new view;
-  $view->name = 'og_notes';
-  $view->description = 'A list of notes on a given OG.';
-  $view->tag = 'webb';
-  $view->view_php = '';
-  $view->base_table = 'node';
-  $view->is_cacheable = FALSE;
-  $view->api_version = 2;
-  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
-  $handler = $view->new_display('default', 'Notes', 'default');
-  $handler->override_option('fields', array(
-    'title' => array(
-      'label' => '',
-      'link_to_node' => 1,
-      'exclude' => 0,
-      'id' => 'title',
-      'table' => 'node',
-      'field' => 'title',
-      'relationship' => 'none',
-    ),
-    'timestamp' => array(
-      'label' => '',
-      'link_to_node' => 0,
-      'comments' => 0,
-      'exclude' => 0,
-      'id' => 'timestamp',
-      'table' => 'history_user',
-      'field' => 'timestamp',
-      'relationship' => 'none',
-    ),
-    'field_character_name_value' => array(
-      'label' => '',
-      'link_to_node' => 0,
-      'label_type' => 'none',
-      'format' => 'default',
-      'multiple' => array(
-        'group' => TRUE,
-        'multiple_number' => '',
-        'multiple_from' => '',
-        'multiple_reversed' => FALSE,
-      ),
-      'exclude' => 0,
-      'id' => 'field_character_name_value',
-      'table' => 'node_data_field_character_name',
-      'field' => 'field_character_name_value',
-      'relationship' => 'none',
-    ),
-    'created' => array(
-      'label' => '',
-      'date_format' => 'medium',
-      'custom_date_format' => '',
-      'exclude' => 0,
-      'id' => 'created',
-      'table' => 'node',
-      'field' => 'created',
-      'relationship' => 'none',
-      'override' => array(
-        'button' => 'Override',
-      ),
-    ),
-    'field_parent_note_nid' => array(
-      'label' => '',
-      'link_to_node' => 0,
-      'label_type' => 'none',
-      'format' => 'default',
-      'multiple' => array(
-        'group' => TRUE,
-        'multiple_number' => '',
-        'multiple_from' => '',
-        'multiple_reversed' => FALSE,
-      ),
-      'exclude' => 1,
-      'id' => 'field_parent_note_nid',
-      'table' => 'node_data_field_parent_note',
-      'field' => 'field_parent_note_nid',
-      'relationship' => 'none',
-    ),
-    'nid' => array(
-      'label' => '',
-      'link_to_node' => 0,
-      'exclude' => 1,
-      'id' => 'nid',
-      'table' => 'node',
-      'field' => 'nid',
-      'relationship' => 'none',
-    ),
-  ));
-  $handler->override_option('arguments', array(
-    'group_nid' => array(
-      'default_action' => 'default',
-      'style_plugin' => 'default_summary',
-      'style_options' => array(),
-      'wildcard' => 'all',
-      'wildcard_substitution' => 'All',
-      'title' => 'Notes on %1',
-      'default_argument_type' => 'node',
-      'default_argument' => '',
-      'validate_type' => 'og_group_types',
-      'validate_fail' => 'not found',
-      'break_phrase' => 0,
-      'not' => 0,
-      'id' => 'group_nid',
-      'table' => 'og_ancestry',
-      'field' => 'group_nid',
-      'relationship' => 'none',
-      'default_options_div_prefix' => '',
-      'default_argument_user' => 0,
-      'default_argument_fixed' => '',
-      'default_argument_php' => '',
-      'validate_argument_node_type' => array(
-        'webform' => 0,
-        'character' => 0,
-        'board' => 0,
-        'fleet' => 0,
-        'logentry' => 0,
-        'news' => 0,
-        'note' => 0,
-        'page' => 0,
-      ),
-      'validate_argument_node_access' => 0,
-      'validate_argument_nid_type' => 'nid',
-      'validate_argument_vocabulary' => array(
-        '10' => 0,
-        '11' => 0,
-        '12' => 0,
-        '6' => 0,
-        '13' => 0,
-        '1' => 0,
-      ),
-      'validate_argument_type' => 'tid',
-      'validate_argument_is_member' => 0,
-      'validate_argument_php' => '',
-      'override' => array(
-        'button' => 'Override',
-      ),
-    ),
-  ));
-  $handler->override_option('filters', array(
-    'created' => array(
-      'operator' => '>=',
-      'value' => array(
-        'type' => 'offset',
-        'value' => '- 6 weeks',
-        'min' => '',
-        'max' => '',
-      ),
-      'group' => '0',
-      'exposed' => FALSE,
-      'expose' => array(
-        'operator' => FALSE,
-        'label' => '',
-      ),
-      'id' => 'created',
-      'table' => 'node',
-      'field' => 'created',
-      'relationship' => 'none',
-      'override' => array(
-        'button' => 'Override',
-      ),
-    ),
-    'status_extra' => array(
-      'operator' => '=',
-      'value' => '',
-      'group' => '0',
-      'exposed' => FALSE,
-      'expose' => array(
-        'operator' => FALSE,
-        'label' => '',
-      ),
-      'id' => 'status_extra',
-      'table' => 'node',
-      'field' => 'status_extra',
-      'relationship' => 'none',
-    ),
-    'type' => array(
-      'operator' => 'in',
-      'value' => array(
-        'note' => 'note',
-      ),
-      'group' => '0',
-      'exposed' => FALSE,
-      'expose' => array(
-        'operator' => FALSE,
-        'label' => '',
-      ),
-      'id' => 'type',
-      'table' => 'node',
-      'field' => 'type',
-      'relationship' => 'none',
-    ),
-  ));
-  $handler->override_option('access', array(
-    'type' => 'perm',
-    'perm' => 'read notes',
-  ));
-  $handler->override_option('items_per_page', 20);
-  $handler->override_option('style_plugin', 'tree');
-  $handler->override_option('style_options', array(
-    'type' => 'ul',
-    'main_field' => 'nid',
-    'parent_field' => 'field_parent_note_nid',
-  ));
-  $handler->override_option('row_options', array(
-    'inline' => array(
-      'title' => 'title',
-      'timestamp' => 'timestamp',
-    ),
-    'separator' => '',
-  ));
-  $handler = $view->new_display('page', 'Page', 'page_1');
-  $handler->override_option('path', 'node/%/notes');
-  $handler->override_option('menu', array(
-    'type' => 'tab',
-    'title' => 'Notes',
-    'weight' => '2',
-    'name' => 'navigation',
-  ));
-  $handler->override_option('tab_options', array(
-    'type' => 'none',
-    'title' => '',
-    'weight' => 0,
-  ));
-  $views[$view->name] = $view;
-
-  $view = new view;
-  $view->name = 'og_colog';
-  $view->description = 'A list of Log entries on a given OG.';
-  $view->tag = 'webb';
-  $view->view_php = '';
-  $view->base_table = 'node';
-  $view->is_cacheable = FALSE;
-  $view->api_version = 2;
-  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
-  $handler = $view->new_display('default', 'CO Log', 'default');
-  $handler->override_option('fields', array(
-    'title' => array(
-      'label' => '',
-      'link_to_node' => 1,
-      'exclude' => 0,
-      'id' => 'title',
-      'table' => 'node',
-      'field' => 'title',
-      'relationship' => 'none',
-    ),
-    'timestamp' => array(
-      'label' => '',
-      'link_to_node' => 0,
-      'comments' => 0,
-      'exclude' => 0,
-      'id' => 'timestamp',
-      'table' => 'history_user',
-      'field' => 'timestamp',
-      'relationship' => 'none',
-    ),
-    'created' => array(
-      'label' => 'Post date',
-      'date_format' => 'medium',
-      'custom_date_format' => '',
-      'exclude' => 0,
-      'id' => 'created',
-      'table' => 'node',
-      'field' => 'created',
-      'relationship' => 'none',
-    ),
-  ));
-  $handler->override_option('sorts', array(
-    'created' => array(
-      'order' => 'DESC',
-      'granularity' => 'second',
-      'id' => 'created',
-      'table' => 'node',
-      'field' => 'created',
-      'override' => array(
-        'button' => 'Override',
-      ),
-      'relationship' => 'none',
-    ),
-  ));
-  $handler->override_option('arguments', array(
-    'group_nid' => array(
-      'default_action' => 'default',
-      'style_plugin' => 'default_summary',
-      'style_options' => array(),
-      'wildcard' => 'all',
-      'wildcard_substitution' => 'All',
-      'title' => 'Notes on %1',
-      'default_argument_type' => 'node',
-      'default_argument' => '',
-      'validate_type' => 'og_group_types',
-      'validate_fail' => 'not found',
-      'break_phrase' => 0,
-      'not' => 0,
-      'id' => 'group_nid',
-      'table' => 'og_ancestry',
-      'field' => 'group_nid',
-      'relationship' => 'none',
-      'default_options_div_prefix' => '',
-      'default_argument_user' => 0,
-      'default_argument_fixed' => '',
-      'default_argument_php' => '',
-      'validate_argument_node_type' => array(
-        'webform' => 0,
-        'character' => 0,
-        'board' => 0,
-        'fleet' => 0,
-        'logentry' => 0,
-        'news' => 0,
-        'note' => 0,
-        'page' => 0,
-        'position' => 0,
-        'rank' => 0,
-      ),
-      'validate_argument_node_access' => 0,
-      'validate_argument_nid_type' => 'nid',
-      'validate_argument_vocabulary' => array(
-        '10' => 0,
-        '11' => 0,
-        '12' => 0,
-        '15' => 0,
-        '13' => 0,
-        '14' => 0,
-      ),
-      'validate_argument_type' => 'tid',
-      'validate_argument_is_member' => 0,
-      'validate_argument_php' => '',
-      'override' => array(
-        'button' => 'Override',
-      ),
-    ),
-  ));
-  $handler->override_option('filters', array(
-    'status_extra' => array(
-      'operator' => '=',
-      'value' => '',
-      'group' => '0',
-      'exposed' => FALSE,
-      'expose' => array(
-        'operator' => FALSE,
-        'label' => '',
-      ),
-      'id' => 'status_extra',
-      'table' => 'node',
-      'field' => 'status_extra',
-      'relationship' => 'none',
-    ),
-    'type' => array(
-      'operator' => 'in',
-      'value' => array(
-        'logentry' => 'logentry',
-      ),
-      'group' => '0',
-      'exposed' => FALSE,
-      'expose' => array(
-        'operator' => FALSE,
-        'label' => '',
-      ),
-      'id' => 'type',
-      'table' => 'node',
-      'field' => 'type',
-      'relationship' => 'none',
-      'override' => array(
-        'button' => 'Override',
-      ),
-    ),
-  ));
-  $handler->override_option('access', array(
-    'type' => 'perm',
-    'perm' => 'read notes',
-  ));
-  $handler->override_option('use_ajax', TRUE);
-  $handler->override_option('use_pager', '1');
-  $handler->override_option('style_options', NULL);
-  $handler->override_option('row_plugin', 'node');
-  $handler->override_option('row_options', array(
-    'teaser' => 1,
-    'links' => 0,
-    'comments' => 0,
-  ));
-  $handler = $view->new_display('page', 'Page', 'page_1');
-  $handler->override_option('path', 'node/%/log');
-  $handler->override_option('menu', array(
-    'type' => 'tab',
-    'title' => 'CO Log',
-    'weight' => '4',
-    'name' => 'navigation',
-  ));
-  $handler->override_option('tab_options', array(
-    'type' => 'none',
-    'title' => '',
-    'weight' => 0,
-  ));
-  $views[$view->name] = $view;
-
-  $view = new view;
   $view->name = 'og_roster';
   $view->description = 'A roster of characters on a given Group.';
   $view->tag = 'webb';
@@ -942,40 +549,6 @@ function webb_views_default_views() {
       'id' => 'field_species_value',
       'table' => 'node_data_field_species',
       'field' => 'field_species_value',
-      'relationship' => 'none',
-    ),
-    'field_character_height_value' => array(
-      'label' => 'Height',
-      'link_to_node' => 0,
-      'label_type' => 'widget',
-      'format' => 'default',
-      'multiple' => array(
-        'group' => TRUE,
-        'multiple_number' => '',
-        'multiple_from' => '',
-        'multiple_reversed' => FALSE,
-      ),
-      'exclude' => 0,
-      'id' => 'field_character_height_value',
-      'table' => 'node_data_field_character_height',
-      'field' => 'field_character_height_value',
-      'relationship' => 'none',
-    ),
-    'field_weight_value' => array(
-      'label' => 'Weight',
-      'link_to_node' => 0,
-      'label_type' => 'widget',
-      'format' => 'default',
-      'multiple' => array(
-        'group' => TRUE,
-        'multiple_number' => '',
-        'multiple_from' => '',
-        'multiple_reversed' => FALSE,
-      ),
-      'exclude' => 0,
-      'id' => 'field_weight_value',
-      'table' => 'node_data_field_weight',
-      'field' => 'field_weight_value',
       'relationship' => 'none',
     ),
     'name' => array(
@@ -1392,6 +965,584 @@ function webb_views_default_views() {
   $views[$view->name] = $view;
 
   $view = new view;
+  $view->name = 'og_subscribers';
+  $view->description = 'A list of subscribers on a given OG.';
+  $view->tag = 'webb';
+  $view->view_php = '';
+  $view->base_table = 'users';
+  $view->is_cacheable = FALSE;
+  $view->api_version = 2;
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+  $handler = $view->new_display('default', 'Defaults', 'default');
+  $handler->override_option('fields', array(
+    'name' => array(
+      'id' => 'name',
+      'table' => 'users',
+      'field' => 'name',
+    ),
+    'is_admin' => array(
+      'label' => 'Admin',
+      'exclude' => 0,
+      'id' => 'is_admin',
+      'table' => 'og_uid',
+      'field' => 'is_admin',
+      'relationship' => 'none',
+    ),
+    'login' => array(
+      'label' => 'Last login',
+      'date_format' => 'time ago',
+      'custom_date_format' => '',
+      'exclude' => 0,
+      'id' => 'login',
+      'table' => 'users',
+      'field' => 'login',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('sorts', array(
+    'is_admin' => array(
+      'order' => 'DESC',
+      'id' => 'is_admin',
+      'table' => 'og_uid',
+      'field' => 'is_admin',
+      'relationship' => 'none',
+    ),
+    'name' => array(
+      'order' => 'ASC',
+      'id' => 'name',
+      'table' => 'users',
+      'field' => 'name',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('arguments', array(
+    'nid' => array(
+      'default_action' => 'default',
+      'style_plugin' => 'default_summary',
+      'style_options' => array(),
+      'wildcard' => 'all',
+      'wildcard_substitution' => 'All',
+      'title' => '',
+      'default_argument_type' => 'node',
+      'default_argument' => '',
+      'validate_type' => 'none',
+      'validate_fail' => 'not found',
+      'break_phrase' => 0,
+      'not' => 0,
+      'id' => 'nid',
+      'table' => 'og_uid',
+      'field' => 'nid',
+      'relationship' => 'none',
+      'default_options_div_prefix' => '',
+      'default_argument_user' => 0,
+      'default_argument_fixed' => '',
+      'default_argument_php' => '',
+      'validate_argument_node_type' => array(
+        'webform' => 0,
+        'character' => 0,
+        'board' => 0,
+        'fleet' => 0,
+        'logentry' => 0,
+        'news' => 0,
+        'note' => 0,
+        'page' => 0,
+        'position' => 0,
+        'rank' => 0,
+      ),
+      'validate_argument_node_access' => 0,
+      'validate_argument_nid_type' => 'nid',
+      'validate_argument_vocabulary' => array(
+        '10' => 0,
+        '11' => 0,
+        '12' => 0,
+        '15' => 0,
+        '13' => 0,
+        '14' => 0,
+      ),
+      'validate_argument_type' => 'tid',
+      'validate_argument_is_member' => 0,
+      'validate_argument_php' => '',
+      'override' => array(
+        'button' => 'Override',
+      ),
+    ),
+  ));
+  $handler->override_option('filters', array(
+    'status' => array(
+      'operator' => '=',
+      'value' => '1',
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'status',
+      'table' => 'users',
+      'field' => 'status',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('access', array(
+    'type' => 'none',
+  ));
+  $handler->override_option('items_per_page', 50);
+  $handler->override_option('use_pager', '1');
+  $handler->override_option('style_plugin', 'bulk');
+  $handler->override_option('style_options', array(
+    'grouping' => '',
+    'override' => 1,
+    'sticky' => 1,
+    'order' => 'asc',
+    'columns' => array(
+      'name' => 'name',
+      'is_admin' => 'is_admin',
+      'login' => 'login',
+    ),
+    'info' => array(
+      'name' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+      'is_admin' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+      'login' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+    ),
+    'default' => '-1',
+    'execution_type' => '2',
+    'display_type' => '0',
+    'skip_confirmation' => 0,
+    'display_result' => 1,
+    'selected_operations' => array(
+      '4d6bb5d91d988f6e1575a5fb96ff9f23' => '4d6bb5d91d988f6e1575a5fb96ff9f23',
+      'adde2fa9520d724f8f100bae202dfdeb' => 'adde2fa9520d724f8f100bae202dfdeb',
+      '35d389062d295b91c958b2b2eb68a4a7' => '35d389062d295b91c958b2b2eb68a4a7',
+      '126df8a04e3f32d42ce1ffd3bb430097' => '126df8a04e3f32d42ce1ffd3bb430097',
+      'fdeff1ebc27598a915af7cbe1360fea1' => 0,
+      'db4e570c092ffef012179fe5713e6c27' => 0,
+      'e52c7d4b8ccc8fd7b8f7a59ca8e0e013' => 0,
+      'e620912b6bfc590784848cf00c05b42f' => 0,
+      'ffd4dd7c59102655f73303c040b08914' => 0,
+      '686f4a5ca4cc828a25e63e200104f2f2' => 0,
+      '2ee09d423aa91460cebfc6453deeab42' => 0,
+      '4e54a2646a6ab092340fd2eb6a600453' => 0,
+      'a8cbec3ba69c8a6ba95ad7e2e4f45e67' => 0,
+    ),
+  ));
+  $handler = $view->new_display('page', 'Page', 'page_1');
+  $handler->override_option('path', 'node/%/edit/subscribers');
+  $handler->override_option('menu', array(
+    'type' => 'tab',
+    'title' => 'Subscribers',
+    'weight' => '0',
+    'name' => 'navigation',
+  ));
+  $handler->override_option('tab_options', array(
+    'type' => 'none',
+    'title' => '',
+    'weight' => 0,
+  ));
+  $views[$view->name] = $view;
+
+  $view = new view;
+  $view->name = 'og_notes';
+  $view->description = 'A list of notes on a given OG.';
+  $view->tag = 'webb';
+  $view->view_php = '';
+  $view->base_table = 'node';
+  $view->is_cacheable = FALSE;
+  $view->api_version = 2;
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+  $handler = $view->new_display('default', 'Notes', 'default');
+  $handler->override_option('fields', array(
+    'title' => array(
+      'label' => '',
+      'link_to_node' => 1,
+      'exclude' => 0,
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+    ),
+    'timestamp' => array(
+      'label' => '',
+      'link_to_node' => 0,
+      'comments' => 0,
+      'exclude' => 0,
+      'id' => 'timestamp',
+      'table' => 'history_user',
+      'field' => 'timestamp',
+      'relationship' => 'none',
+    ),
+    'field_character_name_value' => array(
+      'label' => '',
+      'link_to_node' => 0,
+      'label_type' => 'none',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_character_name_value',
+      'table' => 'node_data_field_character_name',
+      'field' => 'field_character_name_value',
+      'relationship' => 'none',
+    ),
+    'created' => array(
+      'label' => '',
+      'date_format' => 'medium',
+      'custom_date_format' => '',
+      'exclude' => 0,
+      'id' => 'created',
+      'table' => 'node',
+      'field' => 'created',
+      'relationship' => 'none',
+      'override' => array(
+        'button' => 'Override',
+      ),
+    ),
+    'field_parent_note_nid' => array(
+      'label' => '',
+      'link_to_node' => 0,
+      'label_type' => 'none',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 1,
+      'id' => 'field_parent_note_nid',
+      'table' => 'node_data_field_parent_note',
+      'field' => 'field_parent_note_nid',
+      'relationship' => 'none',
+    ),
+    'nid' => array(
+      'label' => '',
+      'link_to_node' => 0,
+      'exclude' => 1,
+      'id' => 'nid',
+      'table' => 'node',
+      'field' => 'nid',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('arguments', array(
+    'group_nid' => array(
+      'default_action' => 'default',
+      'style_plugin' => 'default_summary',
+      'style_options' => array(),
+      'wildcard' => 'all',
+      'wildcard_substitution' => 'All',
+      'title' => 'Notes on %1',
+      'default_argument_type' => 'node',
+      'default_argument' => '',
+      'validate_type' => 'og_group_types',
+      'validate_fail' => 'not found',
+      'break_phrase' => 0,
+      'not' => 0,
+      'id' => 'group_nid',
+      'table' => 'og_ancestry',
+      'field' => 'group_nid',
+      'relationship' => 'none',
+      'default_options_div_prefix' => '',
+      'default_argument_user' => 0,
+      'default_argument_fixed' => '',
+      'default_argument_php' => '',
+      'validate_argument_node_type' => array(
+        'webform' => 0,
+        'character' => 0,
+        'board' => 0,
+        'fleet' => 0,
+        'logentry' => 0,
+        'news' => 0,
+        'note' => 0,
+        'page' => 0,
+      ),
+      'validate_argument_node_access' => 0,
+      'validate_argument_nid_type' => 'nid',
+      'validate_argument_vocabulary' => array(
+        '10' => 0,
+        '11' => 0,
+        '12' => 0,
+        '6' => 0,
+        '13' => 0,
+        '1' => 0,
+      ),
+      'validate_argument_type' => 'tid',
+      'validate_argument_is_member' => 0,
+      'validate_argument_php' => '',
+      'override' => array(
+        'button' => 'Override',
+      ),
+    ),
+  ));
+  $handler->override_option('filters', array(
+    'created' => array(
+      'operator' => '>=',
+      'value' => array(
+        'type' => 'offset',
+        'value' => '- 6 weeks',
+        'min' => '',
+        'max' => '',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'created',
+      'table' => 'node',
+      'field' => 'created',
+      'relationship' => 'none',
+      'override' => array(
+        'button' => 'Override',
+      ),
+    ),
+    'status_extra' => array(
+      'operator' => '=',
+      'value' => '',
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'status_extra',
+      'table' => 'node',
+      'field' => 'status_extra',
+      'relationship' => 'none',
+    ),
+    'type' => array(
+      'operator' => 'in',
+      'value' => array(
+        'note' => 'note',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'type',
+      'table' => 'node',
+      'field' => 'type',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('access', array(
+    'type' => 'perm',
+    'perm' => 'read notes',
+  ));
+  $handler->override_option('items_per_page', 20);
+  $handler->override_option('style_plugin', 'tree');
+  $handler->override_option('style_options', array(
+    'type' => 'ul',
+    'main_field' => 'nid',
+    'parent_field' => 'field_parent_note_nid',
+  ));
+  $handler->override_option('row_options', array(
+    'inline' => array(
+      'title' => 'title',
+      'timestamp' => 'timestamp',
+    ),
+    'separator' => '',
+  ));
+  $handler = $view->new_display('page', 'Page', 'page_1');
+  $handler->override_option('path', 'node/%/notes');
+  $handler->override_option('menu', array(
+    'type' => 'tab',
+    'title' => 'Notes',
+    'weight' => '2',
+    'name' => 'navigation',
+  ));
+  $handler->override_option('tab_options', array(
+    'type' => 'none',
+    'title' => '',
+    'weight' => 0,
+  ));
+  $views[$view->name] = $view;
+
+  $view = new view;
+  $view->name = 'og_colog';
+  $view->description = 'A list of Log entries on a given OG.';
+  $view->tag = 'webb';
+  $view->view_php = '';
+  $view->base_table = 'node';
+  $view->is_cacheable = FALSE;
+  $view->api_version = 2;
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+  $handler = $view->new_display('default', 'CO Log', 'default');
+  $handler->override_option('fields', array(
+    'title' => array(
+      'label' => '',
+      'link_to_node' => 1,
+      'exclude' => 0,
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+    ),
+    'timestamp' => array(
+      'label' => '',
+      'link_to_node' => 0,
+      'comments' => 0,
+      'exclude' => 0,
+      'id' => 'timestamp',
+      'table' => 'history_user',
+      'field' => 'timestamp',
+      'relationship' => 'none',
+    ),
+    'created' => array(
+      'label' => 'Post date',
+      'date_format' => 'medium',
+      'custom_date_format' => '',
+      'exclude' => 0,
+      'id' => 'created',
+      'table' => 'node',
+      'field' => 'created',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('sorts', array(
+    'created' => array(
+      'order' => 'DESC',
+      'granularity' => 'second',
+      'id' => 'created',
+      'table' => 'node',
+      'field' => 'created',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('arguments', array(
+    'group_nid' => array(
+      'default_action' => 'default',
+      'style_plugin' => 'default_summary',
+      'style_options' => array(),
+      'wildcard' => 'all',
+      'wildcard_substitution' => 'All',
+      'title' => 'Notes on %1',
+      'default_argument_type' => 'node',
+      'default_argument' => '',
+      'validate_type' => 'og_group_types',
+      'validate_fail' => 'not found',
+      'break_phrase' => 0,
+      'not' => 0,
+      'id' => 'group_nid',
+      'table' => 'og_ancestry',
+      'field' => 'group_nid',
+      'relationship' => 'none',
+      'default_options_div_prefix' => '',
+      'default_argument_user' => 0,
+      'default_argument_fixed' => '',
+      'default_argument_php' => '',
+      'validate_argument_node_type' => array(
+        'webform' => 0,
+        'character' => 0,
+        'board' => 0,
+        'fleet' => 0,
+        'logentry' => 0,
+        'news' => 0,
+        'note' => 0,
+        'page' => 0,
+        'position' => 0,
+        'rank' => 0,
+      ),
+      'validate_argument_node_access' => 0,
+      'validate_argument_nid_type' => 'nid',
+      'validate_argument_vocabulary' => array(
+        '10' => 0,
+        '11' => 0,
+        '12' => 0,
+        '15' => 0,
+        '13' => 0,
+        '14' => 0,
+      ),
+      'validate_argument_type' => 'tid',
+      'validate_argument_is_member' => 0,
+      'validate_argument_php' => '',
+      'override' => array(
+        'button' => 'Override',
+      ),
+    ),
+  ));
+  $handler->override_option('filters', array(
+    'status_extra' => array(
+      'operator' => '=',
+      'value' => '',
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'status_extra',
+      'table' => 'node',
+      'field' => 'status_extra',
+      'relationship' => 'none',
+    ),
+    'type' => array(
+      'operator' => 'in',
+      'value' => array(
+        'logentry' => 'logentry',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'type',
+      'table' => 'node',
+      'field' => 'type',
+      'relationship' => 'none',
+      'override' => array(
+        'button' => 'Override',
+      ),
+    ),
+  ));
+  $handler->override_option('access', array(
+    'type' => 'perm',
+    'perm' => 'read notes',
+  ));
+  $handler->override_option('use_ajax', TRUE);
+  $handler->override_option('use_pager', '1');
+  $handler->override_option('style_options', NULL);
+  $handler->override_option('row_plugin', 'node');
+  $handler->override_option('row_options', array(
+    'teaser' => 1,
+    'links' => 0,
+    'comments' => 0,
+  ));
+  $handler = $view->new_display('page', 'Page', 'page_1');
+  $handler->override_option('path', 'node/%/log');
+  $handler->override_option('menu', array(
+    'type' => 'tab',
+    'title' => 'CO Log',
+    'weight' => '4',
+    'name' => 'navigation',
+  ));
+  $handler->override_option('tab_options', array(
+    'type' => 'none',
+    'title' => '',
+    'weight' => 0,
+  ));
+  $views[$view->name] = $view;
+
+  $view = new view;
   $view->name = 'og_supported_positions';
   $view->description = 'A list of positions supported by a given OG.';
   $view->tag = 'webb';
@@ -1587,4 +1738,3 @@ function webb_views_default_views() {
 
   return $views;
 }
-

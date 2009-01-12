@@ -164,7 +164,7 @@ function webb_update_5007() {
 function webb_update_6001() {
   module_enable(array(
     // New modules.
-    'auto_nodetitle', 'helpers_database', 'advanced_help',
+    'auto_nodetitle', 'helpers_database', 'advanced_help', 'update',
 
     // Legal seemed to turn itself off somewhere, so just to be safe we'll force
     // it to enable again.

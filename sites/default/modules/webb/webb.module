@@ -305,50 +305,6 @@ function webb_menu() {
       // Only OG node types get these extra menu items
       if (og_is_group_type($node->type)) {
 
-        $items["node/{$node->nid}/add"] = array(
-          'title' => 'Add',
-          'page callback' => 'system_admin_menu_block_page',
-          //'page arguments' => array($node->nid),
-          'access arguments' => _webb_is_og_admin($node->nid),
-          'type' => MENU_CALLBACK,
-        );
-        $items["node/{$node->nid}/admin"] = array(
-          'title' => 'Admin',
-          'page callback' => 'webb_admin_menu_block_page',
-          //'page arguments' => array($node->nid),
-          'access arguments' => _webb_is_og_admin($node->nid),
-          'type' => MENU_LOCAL_TASK ,
-        );
-        $items["node/{$node->nid}/admin/characters"] = array(
-          'title' => 'Character list',
-          'page callback' => 'views_view_page',
-          'page arguments' => array('og_characters_complete', $node->nid),
-          'access arguments' => _webb_is_og_admin($node->nid),
-          'type' => MENU_SUGGESTED_ITEM,
-          'description' => 'A complete list of all characters on this board, rostered and not.',
-        );
-        // Allow admins to create OG-specific node types.
-        foreach (node_get_types() as $type) {
-          if (function_exists($type->module .'_form') && !og_is_omitted_type($type->type) && !og_is_group_type($type->type)) {
-            $name = t('Create new @type', array('@type'=> drupal_ucfirst($type->name)));
-            $type_url_str = str_replace('_', '-', $type->type);
-            $items["node/{$node->nid}/admin/". $type_url_str] = array(
-              'page callback' => 'node_add',
-              'page arguments' => $type->type,
-              'title' => $name,
-              'description' => $type->description,
-              'access arguments' => _webb_is_og_admin($node->nid),
-              'type' => MENU_SUGGESTED_ITEM,  // We don't want this shown in the menu block, so this effectively hides it
-            );
-            if (arg(2) == 'admin' && arg(3) == $type_url_str) {
-              // This is bad.  Never do this.
-              // OG expects the group to be specified in the GET query, but we can't put
-              // a GET query into a path directly.  So we convert it back.
-              $_GET['gids'] = array(arg(1));
-            }
-          }
-        }
-
         // Allow direct access to OG functionality without using the moronic sidebar block.
         $items["node/{$node->nid}/admin/subscribers"] = array(
           'page callback' => 'og_menu_check',
@@ -404,41 +360,6 @@ function webb_menu_access_supports_posting($node) {
  */
 function webb_menu_access_allow_posting($board, $type) {
   return webb_is_post_type($board->type) && node_access('create', $type);
-}
-
-/**
- * Determine if the specified type is an OG node that supports the posting system.
- */
-function webb_is_post_type($type) {
-  return in_array($type, variable_get('webb_og_posting_types', array()));
-}
-
-
-/**
- * This pair of functions is identical to the system module versions,
- * except that it shows all menu items instead of just those that are
- * VISIBLE_IN_TREE.
- */
-function webb_admin_menu_block_page() {
-  $menu = menu_get_item(NULL, $_GET['q']);
-  $content = webb_admin_menu_block($menu);
-
-  $output = theme('admin_block_content', $content);
-  return $output;
-}
-
-function webb_admin_menu_block($block) {
-  $content = array();
-  if (is_array($block['children'])) {
-    usort($block['children'], '_menu_sort');
-    foreach ($block['children'] as $mid) {
-      $item = menu_get_item($mid);
-      if (($item['type']) && _menu_item_is_accessible($mid)) {
-        $content[] = $item;
-      }
-    }
-  }
-  return $content;
 }
 
 /* ------------------- Links -------------------*/

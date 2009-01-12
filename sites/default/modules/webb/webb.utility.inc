@@ -27,6 +27,13 @@ function webb_set_og_context() {
 }
 
 /**
+ * Determine if the specified type is an OG node that supports the posting system.
+ */
+function webb_is_post_type($type) {
+  return in_array($type, variable_get('webb_og_posting_types', array()));
+}
+
+/**
  * Utility function to load a cck field instance object.
  *
  * Why this doesn't exist in CCK, I don't know...

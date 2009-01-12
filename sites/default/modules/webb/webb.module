@@ -196,7 +196,7 @@ function _webb_nodeapi_board(&$node, $op, $a3 = NULL, $a4 = NULL) {
 /* ------------------- Menu -------------------*/
 
 function og_webb_menu_alter(&$items) {
-  // We're providing our own way to create new bnote nodes,
+  // We're providing our own way to create new note nodes,
   // so get rid of the default one.
   unset($items['node/add/note']);
 }

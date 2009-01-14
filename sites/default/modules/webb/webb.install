@@ -502,25 +502,25 @@ function webb_update_6004() {
   // Now, finally remove the old vocabularly as we no longer need it.
   taxonomy_del_vocabulary($old_position_vid);
 
-  /*
-  // Migrate the existing rank info from cck_taxonomy to the noderef field.  Yay, hacky!
-  foreach ($conversion_map as $tid => $nid) {
-    db_query('UPDATE {content_type_character} SET field_rankref_nid = %d WHERE field_rank_tid = %d', $nid, $tid);
-  }
-
-  // Remove the now defunct cck_taxonomy field for ranks.  Because the managing
-  // module is not used anymore, we can't go through CCK for this.  Instead we
-  // futz with CCK's tables manually.  Yeah, we're totally being rebels about it.
-  db_drop_field($ret, 'content_type_character', 'field_rank_tid');
-  db_query("DELETE FROM {content_node_field_instance} WHERE field_name = '%s'", 'field_rank');
-  db_query("DELETE FROM {content_node_field} WHERE field_name = '%s'", 'field_rank');
-  content_clear_type_cache();
-
-  // Now, finally remove the old vocabularly as we no longer need it.
-  taxonomy_del_vocabulary($old_rank_vid);
-
-  */
-
   return $ret;
 }
 
+/**
+ * Set up OG configuration changes.
+ */
+function webb_update_6005() {
+  // Set the OG home page view to our "do nothing" view.
+  variable_set('og_home_page_view', 'og_ghp_null');
+}
+
+/**
+ * Remove the old lookup tables for what boards supported what ranks/positions.
+ */
+function webb_update_6006() {
+  $ret = array();
+
+  db_drop_table($ret, 'webb_board_positions');
+  db_drop_table($ret, 'webb_board_ranks');
+
+  return $ret;
+}

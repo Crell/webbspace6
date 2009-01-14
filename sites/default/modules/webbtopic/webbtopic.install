@@ -109,10 +109,10 @@ function webbtopic_update_6002() {
  * Remove tables that we no longer use.
  */
 function webbtopic_update_6003() {
-    $ret = array();
+  $ret = array();
 
-    db_drop_table($ret, 'webbtopic_topic');
-    db_drop_table($ret, 'webbtopic_nodetypes');
+  db_drop_table($ret, 'webbtopic_topic');
+  db_drop_table($ret, 'webbtopic_nodetypes');
 
-    return $ret;
+  return $ret;
 }

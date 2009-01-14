@@ -135,56 +135,6 @@ function _webb_nodeapi_character(&$node, $op, $a3 = NULL, $a4 = NULL) {
         }
       }
       break;
-    case 'view':
-      if ($a4) {  // in $op=view, $a4 is the $page boolean.
-        /*$node->content['notes'] = array(
-          '#value' => component_get_view('character_notes', $node->nid),
-          '#weight' => 10,
-        );*/
-      }
-
-  }
-}
-
-/**
- * Helper function for hook_nodeapi().
- */
-function _webb_nodeapi_board(&$node, $op, $a3 = NULL, $a4 = NULL) {
-
-  switch ($op) {
-    case update:
-      $positions = array_keys(array_filter($node->positions));
-      $ranks = array_keys(array_filter($node->ranks));
-      // When updating, first delete old data.  We insert the new records in the insert
-      // block below.  Note the lack of a break statement here.
-      if ($positions) {
-        db_query("DELETE FROM {webb_board_positions} WHERE nid=%d", $node->nid);
-      }
-      if ($ranks) {
-        db_query("DELETE FROM {webb_board_ranks} WHERE nid=%d", $node->nid);
-      }
-    case insert:
-      // array_filter() removes all false/0 values, so what we get back is just what was checked.  Nifty.
-      // We have to recalculate these here, in case we're adding and not updating.
-      $positions = array_keys(array_filter($node->positions));
-      $ranks = array_keys(array_filter($node->ranks));
-      if ($positions) {
-        foreach ($positions as $tid) {
-          db_insert('webb_board_positions', array(
-            'nid' => $node->nid,
-            'tid' => $tid,
-          ));
-        }
-      }
-      if ($ranks) {
-        foreach ($ranks as $tid) {
-          db_insert('webb_board_ranks', array(
-            'nid' => $node->nid,
-            'tid' => $tid,
-          ));
-        }
-      }
-      break;
   }
 }
 

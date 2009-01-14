@@ -1,0 +1,43 @@
+<?php
+// $Id: css.install,v 1.2 2008/12/26 15:20:36 fax8 Exp $
+
+/**
+ * Database table schema definition.
+ */
+function css_schema() {
+  $schema['css'] = array(
+      'description' => t('CSS rules added to individual nodes.'),
+      'fields' => array(
+        'nid' => array(
+          'description' => t('The {node}.nid for the CSS.'),
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 0
+        ),
+        'css' => array(
+          'description' => t('The primary identifier for the relation.'),
+          'type' => 'text',
+          'not null' => FALSE,
+        ),
+      ),
+      'primary key' => array('nid'),
+  );
+  return $schema;
+}
+
+
+/**
+ * Implementation of hook_install().
+ */
+function css_install() {
+  drupal_install_schema('css');
+}
+
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function css_uninstall() {
+  drupal_uninstall_schema('css');
+}

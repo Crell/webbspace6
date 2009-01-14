@@ -1,0 +1,13 @@
+// $Id: INSTALL.txt,v 1.4 2008/12/26 15:20:36 fax8 Exp $
+INSTALL INSTRUCTIONS FOR CSS MODULE
+----
+
+- Copy the css module folder into the sites/all/modules directory or sites/example.com/modules directory. 
+- Login as site administrator
+- Activate the css module as usual (Administer > Site building > Modules)
+- Activate the css editing for the node types you need (Administer > Content management > Content types)
+- Enable the "create css for nodes" permissions *only* for the administrator groups (trusted users, see below)
+
+IMPORTANT: note that the CSS editing permissions should be given only to trusted users (administrators). Malicious users which have this permission might break your site design and also introduce security issues (XSS).
+
+

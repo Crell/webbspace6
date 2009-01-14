@@ -1,0 +1,222 @@
+<?php
+// $Id: css.module,v 1.4.2.1 2008/12/26 16:38:32 fax8 Exp $
+
+/**
+ * @file
+ * Adds the support for css on node creation.
+ * We add the ability for each node to have an attached css
+ *
+ * @author Fabio Varesano <fvaresano at yahoo dot it>
+ * @updated to Drupal 5 by Christopher Skauss <christopher skauss at gmail dot com>
+ * @modified drupal 5 Version by Whispero
+ * @updated for Drupal 6 by Joshua Chan <josh at joshuachan dot ca>
+ *
+ * To store this extra information, we need an auxiliary database table.
+ *
+ * Database definition:
+ * @code
+   CREATE TABLE css (
+      nid int(10) unsigned NOT NULL default '0',
+      css text NULL default NULL,
+      PRIMARY KEY (nid)
+    )
+ * @endcode
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function css_help($section) {
+  switch ($section) {
+    case 'admin/modules#description':
+      // This description is shown in the listing at admin/modules.
+      return t('A module which add customizable CSS support.');
+  }
+}
+
+/**
+ * Implementation of hook_menu()
+ */
+function css_menu() {
+  $items = array();
+  // defines the callback for getting the css file. we use
+  // css/get as path instead of only css to avoid that in some
+  // installs users have yet a directory called css
+  $items['css/get'] = array(
+    'title' => 'css',
+    'path' => 'css/get', 
+    'page callback' => 'css_get',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_perm()
+ */
+function css_perm() {
+  return array('create css for nodes');
+} 
+
+/**
+ * Implemenation of hook_form_alter()
+ */ 
+function css_form_alter(&$form, $form_state, $form_id) {
+  //Add a text area to the form where users will put their csses rules.
+  if (user_access('create css for nodes') && variable_get('css__'.$form['#node']->type, FALSE)) {
+    if (isset($form['type']) && $form['type']['#value'] .'_node_form' == $form_id) {
+      $node = $form['#node'];
+      // create a fieldset so we can collapse it
+      $form['css_fieldset'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('CSS Rules'),
+        '#collapsible' => TRUE,
+        '#collapsed' => empty($node->css_css), // show uncollapsed if we have some css rule set
+      );
+      $form['css_fieldset']['css_css'] = array(
+          '#type' => 'textarea',
+          '#title' => t('CSS Rules'),
+          '#default_value' => $node->css_css,
+          '#cols' => 60,
+          '#rows' => 10,
+          '#description' => t('Insert here the css rules for this node. You can use css defined for other nodes using <em>@import "?q=css/get/x";</em> where x is the identification number of the node which contains the css you want to use.'),
+          '#attributes' => NULL,
+          '#required' => FALSE,
+      );
+    }
+  }
+  // Create a settings on content types configuration page
+  // which enable to activate/deactivate css editing for a node type	
+  if (isset($form['#node_type']) && 'node_type_form' == $form_id) {
+    $form['workflow']['css_'.$node->type] = array(
+          '#type' => 'checkbox',
+          '#title' => t('Enable CSS Editing.'),
+          '#return_value' => 1,
+          '#default_value' => variable_get('css__'.$form['#node_type']->type, FALSE),
+    );
+  }
+} 
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function css_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+  static $prev_op = NULL;
+
+  if (variable_get('css__'. $node->type, FALSE)) { // check that CSS editing is enabled for the given node type
+    switch ($op) {
+
+      // Controls for valid input data
+      case 'validate':
+        // Check for potentially malicious tags
+        $pattern = '~<\s*\/?\s*(style|script|meta)\s*.*?>~i';
+        if (preg_match($pattern, $node->css_css)) {
+          form_set_error('css_css', t('Please do not include any tags.'));
+        }
+        break;
+
+      // Now that the form has been properly completed, it is time to commit the new
+      // data to the database.
+      case 'insert':
+        if (!empty($node->css_css)) {
+          db_query("INSERT INTO {css} (nid, css) VALUES (%d, '%s')", $node->nid, $node->css_css);
+        }
+        break;
+
+      // If the form was called to edit an existing node rather than create a new
+      // one, this operation gets called instead. We use a DELETE then INSERT rather
+      // than an UPDATE just in case the rating didn't exist for some reason.
+      case 'update':
+        db_query("DELETE FROM {css} WHERE nid = %d", $node->nid);
+        if (!empty($node->css_css)) {
+          db_query("INSERT INTO {css} (nid, css) VALUES (%d, '%s')", $node->nid, $node->css_css);
+        }
+        break;
+
+      // If the node is being deleted, we need this opportunity to clean up after
+      // ourselves.
+      case 'delete':
+        db_query('DELETE FROM {css} WHERE nid = %d', $node->nid);
+        break;
+
+      // Now we need to take care of loading one of the extended nodes from the
+      // database. An array containing our extra field needs to be returned.
+      case 'load':
+        $object = db_fetch_object(db_query('SELECT css FROM {css} WHERE nid = %d', $node->nid));
+        return array('css_css' => $object->css);
+        break;
+
+      // Using nodeapi('view') is more appropriate than using a filter here, because
+      // filters transform user-supplied content, whereas we are extending it with
+      // additional information.
+      case 'view':
+        if ($prev_op == 'validate') {
+          // 'validate' immediately followed by 'view' means this is a preview
+          if ($node->css_css) {
+            $css = '<style type="text/css" media="all"> '.
+                   css_sanitize($node->css_css, 'preview').
+                   ' </style>';
+            drupal_set_html_head($css, 'preview');
+          }
+        } else {
+          // Drupal 6 seems to check for the physical existence of CSS files
+          // before allowing them to be added. We have to include the virtual
+          // CSS file manually since it does not really exist.
+          if (!empty($node->css_css)) {
+            $link = url('css/get/'.$node->nid);
+            drupal_add_link(array(
+              'type' => 'text/css',
+              'rel' => 'stylesheet',
+              'media' => 'all',
+              'href' => $link,
+            ));
+          }
+        }
+        break;
+    }
+
+    $prev_op = $op; // used to determine Preview state
+  }
+}
+
+/**
+ * Return the css attached to the node.
+ * Last-Modified header is set to let browsers cache the css.
+ */
+function css_get($nid = 0) {
+  if (is_numeric($nid) && $nid > 0) {
+    $object = db_fetch_object(db_query('SELECT css, changed FROM {css} c, {node} n WHERE n.nid = %d AND n.nid = c.nid', $nid));
+    if ($object) {
+      $date = gmdate('D, d M Y H:i:s', $object->changed) .' GMT';
+      header("Last-Modified: $date");
+      drupal_set_header('Content-Type: text/css; charset=utf-8');
+      print(css_sanitize($object->css));
+    }
+  }
+}
+
+/**
+ * Remove harmful code from CSS.
+ */
+function css_sanitize($css, $type = 'view') {
+  switch ($type) {
+    case 'view':
+      // Are there any security vulnerabilites from external CSS files?
+      break;
+
+    case 'preview':
+      // Catch potentially malicious code
+      $patterns = array(
+        '~<\s*(/?)\s*(style|script|meta)\s*>~i',
+      );
+      $css = preg_replace($patterns, '<$1FILTERED $2>', $css);
+      break;
+
+    default:
+      $css = '';
+      break;
+  }
+  
+  return $css;
+}

@@ -1,0 +1,11 @@
+; $Id: css.info,v 1.3 2008/12/26 15:20:36 fax8 Exp $
+name = CSS
+description = Permits adding CSS rules to node contents.
+package = Content
+core = "6.x"
+; Information added by drupal.org packaging script on 2008-12-26
+version = "6.x-1.0-rc1"
+core = "6.x"
+project = "css"
+datestamp = "1230309917"
+

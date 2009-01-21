@@ -105,12 +105,12 @@
 /** content **/
   #content
   {
-  	
   }
 
   #content-inner
   {
   	background-color: #000;
+  	border: 1px solid #999999;
   }
 
   #mission /* The mission statement of the site (displayed on homepage) */

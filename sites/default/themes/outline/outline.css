@@ -1,0 +1,26 @@
+#sidebar-left-inner a {
+  color: #F0C388;
+}
+
+#sidebar-left-inner .block .content {
+  border: 1px solid #C49A34;
+}
+
+#sidebar-left-inner .block h2.title {
+  color: #c49a34;
+  font-size: 14px;
+  font-weight: bold;
+  width: 90%;
+  line-height: normal;
+  padding-bottom: 6px;
+}
+
+h1.title {
+  padding-top: 0;
+  padding-bottom: 0;
+  color: #F0F388;
+  font-size: 24px;
+  line-height: 28px;
+  font-weight: bold;
+  font-family: Georgia, "Times New Roman", Times, serif;
+}

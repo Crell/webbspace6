@@ -1,0 +1,14 @@
+
+/* These rules color the quoted portion of notes to make them stand out. */
+span.webb-quoted {
+  font-style: italic;
+  color: #c49a34;
+}
+
+span.webb-quoted-1 {
+  color: #f0f388;
+}
+
+span.webb-quoted-2 {
+  color: #f0c388;
+}

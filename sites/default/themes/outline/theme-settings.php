@@ -13,7 +13,7 @@ include_once './' . drupal_get_path('theme', 'zen') . '/theme-settings.php';
  * @return
  *   A form array.
  */
-function stf_settings($saved_settings) {
+function outline_settings($saved_settings) {
 
   // Get the default values from the .info file.
   $defaults = zen_theme_get_default_settings('stf');

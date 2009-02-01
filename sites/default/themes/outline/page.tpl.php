@@ -125,6 +125,12 @@
         </div> <!-- /#logo-title -->
       <?php endif; ?>
 
+      <?php if ($primary_links): ?>
+        <div id="primary">
+          <?php print theme('links', $primary_links); ?>
+        </div> <!-- /#primary -->
+      <?php endif; ?>
+
       <?php if ($header): ?>
         <div id="header-blocks" class="region region-header">
           <?php print $header; ?>
@@ -146,7 +152,7 @@
             <?php print $content_top; ?>
           </div> <!-- /#content-top -->
         <?php endif; ?>
-
+        <div class="tabs"><?php print $tabs; ?></div>
         <div id="content-wrapper">
 	        <?php if ($breadcrumb or $title or $tabs or $help or $messages): ?>
 	          <div id="content-header">
@@ -155,9 +161,7 @@
 	              <h1 class="title"><?php print $title; ?></h1>
 	            <?php endif; ?>
 	            <?php print $messages; ?>
-	            <?php if ($tabs): ?>
-	              <div class="tabs"><?php print $tabs; ?></div>
-	            <?php endif; ?>
+
 	            <?php print $help; ?>
 	          </div> <!-- /#content-header -->
 	        <?php endif; ?>
@@ -188,12 +192,6 @@
             <div id="search-box">
               <?php print $search_box; ?>
             </div> <!-- /#search-box -->
-          <?php endif; ?>
-
-          <?php if ($primary_links): ?>
-            <div id="primary">
-              <?php print theme('links', $primary_links); ?>
-            </div> <!-- /#primary -->
           <?php endif; ?>
 
           <?php if ($secondary_links): ?>

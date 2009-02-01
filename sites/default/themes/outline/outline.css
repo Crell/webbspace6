@@ -2,11 +2,11 @@
   color: #F0C388;
 }
 
-#sidebar-left-inner .block .content {
+.block .content {
   border: 1px solid #C49A34;
 }
 
-#sidebar-left-inner .block h2.title {
+.block h2.title {
   color: #c49a34;
   font-size: 14px;
   font-weight: bold;

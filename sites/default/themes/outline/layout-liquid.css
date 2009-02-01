@@ -144,12 +144,12 @@
   .sidebar-left #content-inner
   {
     padding-left: 200px; /* The width + left margin of #sidebar-left. */
-    padding-right: 0;
+    padding-right: 10px;
   }
 
   .sidebar-right #content-inner
   {
-    padding-left: 0;
+    padding-left: 10px;
     padding-right: 200px; /* The width + right margin of #sidebar-right. */
   }
 
@@ -235,7 +235,7 @@
 
   #sidebar-left-inner
   {
-    margin: 0 20px 0 0;
+    margin: 10px 20px 0 10px;
     padding: 0;
   }
 
@@ -252,7 +252,7 @@
   #sidebar-right-inner
   {
     margin: 0 0 0 20px;
-    padding: 0;
+    padding: 10px;
   }
 
 /** footer **/

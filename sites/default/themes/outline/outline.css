@@ -1,9 +1,14 @@
 #sidebar-left-inner a {
-  color: #F0C388;
+  color: #C09358;
+}
+
+#sidebar-left-inner a:hover {
+  color: #F0F388;
 }
 
 .block .content {
   border: 1px solid #C49A34;
+  padding: 5px;
 }
 
 .block h2.title {

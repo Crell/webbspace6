@@ -69,7 +69,7 @@
   h1#site-name, div#site-name /* The name of the website */
   {
     margin: 0;
-    font-size: 2em;
+    font-size: 3em;
     line-height: 1.3em;
   }
 

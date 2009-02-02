@@ -67,3 +67,41 @@ h1.title {
   right: -1px;
   background: url(./corner-blocks.gif) bottom right no-repeat;
 }
+
+
+/* Main body rounded corner rules */
+
+#content-wrapper-inner {
+  position: relative;
+}
+
+#content-wrapper-inner .corner {
+  display: block;
+  position: absolute;
+  width: 5px;
+  height: 5px;
+}
+
+#content-wrapper-inner .corner-top-left {
+  top: -1px;
+  left: -1px;
+  background: url(./corner-body.gif) top left no-repeat;
+}
+
+#content-wrapper-inner .corner-top-right {
+  top: -1px;
+  right: -1px;
+  background: url(./corner-body.gif) top right no-repeat;
+}
+
+#content-wrapper-inner .corner-bottom-left {
+  bottom: -1px;
+  left: -1px;
+  background: url(./corner-body.gif) bottom left no-repeat;
+}
+
+#content-wrapper-inner .corner-bottom-right {
+  bottom: -1px;
+  right: -1px;
+  background: url(./corner-body.gif) bottom right no-repeat;
+}

@@ -165,31 +165,37 @@
 
         <div id="content-wrapper">
           <div id="content-wrapper-inner">
-	        <?php if ($breadcrumb or $title or $tabs or $help or $messages): ?>
-	          <div id="content-header">
+		        <?php if ($title or $help or $messages): ?>
+		          <div id="content-header">
 
-	            <?php if ($title): ?>
-	              <h1 class="title"><?php print $title; ?></h1>
-	            <?php endif; ?>
-	            <?php print $messages; ?>
+		            <?php if ($title): ?>
+		              <h1 class="title"><?php print $title; ?></h1>
+		            <?php endif; ?>
+		            <?php print $messages; ?>
 
-	            <?php print $help; ?>
-	          </div> <!-- /#content-header -->
-	        <?php endif; ?>
+		            <?php print $help; ?>
+		          </div> <!-- /#content-header -->
+		        <?php endif; ?>
 
-	        <div id="content-area">
-	          <?php print $content; ?>
-	        </div>
+		        <div id="content-area">
+		          <?php print $content; ?>
+		        </div>
 
-	        <?php if ($feed_icons): ?>
-	          <div class="feed-icons"><?php print $feed_icons; ?></div>
-	        <?php endif; ?>
+		        <?php if ($feed_icons): ?>
+		          <div class="feed-icons"><?php print $feed_icons; ?></div>
+		        <?php endif; ?>
 
-	        <?php if ($content_bottom): ?>
-	          <div id="content-bottom" class="region region-content_bottom">
-	            <?php print $content_bottom; ?>
-	          </div> <!-- /#content-bottom -->
-	        <?php endif; ?>
+		        <?php if ($content_bottom): ?>
+		          <div id="content-bottom" class="region region-content_bottom">
+		            <?php print $content_bottom; ?>
+		          </div> <!-- /#content-bottom -->
+		        <?php endif; ?>
+
+	          <span class="corner-top-left corner"></span>
+			      <span class="corner-top-right corner"></span>
+			      <span class="corner-bottom-left corner"></span>
+			      <span class="corner-bottom-right corner"></span>
+
           </div> <!--  /#content-wrapper-inner -->
         </div> <!--  /#content-wrapper -->
 

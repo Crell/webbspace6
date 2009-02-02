@@ -646,17 +646,19 @@
 
   tr.even
   {
-    /* background-color: #eee; */ /* Drupal core uses a #eee background */
+    /*backgroud-color: transparent;*/
+    background-color: #eee; /* Drupal core uses a #eee background */
   }
 
   tr.odd
   {
+    backgroud-color: transparent;
     /* background-color: #eee; */ /* Drupal core uses a #eee background */
   }
 
   li a.active /* The active item in a Drupal menu */
   {
-    color: #000;
+    color: #F0F388;
   }
 
 

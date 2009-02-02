@@ -131,6 +131,12 @@
         </div> <!-- /#primary -->
       <?php endif; ?>
 
+      <?php if ($search_box): ?>
+        <div id="search-box">
+          <?php print $search_box; ?>
+        </div> <!-- /#search-box -->
+      <?php endif; ?>
+
       <?php if ($header): ?>
         <div id="header-blocks" class="region region-header">
           <?php print $header; ?>
@@ -189,21 +195,6 @@
 
       </div></div> <!-- /#content-inner, /#content -->
 
-      <?php if ($search_box or $primary_links or $secondary_links or $navbar): ?>
-        <div id="navbar"><div id="navbar-inner" class="region region-navbar">
-
-          <a name="navigation" id="navigation"></a>
-
-          <?php if ($search_box): ?>
-            <div id="search-box">
-              <?php print $search_box; ?>
-            </div> <!-- /#search-box -->
-          <?php endif; ?>
-
-          <?php print $navbar; ?>
-
-        </div></div> <!-- /#navbar-inner, /#navbar -->
-      <?php endif; ?>
 
       <?php if ($left): ?>
         <div id="sidebar-left"><div id="sidebar-left-inner" class="region region-left">

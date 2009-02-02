@@ -1,14 +1,19 @@
-#sidebar-left-inner a {
+.block a {
   color: #C09358;
 }
 
-#sidebar-left-inner a:hover {
+.block a:hover {
+  color: #F0F388;
+}
+
+.block li a.active {
   color: #F0F388;
 }
 
 .block .content {
   border: 1px solid #C49A34;
   padding: 10px;
+  position: relative;
 }
 
 .block h2.title {
@@ -28,4 +33,37 @@ h1.title {
   line-height: 28px;
   font-weight: bold;
   font-family: Georgia, "Times New Roman", Times, serif;
+}
+
+/* Block rounded corner rules */
+
+.block .content .corner {
+  display: block;
+  position: absolute;
+  width: 5px;
+  height: 5px;
+}
+
+.block .content .corner-top-left {
+  top: -1px;
+  left: -1px;
+  background: url(./corner-blocks.gif) top left no-repeat;
+}
+
+.block .content .corner-top-right {
+  top: -1px;
+  right: -1px;
+  background: url(./corner-blocks.gif) top right no-repeat;
+}
+
+.block .content .corner-bottom-left {
+  bottom: -1px;
+  left: -1px;
+  background: url(./corner-blocks.gif) bottom left no-repeat;
+}
+
+.block .content .corner-bottom-right {
+  bottom: -1px;
+  right: -1px;
+  background: url(./corner-blocks.gif) bottom right no-repeat;
 }

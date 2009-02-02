@@ -13,6 +13,7 @@ function webb_init() {
   module_load_include('inc', 'webb', 'webb.filters');
   module_load_include('inc', 'webb', 'webb.computed_field');
   module_load_include('inc', 'webb', 'webb.utility');
+  module_load_include('inc', 'webb', 'webb.widgets');
   //module_load_include('inc', webb, 'dbhelpers');
 }
 
@@ -849,10 +850,13 @@ function _webb_og_notes_filter_form_time_options($view) {
 
 /*------------------- Theme functions -------------------*/
 
-function hook_theme($existing, $type, $theme, $path) {
+function webb_theme($existing, $type, $theme, $path) {
   return array(
     'webb_note_quoted_line' => array(
       'arguments' => array('line' => '', 'quote_char' => ':'),
+    ),
+    'nodereference_character_select' => array(
+      'arguments' => array('element' => NULL),
     ),
   );
 }

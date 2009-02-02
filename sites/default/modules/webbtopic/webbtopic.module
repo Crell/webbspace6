@@ -14,6 +14,7 @@ function webbtopic_menu() {
   $items['webbtopic/autocomplete'] = array(
     'page callback' => 'webbtopic_autocomplete',
     'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
   );
 
   $items['admin/og/webbtopic'] = array(

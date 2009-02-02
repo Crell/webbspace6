@@ -141,6 +141,8 @@
 
     <div id="main"><div id="main-inner" class="clear-block<?php if ($search_box or $primary_links or $secondary_links or $navbar) { print ' with-navbar'; } ?>">
 
+      <?php print $breadcrumb; ?>
+
       <div id="content"><div id="content-inner">
 
         <?php if ($mission): ?>
@@ -159,7 +161,7 @@
           <div id="content-wrapper-inner">
 	        <?php if ($breadcrumb or $title or $tabs or $help or $messages): ?>
 	          <div id="content-header">
-	            <?php print $breadcrumb; ?>
+
 	            <?php if ($title): ?>
 	              <h1 class="title"><?php print $title; ?></h1>
 	            <?php endif; ?>
@@ -198,12 +200,6 @@
             </div> <!-- /#search-box -->
           <?php endif; ?>
 
-          <?php if ($secondary_links): ?>
-            <div id="secondary">
-              <?php print theme('links', $secondary_links); ?>
-            </div> <!-- /#secondary -->
-          <?php endif; ?>
-
           <?php print $navbar; ?>
 
         </div></div> <!-- /#navbar-inner, /#navbar -->
@@ -221,6 +217,7 @@
         </div></div> <!-- /#sidebar-right-inner, /#sidebar-right -->
       <?php endif; ?>
 
+
     </div></div> <!-- /#main-inner, /#main -->
 
     <?php if ($footer or $footer_message): ?>
@@ -230,10 +227,17 @@
           <div id="footer-message"><?php print $footer_message; ?></div>
         <?php endif; ?>
 
+        <?php if ($secondary_links): ?>
+          <div id="secondary">
+            <?php print theme('links', $secondary_links); ?>
+          </div> <!-- /#secondary -->
+        <?php endif; ?>
+
         <?php print $footer; ?>
 
       </div></div> <!-- /#footer-inner, /#footer -->
     <?php endif; ?>
+
 
   </div></div> <!-- /#page-inner, /#page -->
 

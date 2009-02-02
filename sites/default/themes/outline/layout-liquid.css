@@ -181,7 +181,7 @@
   .with-navbar #sidebar-left,
   .with-navbar #sidebar-right
   {
-    margin-top: 3.6em; /* Set this to the same value as the navbar height above. */
+    /*margin-top: 3.6em;*/ /* Set this to the same value as the navbar height above. */
   }
 
   #navbar-inner

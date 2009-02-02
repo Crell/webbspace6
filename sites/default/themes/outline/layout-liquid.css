@@ -197,7 +197,20 @@
 
   #primary
   {
-    margin-left: 200px; /* Width of search-box */
+    position: absolute;
+    top: 0;
+    left: 225px;
+    padding-top: 35px;
+  }
+  
+  #primary li {
+    border-right: 1px;
+    border-color: #99FFFF;
+    /*display: block;*/
+  }
+  
+  #primary a {
+    color: #99FFFF;
   }
 
   #secondary

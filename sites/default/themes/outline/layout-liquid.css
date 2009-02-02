@@ -141,6 +141,10 @@
     border: 1px solid #666666;
     margin-top: -2px;
   }
+  
+  #content-wrapper-inner {
+    padding: 10px;
+  }
 
   .sidebar-left #content-inner
   {

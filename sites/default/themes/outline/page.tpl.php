@@ -152,8 +152,11 @@
             <?php print $content_top; ?>
           </div> <!-- /#content-top -->
         <?php endif; ?>
+
         <div class="tabs"><?php print $tabs; ?></div>
+
         <div id="content-wrapper">
+          <div id="content-wrapper-inner">
 	        <?php if ($breadcrumb or $title or $tabs or $help or $messages): ?>
 	          <div id="content-header">
 	            <?php print $breadcrumb; ?>
@@ -179,6 +182,7 @@
 	            <?php print $content_bottom; ?>
 	          </div> <!-- /#content-bottom -->
 	        <?php endif; ?>
+          </div> <!--  /#content-wrapper-inner -->
         </div> <!--  /#content-wrapper -->
 
       </div></div> <!-- /#content-inner, /#content -->

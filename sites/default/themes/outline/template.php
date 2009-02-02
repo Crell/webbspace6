@@ -23,6 +23,4 @@ function outline_theme(&$existing, $type, $theme, $path) {
  */
 function outline_preprocess_page(&$vars, $hook) {
 
-	//dpm($vars['tabs']);
-  //$vars['tabs'] = '';
 }

@@ -12,7 +12,8 @@
 
   div.tabs
   {
-    margin: 0 0 5px 0;
+    margin: 0 0 0 0;
+    height: 23px; /* This was determined experimentally to line up with the sidebars. --LG */
   }
 
   ul.primary
@@ -23,7 +24,8 @@
     list-style: none;
     white-space: nowrap;
     line-height: normal;
-    background: url(images/tab-bar.png) repeat-x left bottom;
+    
+    /*background: url(images/tab-bar.png) repeat-x left bottom;*/
   }
 
   ul.primary li
@@ -36,53 +38,63 @@
   ul.primary li a
   {
     display: block;
-    height: 24px;
     margin: 0;
-    padding: 0 0 0 5px; /* width of tab-left.png */
-    border-width: 0;
-    font-weight: bold;
+    padding: 0 0 0 5px;
     text-decoration: none;
-    color: #777;
-    background-color: transparent;
-    background: url(images/tab-left.png) no-repeat left -38px;
+    color: #5070FF;
+    background-color:#111;
+    border-color:#666;
+    border-style:solid solid none;
+    border-width:1px;
+    height:auto;
+    margin-right:0.5em;
   }
 
   ul.primary li a .tab
   {
-    display: block;
-    height: 20px; /* 24px (parent) - 4px (padding) */
+    /*display: block;*/
+    /*height: 20px;*/ /* 24px (parent) - 4px (padding) */
     margin: 0;
     padding: 4px 13px 0 6px;
     border-width: 0;
     line-height: 20px;
-    background: url(images/tab-right.png) no-repeat right -38px;
+    /*background: url(images/tab-right.png) no-repeat right -38px;*/
   }
 
   ul.primary li a:hover
   {
-    border-width: 0;
-    background-color: transparent;
-    background: url(images/tab-left.png) no-repeat left -76px;
+    background-color: #EEEEEE;
+    border-color: #CCC #CCC #EEE; 
   }
 
   ul.primary li a:hover .tab
   {
-    background: url(images/tab-right.png) no-repeat right -76px;
+    /*background: url(images/tab-right.png) no-repeat right -76px;*/
   }
 
-  ul.primary li.active a,
+  ul.primary li.active a
+  {
+    background-color: transparent;
+    color: #70FFFF;
+    background-color:#000;
+    border-color:#999;
+    border-bottom: 1px solid #060610;
+    border-style:solid;
+    border-width:1px;
+  }
+
   ul.primary li.active a:hover
   {
-    border-width: 0;
-    color: #000;
-    background-color: transparent;
-    background: url(images/tab-left.png) no-repeat left 0;
+    /*border-width: 0; */
+    /*color: #000; */
+    /*background-color: transparent; */
+    /*background: url(images/tab-left.png) no-repeat left 0;*/
   }
 
   ul.primary li.active a .tab,
   ul.primary li.active a:hover .tab
   {
-    background: url(images/tab-right.png) no-repeat right 0;
+    /*background: url(images/tab-right.png) no-repeat right 0;*/
   }
 
   ul.secondary

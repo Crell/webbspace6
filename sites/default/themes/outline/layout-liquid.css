@@ -139,6 +139,7 @@
   #content-wrapper
   {
     border: 1px solid #666666;
+    margin-top: -2px;
   }
 
   .sidebar-left #content-inner
@@ -235,7 +236,7 @@
 
   #sidebar-left-inner
   {
-    margin: 10px 20px 0 10px;
+    margin: 9px 20px 0 10px;
     padding: 0;
   }
 

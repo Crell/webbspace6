@@ -5,7 +5,7 @@ base theme  = stf
 
 stylesheets[all][]   = layout-liquid.css
 stylesheets[all][]  = html-elements.css
-;stylesheets[all][]  = tabs.css
+stylesheets[all][]  = tabs.css
 stylesheets[all][]   = outline.css
 ;stylesheets[all][]  = messages.css
 ;stylesheets[all][]  = block-editing.css

@@ -13,7 +13,6 @@ function webb_init() {
   module_load_include('inc', 'webb', 'webb.filters');
   module_load_include('inc', 'webb', 'webb.computed_field');
   module_load_include('inc', 'webb', 'webb.utility');
-  module_load_include('inc', 'webb', 'webb.widgets');
   //module_load_include('inc', webb, 'dbhelpers');
 }
 

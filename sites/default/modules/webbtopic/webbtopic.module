@@ -75,10 +75,10 @@ function webbtopic_autocomplete($gid, $field_name, $string) {
     $result = db_query_range("SELECT DISTINCT {$dbinfo['columns']['value']['column']} as topic
       FROM {{$dbinfo['table']}} f
         INNER JOIN {node} n ON f.nid=n.nid
-  	  WHERE f.nid IN (SELECT nid FROM {og_ancestry} WHERE group_nid=%d)
-  	    AND %d-n.changed < %d
-  	    AND {$dbinfo['columns']['value']['column']} LIKE ('%s%%')
-  	  ORDER BY topic", array(
+          WHERE f.nid IN (SELECT nid FROM {og_ancestry} WHERE group_nid=%d)
+            AND %d-n.changed < %d
+            AND {$dbinfo['columns']['value']['column']} LIKE ('%s%%')
+          ORDER BY topic", array(
         $gid,
         time(),
         WEBBTOPIC_AGE_AUTOCOMPLETE,

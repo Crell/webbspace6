@@ -1,5 +1,5 @@
 <?php
-// $Id: theme.inc,v 1.415.2.17 2008/12/10 21:09:05 goba Exp $
+// $Id: theme.inc,v 1.415.2.21 2009/04/30 00:13:30 goba Exp $
 
 /**
  * @file
@@ -687,6 +687,10 @@ function theme() {
   }
   // restore path_to_theme()
   $theme_path = $temp;
+  // Add final markup to the full page.
+  if ($hook == 'page') {
+    $output = drupal_final_markup($output);
+  }
   return $output;
 }
 
@@ -698,11 +702,16 @@ function theme() {
 function drupal_discover_template($paths, $suggestions, $extension = '.tpl.php') {
   global $theme_engine;
 
+  // Remove slashes or null to prevent files from being included from
+  // an unexpected location (especially on Windows servers).
+  $extension = str_replace(array("/", "\\", "\0"), '', $extension);
+
   // Loop through all paths and suggestions in FIFO order.
   $suggestions = array_reverse($suggestions);
   $paths = array_reverse($paths);
   foreach ($suggestions as $suggestion) {
     if (!empty($suggestion)) {
+      $suggestion = str_replace(array("/", "\\", "\0"), '', $suggestion);
       foreach ($paths as $path) {
         if (file_exists($file = $path .'/'. $suggestion . $extension)) {
           return $file;
@@ -1133,6 +1142,7 @@ function theme_status_messages($display = NULL) {
  *   A string containing an unordered list of links.
  */
 function theme_links($links, $attributes = array('class' => 'links')) {
+  global $language;
   $output = '';
 
   if (count($links) > 0) {
@@ -1151,7 +1161,8 @@ function theme_links($links, $attributes = array('class' => 'links')) {
       if ($i == $num_links) {
         $class .= ' last';
       }
-      if (isset($link['href']) && ($link['href'] == $_GET['q'] || ($link['href'] == '<front>' && drupal_is_front_page()))) {
+      if (isset($link['href']) && ($link['href'] == $_GET['q'] || ($link['href'] == '<front>' && drupal_is_front_page()))
+          && (empty($link['language']) || $link['language']->language == $language->language)) {
         $class .= ' active';
       }
       $output .= '<li'. drupal_attributes(array('class' => $class)) .'>';
@@ -1866,6 +1877,7 @@ function template_preprocess_page(&$variables) {
   $suggestion = 'page';
   $suggestions = array();
   while ($arg = arg($i++)) {
+    $arg = str_replace(array("/", "\\", "\0"), '', $arg);
     $suggestions[] = $suggestion .'-'. $arg;
     if (!is_numeric($arg)) {
       $suggestion .= '-'. $arg;

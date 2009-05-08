@@ -19,6 +19,7 @@ function nodereference_character_theme() {
 /**
  * Implementation of hook_form_alter().
  */
+/*
 function nodereference_character_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'content_field_edit_form' && isset($form['#field']) && $form['#field']['widget']['type'] == 'nodereference_character') {
     // Hide settings that don't apply to this widget.
@@ -26,6 +27,7 @@ function nodereference_character_form_alter(&$form, &$form_state, $form_id) {
     $form['widget']['description']['#type'] = 'value';
   }
 }
+*/
 
 /**
  * Implementation of hook_widget_info().
@@ -33,11 +35,11 @@ function nodereference_character_form_alter(&$form, &$form_state, $form_id) {
 function nodereference_character_widget_info() {
   return array(
     'nodereference_character' => array(
-      'label' => t('WeBB: Character select list (2)'),
+      'label' => t('WeBB: Character select list (3)'),
       'field types' => array('nodereference'),
-      'multiple values' => CONTENT_HANDLE_CORE,
+      'multiple values' => CONTENT_HANDLE_MODULE,
       'callbacks' => array(
-        'default value' => CONTENT_CALLBACK_NONE,
+        'default value' => CONTENT_CALLBACK_DEFAULT,
       ),
     ),
   );
@@ -83,32 +85,47 @@ function nodereference_character_widget_settings($op, $widget) {
 /**
  * Element validation function to ensure invalid options are not selected.
  */
+/*
 function nodereference_character_fallback_validate($element, &$form_state) {
   if ($form_state['values']['required'] && $form_state['values']['fallback'] == 'leave_blank') {
     form_error($element, t('The fallback behavior cannot be left blank if this field is also required.'));
   }
 }
+*/
 
 /**
  * Element validation function that makes title required when creating a link.
  */
+/*
 function nodereference_character_node_link_validate($element, &$form_state) {
   if ($form_state['values']['node_link']['enabled'] && empty($form_state['values']['node_link']['title'])) {
     form_error($element['title'], t('A link title must be specified if creating links on referenceable content.'));
   }
 }
+*/
 
 /**
  * Implementation of hook_widget().
  */
 function nodereference_character_widget(&$form, &$form_state, $field, $items, $delta = 0) {
+  switch ($field['widget']['type']) {
+    case 'nodereference_character':
+      $element = array(
+        '#type' => 'nodereference_character',
+        '#default_value' => $items,
+      );
+      break;
+  }
+  return $element;
+
+/*
   $element = array('#tree' => TRUE);
 
   $default_value = 0;
   if (isset($form['#node']->$field['field_name'])) {
-  	$field_name = $field['field_name'];
-  	$field_fragment = $form['#node']->$field_name;
-  	$default_value = $field_fragment[$delta]['nid'];
+    $field_name = $field['field_name'];
+    $field_fragment = $form['#node']->$field_name;
+    $default_value = $field_fragment[$delta]['nid'];
   }
 
   $element = array(
@@ -119,6 +136,7 @@ function nodereference_character_widget(&$form, &$form_state, $field, $items, $d
   );
 
   return $element;
+*/
 }
 
 /**
@@ -130,19 +148,31 @@ function nodereference_character_widget(&$form, &$form_state, $field, $items, $d
  * The $fields array is in $form['#field_info'][$element['#field_name']].
  */
 function nodereference_character_process($element, $edit, $form_state, $form) {
-  //dpm($element);
-  //dpm($edit);
-  //dpm($form_state);
-  //dpm($form);
-
-  // $field_key should be "nid" here.
+  // The nodereference_select widget doesn't need to create its own
+  // element, it can wrap around the optionwidgets_select element.
+  // This will create a new, nested instance of the field.
+  // Add a validation step where the value can be unwrapped.
   $field_key  = $element['#columns'][0];
-  $field = $form['#field_info'][$element['#field_name']];
+  $element[$field_key] = array(
+    '#type' => 'optionwidgets_select',
+    '#default_value' => isset($element['#value']) ? $element['#value'] : '',
+    // The following values were set by the content module and need
+    // to be passed down to the nested element.
+    '#title' => $element['#title'],
+    '#required' => $element['#required'],
+    '#description' => $element['#description'],
+    '#field_name' => $element['#field_name'],
+    '#type_name' => $element['#type_name'],
+    '#delta' => $element['#delta'],
+    '#columns' => $element['#columns'],
+  );
+  if (empty($element[$field_key]['#element_validate'])) {
+    $element[$field_key]['#element_validate'] = array();
+  }
+  array_unshift($element[$field_key]['#element_validate'], 'nodereference_optionwidgets_validate');
+  return $element;  
 
-  // Initialize the options and default values.
-  $options = array();
-  $default_value = $element['#default_value'];
-
+/*
   // If this is a new node, we want to show all characters on this OG owned
   // by the current user.  If we're editing a node, we want to show all
   // characters on this OG owned by the node's owner.  Yes, it's wacky.
@@ -190,7 +220,7 @@ function nodereference_character_process($element, $edit, $form_state, $form) {
       WHERE ctn.field_character_nid IN (" . $placeholders . ")
       ORDER BY n.created DESC", array_keys($characters), 0, 1));
   }
-
+*/
 
   /*
   if (isset($_GET['gids'])) {
@@ -222,6 +252,7 @@ function nodereference_character_process($element, $edit, $form_state, $form) {
   }
   */
 
+/*
   $element[$field_key] = array(
     '#type' => 'select',
     // The following values were set by the content module and need
@@ -238,7 +269,7 @@ function nodereference_character_process($element, $edit, $form_state, $form) {
   );
 
   return $element;
-
+*/
   /*
 	$field_key  = $element['#columns'][0];
   $field = $form['#field_info'][$element['#field_name']];
@@ -282,8 +313,9 @@ function nodereference_character_process($element, $edit, $form_state, $form) {
 
 
    */
-
 }
+
+
 
 /**
  * FAPI theme for an individual elements.
@@ -297,5 +329,5 @@ function nodereference_character_process($element, $edit, $form_state, $form) {
  * $element['#delta]  is the position of this element in the group
  */
 function theme_nodereference_character($element) {
-	return $element['#children'];
+  return $element['#children'];
 }

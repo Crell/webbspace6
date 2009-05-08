@@ -1,5 +1,5 @@
 <?php
-// $Id: locale.inc,v 1.174.2.5 2008/12/10 21:29:36 goba Exp $
+// $Id: locale.inc,v 1.174.2.8 2009/04/08 02:54:00 dries Exp $
 
 /**
  * @file
@@ -665,6 +665,7 @@ function locale_translate_import_form_submit($form, &$form_state) {
   else {
     drupal_set_message(t('File to import not found.'), 'error');
     $form_state['redirect'] = 'admin/build/translate/import';
+    return;
   }
 
   $form_state['redirect'] = 'admin/build/translate';
@@ -1368,7 +1369,7 @@ function _locale_import_one_string_db(&$report, $langcode, $source, $translation
   }
   elseif ($mode == LOCALE_IMPORT_OVERWRITE) {
     // Empty translation, remove existing if instructed.
-    db_query("DELETE FROM {locales_target} WHERE language = '%s' AND lid = %d AND plid = %d AND plural = %d", $translation, $langcode, $lid, $plid, $plural);
+    db_query("DELETE FROM {locales_target} WHERE language = '%s' AND lid = %d AND plid = %d AND plural = %d", $langcode, $lid, $plid, $plural);
     $report['deletes']++;
   }
 
@@ -2432,7 +2433,7 @@ function _locale_get_predefined_list() {
     "se" => array("Northern Sami"),
     "sg" => array("Sango"),
     "sh" => array("Serbo-Croatian"),
-    "si" => array("Singhalese"),
+    "si" => array("Sinhala", "සිංහල"),
     "sk" => array("Slovak", "Slovenčina"),
     "sl" => array("Slovenian", "Slovenščina"),
     "sm" => array("Samoan"),

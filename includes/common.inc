@@ -1,5 +1,5 @@
 <?php
-// $Id: common.inc,v 1.756.2.37 2008/12/11 17:39:42 goba Exp $
+// $Id: common.inc,v 1.756.2.49 2009/04/30 00:13:30 goba Exp $
 
 /**
  * @file
@@ -149,6 +149,15 @@ function drupal_set_header($header = NULL) {
  */
 function drupal_get_headers() {
   return drupal_set_header();
+}
+
+/**
+ * Make any final alterations to the rendered xhtml.
+ */
+function drupal_final_markup($content) {
+  // Make sure that the charset is always specified as the first element of the
+  // head region to prevent encoding-based attacks.
+  return preg_replace('/<head[^>]*>/i', "\$0\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />", $content, 1);
 }
 
 /**
@@ -414,23 +423,7 @@ function drupal_access_denied() {
  *   data and redirect status.
  */
 function drupal_http_request($url, $headers = array(), $method = 'GET', $data = NULL, $retry = 3) {
-  static $self_test = FALSE;
   $result = new stdClass();
-  // Try to clear the drupal_http_request_fails variable if it's set. We
-  // can't tie this call to any error because there is no surefire way to
-  // tell whether a request has failed, so we add the check to places where
-  // some parsing has failed.
-  if (!$self_test && variable_get('drupal_http_request_fails', FALSE)) {
-    $self_test = TRUE;
-    $works = module_invoke('system', 'check_http_request');
-    $self_test = FALSE;
-    if (!$works) {
-      // Do not bother with further operations if we already know that we
-      // have no chance.
-      $result->error = t("The server can't issue HTTP requests");
-      return $result;
-    }
-  }
 
   // Parse the URL and make sure we can handle the schema.
   $uri = parse_url($url);
@@ -468,6 +461,13 @@ function drupal_http_request($url, $headers = array(), $method = 'GET', $data = 
     // clash with the HTTP status codes.
     $result->code = -$errno;
     $result->error = trim($errstr);
+
+    // Mark that this request failed. This will trigger a check of the web
+    // server's ability to make outgoing HTTP requests the next time that
+    // requirements checking is performed.
+    // @see system_requirements()
+    variable_set('drupal_http_request_fails', TRUE);
+
     return $result;
   }
 
@@ -684,8 +684,8 @@ function fix_gpc_magic() {
  *
  * Special variables called "placeholders" are used to signal dynamic
  * information in a string which should not be translated. Placeholders
- * can also be used for text that may change from time to time
- * (such as link paths) to be changed without requiring updates to translations.
+ * can also be used for text that may change from time to time (such as
+ * link paths) to be changed without requiring updates to translations.
  *
  * For example:
  * @code
@@ -701,9 +701,9 @@ function fix_gpc_magic() {
  *     $message[] = t("If you don't want to receive such e-mails, you can change your settings at !url.", array('!url' => url("user/$account->uid", array('absolute' => TRUE))));
  *   @endcode
  *
- * - @variable, which indicates that the text should be run through check_plain,
- *   to escape HTML characters. Use this for any output that's displayed within
- *   a Drupal page.
+ * - @variable, which indicates that the text should be run through
+ *   check_plain, to escape HTML characters. Use this for any output that's
+ *   displayed within a Drupal page.
  *   @code
  *     drupal_set_title($title = t("@name's blog", array('@name' => $account->name)));
  *   @endcode
@@ -716,10 +716,10 @@ function fix_gpc_magic() {
  *   @endcode
  *
  * When using t(), try to put entire sentences and strings in one t() call.
- * This makes it easier for translators, as it provides context as to what each
- * word refers to. HTML markup within translation strings is allowed, but should
- * be avoided if possible. The exception are embedded links; link titles add a
- * context for translators, so should be kept in the main string.
+ * This makes it easier for translators, as it provides context as to what
+ * each word refers to. HTML markup within translation strings is allowed, but
+ * should be avoided if possible. The exception are embedded links; link
+ * titles add a context for translators, so should be kept in the main string.
  *
  * Here is an example of incorrect usage of t():
  * @code
@@ -842,8 +842,8 @@ function fix_gpc_magic() {
  *   A string containing the English string to translate.
  * @param $args
  *   An associative array of replacements to make after translation. Incidences
- *   of any key in this array are replaced with the corresponding value.
- *   Based on the first character of the key, the value is escaped and/or themed:
+ *   of any key in this array are replaced with the corresponding value. Based
+ *   on the first character of the key, the value is escaped and/or themed:
  *    - !variable: inserted as is
  *    - @variable: escape plain text to HTML (check_plain)
  *    - %variable: escape text and theme as a placeholder for user-submitted
@@ -931,6 +931,7 @@ function valid_email_address($mail) {
  *
  * This function should only be used on actual URLs. It should not be used for
  * Drupal menu paths, which can contain arbitrary characters.
+ * Valid values per RFC 3986.
  *
  * @param $url
  *   The URL to verify.
@@ -940,14 +941,29 @@ function valid_email_address($mail) {
  *   TRUE if the URL is in a valid format.
  */
 function valid_url($url, $absolute = FALSE) {
-  $allowed_characters = '[a-z0-9\/:_\-_\.\?\$,;~=#&%\+]';
   if ($absolute) {
-    return preg_match("/^(http|https|ftp):\/\/". $allowed_characters ."+$/i", $url);
+    return (bool)preg_match("
+      /^                                                      # Start at the beginning of the text
+      (?:ftp|https?):\/\/                                     # Look for ftp, http, or https schemes
+      (?:                                                     # Userinfo (optional) which is typically
+        (?:(?:[\w\.\-\+!$&'\(\)*\+,;=]|%[0-9a-f]{2})+:)*      # a username or a username and password
+        (?:[\w\.\-\+%!$&'\(\)*\+,;=]|%[0-9a-f]{2})+@          # combination
+      )?
+      (?:
+        (?:[a-z0-9\-\.]|%[0-9a-f]{2})+                        # A domain name or a IPv4 address
+        |(?:\[(?:[0-9a-f]{0,4}:)*(?:[0-9a-f]{0,4})\])         # or a well formed IPv6 address
+      )
+      (?::[0-9]+)?                                            # Server port number (optional)
+      (?:[\/|\?]
+        (?:[\w#!:\.\?\+=&@$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2})   # The path and query (optional)
+      *)?
+    $/xi", $url);
   }
   else {
-    return preg_match("/^". $allowed_characters ."+$/i", $url);
+    return (bool)preg_match("/^(?:[\w#!:\.\?\+=&@$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2})+$/i", $url);
   }
 }
+
 
 /**
  * @} End of "defgroup validation".
@@ -1404,18 +1420,12 @@ function url($path = NULL, $options = array()) {
 
   global $base_url;
   static $script;
-  static $clean_url;
 
   if (!isset($script)) {
     // On some web servers, such as IIS, we can't omit "index.php". So, we
     // generate "index.php?q=foo" instead of "?q=foo" on anything that is not
     // Apache.
     $script = (strpos($_SERVER['SERVER_SOFTWARE'], 'Apache') === FALSE) ? 'index.php' : '';
-  }
-
-  // Cache the clean_url variable to improve performance.
-  if (!isset($clean_url)) {
-    $clean_url = (bool)variable_get('clean_url', '0');
   }
 
   if (!isset($options['base_url'])) {
@@ -1443,7 +1453,7 @@ function url($path = NULL, $options = array()) {
   $prefix = empty($path) ? rtrim($options['prefix'], '/') : $options['prefix'];
   $path = drupal_urlencode($prefix . $path);
 
-  if ($clean_url) {
+  if (variable_get('clean_url', '0')) {
     // With Clean URLs.
     if ($options['query']) {
       return $base . $path .'?'. $options['query'] . $options['fragment'];
@@ -1532,6 +1542,8 @@ function drupal_attributes($attributes = array()) {
  *   an HTML string containing a link to the given path.
  */
 function l($text, $path, $options = array()) {
+  global $language;
+
   // Merge in defaults.
   $options += array(
       'attributes' => array(),
@@ -1539,7 +1551,8 @@ function l($text, $path, $options = array()) {
     );
 
   // Append active class.
-  if ($path == $_GET['q'] || ($path == '<front>' && drupal_is_front_page())) {
+  if (($path == $_GET['q'] || ($path == '<front>' && drupal_is_front_page())) &&
+      (empty($options['language']) || $options['language']->language == $language->language)) {
     if (isset($options['attributes']['class'])) {
       $options['attributes']['class'] .= ' active';
     }
@@ -1750,7 +1763,7 @@ function drupal_add_css($path = NULL, $type = 'module', $media = 'all', $preproc
     $css[$media][$type][$path] = $preprocess;
 
     // If the current language is RTL, add the CSS file with RTL overrides.
-    if (defined('LANGUAGE_RTL') && $language->direction == LANGUAGE_RTL) {
+    if ($language->direction == LANGUAGE_RTL) {
       $rtl_path = str_replace('.css', '-rtl.css', $path);
       if (file_exists($rtl_path)) {
         $css[$media][$type][$rtl_path] = $preprocess;

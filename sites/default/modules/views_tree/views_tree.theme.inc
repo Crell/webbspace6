@@ -23,9 +23,7 @@ function theme_views_tree($view, $options, $rows, $title) {
     $parents[] = $record->$options['main_field_property'];
   }
   foreach ($result as $record) {
-    dpm("Checking Note {$record->nid}, parent is {$record->$options['parent_field_property']}");
     if (! in_array($record->$options['parent_field_property'], $parents)) {
-      dpm("Reparenting note {$record->nid}");
       $record->$options['parent_field_property'] = 0;
     }
   }

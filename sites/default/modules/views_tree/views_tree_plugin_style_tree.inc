@@ -43,7 +43,7 @@ class views_tree_plugin_style_tree extends views_plugin_style_list {
 
     $events = array('click' => t('On Click'), 'mouseover' => t('On Mouseover'));
 
-    $form['type']['#description'] = t('Whether to use an ordered or unordered list for the retrieved cycle items. Most use cases will prefer Unordered.');
+    $form['type']['#description'] = t('Whether to use an ordered or unordered list for the retrieved items. Most use cases will prefer Unordered.');
 
     $form['main_field'] = array(
       '#type' => 'select',
@@ -59,7 +59,7 @@ class views_tree_plugin_style_tree extends views_plugin_style_list {
       '#title' => t('Parent field'),
       '#options' => $fields,
       '#default_value' => $this->options['parent_field'],
-      '#description' => t('Select the field that contains the unique identifier of the record\s parent.'),
+      '#description' => t('Select the field that contains the unique identifier of the record\'s parent.'),
     );
   }
 }

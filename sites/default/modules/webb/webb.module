@@ -2,6 +2,10 @@
 
 /* ------------------- Miscellaneous -------------------*/
 
+// Because we store menu permissions here, it has to be included
+// before hook_init() runs.  This is a design flaw in Drupal, IMO.
+module_load_include('inc', 'webb', 'webb.utility');
+
 /**
  * Implementation of hook_init().
  *
@@ -12,7 +16,6 @@ function webb_init() {
   module_load_include('inc', 'webb', 'webb_nodes');
   module_load_include('inc', 'webb', 'webb.filters');
   module_load_include('inc', 'webb', 'webb.computed_field');
-  module_load_include('inc', 'webb', 'webb.utility');
   //module_load_include('inc', webb, 'dbhelpers');
 }
 
@@ -23,7 +26,6 @@ function webb_views_api() {
   return array(
     'api' => 2,
     'path' => drupal_get_path('module', 'webb'),
-    //'path' => drupal_get_path('module', 'webb') . '/includes',
   );
 }
 

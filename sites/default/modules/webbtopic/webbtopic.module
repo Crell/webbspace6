@@ -399,8 +399,9 @@ function webbtopic_textfield_ogsuggest_process($element, $edit, $form_state, $fo
   $element[$field_key]['#description'] .= t('Recently used: ') . webbtopic_suggestions($group, $element['#field_name']);
 
   // If there's a parent specified, use the parent's field value as the default.
-  if (!empty($_GET['parent_nid'])) {
-    $parent = node_load((int)$_GET['parent_nid']);
+  $parent_nid = arg(3);
+  if (!empty($parent_nid)) {
+    $parent = node_load((int)$parent_nid);
     $node_field = $parent->$element['#field_name'];
     $element[$field_key]['#default_value'] = $node_field[0]['value'];
   }

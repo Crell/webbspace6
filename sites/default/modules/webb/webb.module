@@ -404,6 +404,7 @@ function _webb_link_note($node, $teaser) {
     }
 
     // Add a "reply" link
+    /*
     if (user_access('post notes')) {
       $links['reply'] = array(
         'title' => t("Reply"),
@@ -414,6 +415,7 @@ function _webb_link_note($node, $teaser) {
          ),
       );
     }
+     */
 
     // Add a link to the next note chronologically on this board.
     $next_by_time = db_result(
@@ -618,14 +620,16 @@ function webb_form_note_node_form_alter(&$form, &$form_state) {
   }
 
   // Pre-fill the parent id field from the GET query, then hide it
-  $parent_nid = (int)$_GET['parent_nid'];
-  $form['field_parent_note'][0]['#type'] = 'value';
+  //$parent_nid = (int)$_GET['parent_nid'];
+  $parent_nid = arg(3);
+  //$form['field_parent_note'][0]['#type'] = 'value';
   if ($parent_nid) {
+    
     $parent = node_load($parent_nid);
-
+/*
     //Note 2 [nid:13]
     $form['field_parent_note'][0]['#value'] = "{$parent->title} [nid:{$parent->nid}]";
-
+*/
     // Also set the default value of the note to the quoted version of the parent's body
     $body = &$form['body_field']['body'];
     if (! $body['#default_value']) {

@@ -14,6 +14,8 @@
  * even though writing into $_GET is horribly evil.
  */
 function webb_set_og_context() {
+  $group = NULL;
+
   // menu_get_object assumes the type maps directly to a load routine, so
   // we have to allow for multiple possible load routines since we are using
   // load routines to control access and tab location.  Blargh!
@@ -22,6 +24,16 @@ function webb_set_og_context() {
       break;
     }
   }
+  
+  // If we didn't find a group yet, we may be on the node/add page.  If so, look
+  // for a nid in nodereference_url form and use its group.  This is even uglier.
+  if (empty($group)) {
+    if (arg(0) == 'node' && arg(1) == 'add' && arg(2) == 'note' && is_numeric(arg(3))) {
+      $parent = node_load(arg(3));
+      $group = node_load(current($parent->og_groups));
+    }
+  }
+  
   og_set_group_context($group);
   $_GET['gids'] = array($group->nid);
 }

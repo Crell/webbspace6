@@ -1,10 +1,14 @@
-// $Id: CHANGELOG.txt,v 1.33.2.53 2009/04/26 22:23:20 davereid Exp $
+// $Id: CHANGELOG.txt,v 1.33.2.54 2009/05/15 21:14:42 sun Exp $
 
 Admin Menu x.x-x.x, xxxx-xx-xx
 ------------------------------
 
 
 Admin Menu 6.x-1.x, xxxx-xx-xx
+------------------------------
+
+
+Admin Menu 6.x-1.4, 2009-05-15
 ------------------------------
 by Dave Reid: Updated for getInfo() for tests.
 #433016 by ultimateboy: Fixed Devel switch user links added to wrong parent.

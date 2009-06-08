@@ -561,7 +561,7 @@ function webb_form_alter(&$form, &$form_state, $form_id) {
   if ($form['#id'] == 'node-form' && webb_is_post_type($form['type']['#value'])) {
     _webb_form_alter_postable_node_form($form, $form_state);
   }
-  elseif ($form_id == 'charater_node_form') {
+  elseif ($form_id == 'character_node_form') {
     // This has to be done here, rather than in a form-specific hook, because
     // it has to run after cck does since we're modifying CCK-added form structures.
 
@@ -575,9 +575,59 @@ function webb_form_alter(&$form, &$form_state, $form_id) {
     $form['field_custom_position']['#access'] = $access;
     $form['field_rostered']['#access'] = $access;
   }
+  elseif ($form_id == 'note_node_form') {
+    // This has to be done here, rather than in a form-specific hook, because
+    // it has to run after cck does since we're modifying CCK-added form structures.
+
+    // In order to set the default value of the character select box, we need to
+    // hook into the form building process after the CCK field gets built out.
+    // That requires we add in our own process function to run after the
+    // built-in one.  And of course we have to redeclare the built in one so that
+    // it still runs.  How does this make any sense?
+    $form['field_character']['#process'][] ='nodereference_select_process';
+    $form['field_character']['#process'][] ='webb_field_character_process';
+  }
   elseif ('views_filters' == $form_id && $form['view']['#value']->name == 'og_notes') {
     _webb_form_alter_og_notes_filter_form($form_id, $form);
   }
+}
+
+/**
+ * Process callback for character fields.
+ *
+ * Because CCK nodereference select boxes are a two-step build process, due to
+ * the use of optionwidgets, we need to parallel that two-step process ourselves.
+ * Can I start crying now?
+ */
+function webb_field_character_process($element, $edit, $form_state, $form) {
+
+  $element['nid']['#process'][] = 'optionwidgets_select_process';
+  $element['nid']['#process'][] = 'webb_field_character_process_phase2';
+
+  return $element;
+}
+
+/**
+ * Process callback for character fields part 2.
+ */
+function webb_field_character_process_phase2($element, $edit, $form_state, $form) {
+  $characters = array_filter(array_keys($element['nid']['#options']));
+
+  // If there is no default character set, set it to the character in the
+  // select box that was most recently used.
+  if ($characters && !$element['nid']['#default_value']['nid']) {
+    $dbinfo = content_database_info(content_fields('field_character'));
+
+    $default_character = db_result(db_query_range("SELECT ctn.{$dbinfo['columns']['nid']['column']}
+        FROM {node} n
+          INNER JOIN {{$dbinfo['table']}} ctn on n.nid=ctn.nid AND n.vid=ctn.vid
+        WHERE ctn.{$dbinfo['columns']['nid']['column']} IN (" . db_placeholders($characters) . ")
+        ORDER BY n.created DESC", $characters, 0, 1));
+
+    $element['nid']['#default_value']['nid'] = $default_character;
+  }
+
+  return $element;
 }
 
 
@@ -642,6 +692,7 @@ function webb_form_note_node_form_alter(&$form, &$form_state) {
   // We'll fill in a "real" title in hook_nodeapi.
   $form['title']['#type'] = 'value';
   $form['title']['#value'] = 'Note';
+
 
 /*
   // Set the options for the character to post as manually, because this is too complex to do via configuration.
@@ -886,22 +937,6 @@ function theme_webb_note_quoted_line($line, $quote_char = ':') {
   return "<span class='webb-quoted webb-quoted-{$i}'>" . $line . "</span>";
 }
 
-
-
-
-/**
- * Implementation of hook_views_default_views().
- */
-/*
-function webb_views_default_views() {
-  $views = array();
-  foreach(glob(drupal_get_path('module', 'webb') .'/views/*.view.inc') as $file) {
-    require_once($file);
-  }
-
-  return $views;
-}
-*/
 
 /**
  * Implementation of hook_profile_alter().

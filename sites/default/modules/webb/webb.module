@@ -910,24 +910,13 @@ function webb_profile_alter(&$account) {
 
   // We don't want to show the subscription list or the user's
   // original application.
-  //unset($account->content['Groups']);
   unset($account->content['Application']);
-
-  // Add a list of this user's characters
-  /* TODO: Make this work again.
-   *
-  $account->content[t('Characters')] = array(
-    array(
-      'value' => component_get_view('user_characters', $account->uid),
-      'title' => '',
-      'class' => 'user_characters',
-    )
-  );*/
 }
 
 /**
  * Implementation of hook_views_tables().
  */
+/*
 function webb_views_tables() {
   $tables['webb_note_lookup'] = array(
     'name' => 'webb_note_lookup',
@@ -965,10 +954,12 @@ function webb_views_tables() {
 
   return $tables;
 }
+ */
 
 /**
  * Implemenation of hook_views_arguments().
  */
+/*
 function webb_views_arguments() {
   $args = array(
     'gid_lookup' => array(
@@ -979,7 +970,9 @@ function webb_views_arguments() {
   );
   return $args;
 }
+*/
 
+/*
 function webb_og_handler_argument_gid($op, &$query, $argtype, $arg = '') {
   switch ($op) {
     case 'summary':
@@ -1005,7 +998,9 @@ function webb_og_handler_argument_gid($op, &$query, $argtype, $arg = '') {
       return db_result(db_query_range('SELECT title FROM {node} WHERE nid = %d', $query, 0, 1));;
   }
 }
+*/
 
+/*
 function webb_og_views_break_phrase($string, &$query) {
   list($and_or, $gids) = _views_break_phrase($string);
   $and_or = strtoupper($and_or);
@@ -1030,7 +1025,7 @@ function webb_og_views_break_phrase($string, &$query) {
     og_set_group_context($node);
   }
 }
-
+*/
 
 /* ---------- Move these elsewhere later --------------- */
 

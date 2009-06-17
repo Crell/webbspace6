@@ -1,0 +1,16 @@
+/* $Id: messages-rtl.css,v 1.1 2009/05/26 03:33:22 johnalbin Exp $ */
+
+/**
+ * @file
+ * RTL companion for the messages.css file.
+ */
+
+
+div.messages, /* Important messages (status, warning, and error) for the user */
+div.status,
+div.warning,
+div.error
+{
+  padding: 5px 35px 5px 5px;
+  background-position: 99.5% 5px;
+}

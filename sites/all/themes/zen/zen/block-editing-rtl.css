@@ -1,0 +1,12 @@
+/* $Id: block-editing-rtl.css,v 1.1 2009/05/26 03:33:22 johnalbin Exp $ */
+
+/**
+ * @file
+ * RTL companion for the block-editing.css file.
+ */
+
+
+div.block.with-block-editing div.edit
+{
+  left: 0;
+}

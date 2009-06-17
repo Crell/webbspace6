@@ -102,7 +102,7 @@ php_value memory_limit 48M
   # If your site is running in a VirtualDocumentRoot at http://example.com/,
   # uncomment the following line:
   # RewriteBase /
-  RewriteBase /~lgarfiel/projects/webbspace/branches/drupal6v2
+  RewriteBase /~caroltron/webbspace
 
   # Rewrite URLs of the form 'x' to the form 'index.php?q=x'.
   RewriteCond %{REQUEST_FILENAME} !-f

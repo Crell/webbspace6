@@ -73,6 +73,8 @@ DirectoryIndex index.php
 # Additions
 php_value memory_limit 48M
 
+php_value display_errors On
+
 # Various rewrite rules.
 <IfModule mod_rewrite.c>
   RewriteEngine on

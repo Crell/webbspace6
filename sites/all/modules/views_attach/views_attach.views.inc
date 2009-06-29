@@ -1,5 +1,5 @@
 <?php
-// $Id: views_attach.views.inc,v 1.1 2009/01/13 08:07:10 crell Exp $
+// $Id: views_attach.views.inc,v 1.1.2.1.2.2 2009/06/03 23:10:34 crell Exp $
 
 /**
  * Implementation of hook_views_plugins().
@@ -11,7 +11,8 @@ function views_attach_views_plugins() {
         'title' => t('Profile'),
         'help' => t('Display the view as a part of a user profile.'),
         'handler' => 'views_attach_plugin_display_profile',
-        'theme' => 'views_view',
+        'theme' => 'views_attach_display_profile_view',
+        'theme file' => 'views_attach.theme.inc',
         'uses hook user' => TRUE,
         'use ajax' => TRUE,
         'use pager' => TRUE,
@@ -24,7 +25,9 @@ function views_attach_views_plugins() {
         'title' => t('Node content'),
         'help' => t("Display the view as part of a node's content."),
         'handler' => 'views_attach_plugin_display_node_content',
-        'theme' => 'views_view',
+        'theme' => 'views_attach_display_node_content_view',
+        'theme file' => 'views_attach.theme.inc',
+        'theme path' => drupal_get_path('module', 'views_attach'),
         'uses hook nodeapi' => TRUE,
         'use ajax' => TRUE,
         'use pager' => TRUE,

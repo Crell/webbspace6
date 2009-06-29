@@ -1,5 +1,5 @@
 <?php
-// $Id: views_attach.module,v 1.1.2.7 2009/02/22 23:05:36 crell Exp $
+// $Id: views_attach.module,v 1.1.2.9.2.7 2009/06/25 23:19:20 eaton Exp $
 
 /**
  *  Implementation of hook_views_api().
@@ -28,11 +28,11 @@ function views_attach_content_extra_fields($type_name) {
   // Now add a weight field for each view/display.
   foreach ($items as $item) {
     if (!$item['title']) {
-      $item['title'] = t('Unnamed attached view');
+      $item['title'] = theme('placeholder', t('None'));
     }
     $extras[$item['name'] .'_'. $item['display']] = array(
       'label' => $item['title'],
-      'description' => t('Attached view.'),
+      'description' => t('Attached view: !view - !display', array('!view' => $item['name'], '!display' => $item['display'])),
       'weight' => 10,
     );
   }
@@ -50,18 +50,21 @@ function views_attach_user($op, &$edit, &$account, $category = NULL) {
       foreach ($views as $info) {
         $view = views_get_view($info['name']);
         $view->set_display($info['display']);
-        $args = $view->display_handler->get_option('default_argument') === 'uid' ? array($account->uid) : array();
-        $result = $view->execute_display($info['display'], $args);
-        if (!empty($result)) {
-          $account->content[$view->name . '_' . $info['display']] = array(
-            '#type' => 'user_profile_category',
-            '#weight' => $view->display_handler->get_option('weight'),
-            '#title' => $view->get_title(),
-          );
-          $account->content[$view->name . '_' . $info['display']]['content'] = array(
-            '#type' => 'markup',
-            '#value' => $result,
-          );
+        
+        if ($view->access($info['display'])) {
+          $view->current_account = $account;
+          $result = $view->execute_display($info['display']);
+          if (!empty($result)) {
+            $account->content[$view->name . '_' . $info['display']] = array(
+              '#type' => 'user_profile_category',
+              '#weight' => $view->display_handler->get_option('weight'),
+              '#title' => $view->get_title(),
+            );
+            $account->content[$view->name . '_' . $info['display']]['content'] = array(
+              '#type' => 'markup',
+              '#value' => $result,
+            );
+          }
         }
       }
   }
@@ -91,20 +94,16 @@ function views_attach_nodeapi(&$node, $op, $teaser, $page) {
       foreach ($views as $info) {
         $view = views_get_view($info['name']);
         $view->set_display($info['display']);
-        $args = $view->display_handler->get_option('default_argument') === 'nid' ? array($node->nid) : array();
-        $result = $view->execute_display($info['display'], $args);
-        if (!empty($result)) {
-          // This is not really a form item, but by using item here we get
-          // all of the built in theming of #title and don't need to introduce
-          // a new theme function.  That does mean we get an extra div of class
-          // form-item which MAY confuse some advanced theming.  @todo: Clean this
-          // up if it causes problems.
-          $node->content[$view->name . '_' . $info['display']] = array(
-            '#title' => $view->display_handler->get_option('show_title') ? $view->get_title() : '',
-            '#type' => 'item',
-            '#weight' => module_exists('content') ? content_extra_field_weight($node->type, $view->name . '_' . $info['display']) : 10,
-            '#value' => $result,
-          );
+        
+        if ($view->access($info['display'])) {
+          $view->current_node = $node;
+          $result = $view->execute_display($info['display']);
+          if (!empty($result)) {
+            $node->content[$view->name . '_' . $info['display']] = array(
+              '#weight' => module_exists('content') ? content_extra_field_weight($node->type, $view->name . '_' . $info['display']) : 10,
+              '#value' => $result,
+            );
+          }
         }
       }
       break;
@@ -215,9 +214,57 @@ function views_attach_build_modes() {
   }
   else {
     $modes = array(
-      'full' => 'Full',
+      'full' => 'Full node',
       'teaser'  => 'Teaser',
     );
   }
+  $modes['edit'] = 'Edit page';
   return $modes;
+}
+
+/**
+ * Get view arguments array from string that contains tokens
+ *
+ * @param $string
+ *   The token string defined by the view.
+ * @param $type
+ *   The token type.
+ * @param $object
+ *   The object being used for replacement data (typically a node).
+ * @return
+ *   An array of argument values.
+ *
+ * @todo: security?
+ */
+function views_attach_get_arguments_from_token_string($string, $type, $object) {
+  $args = trim($string);
+
+  if (empty($args)) {
+    return array();
+  }
+
+  $args = token_replace($args, $type, $object);
+  return explode('/', $args);
+}
+
+/**
+* Implementation of hook_form_alter().
+*/
+function views_attach_form_alter(&$form, $form_state, $form_id) {
+  if($form['#id'] == 'node-form') {
+    $views = views_attach_get_node_views($form['type']['#value'], 'edit');
+    foreach ($views as $info) {
+      $view = views_get_view($info['name']);
+      $view->set_display($info['display']);
+      $result = $view->execute_display($info['display'], array($form['#node']->nid));
+      if (!empty($result)) {
+        $form[$view->name . '_' . $info['display']] = array(
+          '#title' => $view->display_handler->get_option('show_title') ? $view->get_title() : '',
+          '#type' => 'item',
+          '#weight' => module_exists('content') ? content_extra_field_weight($form['type']['#value'], $view->name . '_' . $info['display']) : 10,
+          '#value' => $result,
+        );
+      }
+    }
+  }
 }

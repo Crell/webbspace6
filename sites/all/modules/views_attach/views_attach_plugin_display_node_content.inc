@@ -1,5 +1,5 @@
 <?php
-// $Id: views_attach_plugin_display_node_content.inc,v 1.1.2.7 2009/02/22 23:05:36 crell Exp $
+// $Id: views_attach_plugin_display_node_content.inc,v 1.1.2.7.2.5 2009/06/25 23:14:07 eaton Exp $
 
 /**
  * The plugin that handles node-attached views.
@@ -10,7 +10,8 @@ class views_attach_plugin_display_node_content extends views_plugin_display {
 
     $options['types'] = array('default' => array());
     $options['modes'] = array('default' => array('full'));
-    $options['default_argument'] = array('default' => 'nid');
+    $options['argument_mode'] = array('default' => 'nid');
+    $options['default_argument'] = array('default' => '');
     $options['show_title'] = 0;
 
     return $options;
@@ -57,11 +58,11 @@ class views_attach_plugin_display_node_content extends views_plugin_display {
       $weight = 10;
     }
 
-    $default_argument = $this->get_option('default_argument');
-    $options['default_argument'] = array(
+    $argument_mode = $this->get_option('argument_mode');
+    $options['arguments'] = array(
       'category' => 'node_content',
-      'title' => t('Default argument'),
-      'value' => empty($default_argument) ? t('None') : $default_argument,
+      'title' => t('Arguments'),
+      'value' => empty($argument_mode) ? t('None') : check_plain($argument_mode),
     );
 
     $options['show_title'] = array(
@@ -101,14 +102,53 @@ class views_attach_plugin_display_node_content extends views_plugin_display {
          );
          break;
 
-      case 'default_argument':
-        $form['#title'] .= t('Default argument');
-        $form['default_argument'] = array(
-          '#type' => 'checkbox',
-          '#title' => t('Provide the current node id as a default argument.'),
-          '#default_value' => $this->get_option('default_argument') === 'nid',
-          '#return_value' => 'nid',
+      case 'arguments':
+        $form['#title'] .= t('Arguments');
+        $default = $this->get_option('argument_mode');
+        $options = array(
+          'none' => t("No special handling"),
+          'nid' =>  t("Use the ID of the node the view is attached to"),
         );
+
+        $form['argument_mode'] = array(
+          '#type' => 'radios',
+          '#title' => t("How should this display populate the view's arguments?"),
+          '#options' => $options,
+          '#default_value' => $default,
+        );
+
+        // Add the extra option for Tokens if the module is enabled.
+        // If it isn't, ensure that we dont' default to 'token'.
+        if (module_exists('token')) {
+          $form['argument_mode']['#options']['token'] = t("Use tokens from the node the view is attached to");
+          $form['token_prefix'] = array(
+            '#id' => 'views-attached-token-arguments',
+            '#type' => 'hidden',
+            '#prefix' => '<div><div id="views-attached-token-arguments">',
+            '#process' => array('views_process_dependency'),
+            '#dependency' => array(
+              'radio:argument_mode' => array('token')
+            ),
+          );
+          $form['default_argument'] = array(
+            '#type' => 'textfield',
+            '#default_value' => $this->get_option('default_argument'),
+            '#description' => t('You may use token replacement to provide arguments based on the current node. Separate arguments with "/".'),
+          );
+          $form['token_help'] = array(
+            '#type' => 'fieldset',
+            '#title' => t('Replacement tokens'),
+            '#collapsible' => TRUE,
+            '#collapsed' => TRUE,
+            '#description' => theme('token_help', 'node'),
+          );
+          $form['token_suffix'] = array(
+            '#value' => '</div></div>',
+          );
+        }
+        elseif ($default == 'token') {
+          $form['argument_mode']['#default_value'] = 'none';
+        }
         break;
 
       case 'show_title':
@@ -133,12 +173,50 @@ class views_attach_plugin_display_node_content extends views_plugin_display {
       case 'modes':
         $this->set_option('modes', array_values(array_filter($form_state['values']['modes'])));
         break;
-      case 'default_argument':
-        $this->set_option('default_argument', $form_state['values']['default_argument']);
+      case 'arguments':
+        $this->set_option('argument_mode', $form_state['values']['argument_mode']);
+        if ($form_state['values']['argument_mode'] == 'token') {
+          $this->set_option('default_argument', $form_state['values']['default_argument']);
+        }
+        else {
+          $this->set_option('default_argument', NULL);          
+        }
         break;
       case 'show_title':
         $this->set_option('show_title', $form_state['values']['show_title']);
         break;
+    }
+  }
+
+  /**
+   * We have to run token replacement before the arguments are used.
+   */
+  function pre_execute() {
+    // Call the parent setup function so we do not lose data.
+    parent::pre_execute();
+
+    $node = $this->view->current_node;
+    $node_types = $this->view->display_handler->get_option('types');
+    if (!in_array($node->type, $node_types)) {
+      return;
+    }
+
+    $arg_mode = $this->view->display_handler->get_option('argument_mode');
+    if (module_exists('token') && $arg_mode == 'token') {
+      if ($token_string = $this->view->display_handler->get_option('default_argument')) {
+        // Now do the token replacement.
+        $token_values = views_attach_get_arguments_from_token_string($token_string, 'node', $node);
+        $new_args = array();
+        // We have to be careful to only replace arguments that have tokens.
+        foreach ($token_values as $key => $value) {
+          $new_args[$key] = $value;
+        }
+    
+        $this->view->args = $new_args;
+      }
+    }
+    elseif ($arg_mode == 'nid') {
+      $this->view->args = array($node->nid);
     }
   }
 

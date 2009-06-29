@@ -1,5 +1,5 @@
 <?php
-// $Id: views_attach_plugin_display_profile.inc,v 1.1.2.1 2009/02/13 17:14:26 crell Exp $
+// $Id: views_attach_plugin_display_profile.inc,v 1.1.2.1.2.6 2009/06/25 23:14:07 eaton Exp $
 
 /**
  * The plugin that handles a user profile.
@@ -10,7 +10,8 @@ class views_attach_plugin_display_profile extends views_plugin_display {
 
     $options['weight'] = array('default' => 10);
     $options['category'] = array('default' => NULL);
-    $options['default_argument'] = array('default' => 'uid');
+    $options['argument_mode'] = array('default' => 'uid');
+    $options['default_argument'] = array('default' => '');
 
     return $options;
   }
@@ -49,11 +50,12 @@ class views_attach_plugin_display_profile extends views_plugin_display {
       'title' => t('Weight'),
       'value' => $weight,
     );
-
-    $options['default_argument'] = array(
+    
+    $argument_mode = $this->get_option('argument_mode');
+    $options['arguments'] = array(
       'category' => 'profile',
-      'title' => t('Default argument'),
-      'value' => $this->get_option('default_argument') === 'uid' ? t('Yes') : t('No'),
+      'title' => t('Arguments'),
+      'value' => empty($argument_mode) ? t('None') : check_plain($argument_mode),
     );
   }
 
@@ -81,14 +83,53 @@ class views_attach_plugin_display_profile extends views_plugin_display {
           '#default_value' => $this->get_option('category'),
         );
         break;
-      case 'default_argument':
-        $form['#title'] .= t('Default argument');
-        $form['default_argument'] = array(
-          '#type' => 'checkbox',
-          '#title' => t("Provide the current user id as a default argument."),
-          '#default_value' => $this->get_option('default_argument') === 'uid',
-          '#return_value' => 'uid',
+      case 'arguments':
+        $form['#title'] .= t('Arguments');
+        $default = $this->get_option('argument_mode');
+        $options = array(
+          'none' => t("No special handling"),
+          'uid' =>  t("Use the ID of the user the view is attached to."),
         );
+
+        $form['argument_mode'] = array(
+          '#type' => 'radios',
+          '#title' => t("How should this display populate the view's arguments?"),
+          '#options' => $options,
+          '#default_value' => $default,
+        );
+
+        // Add the extra option for Tokens if the module is enabled.
+        // If it isn't, ensure that we dont' default to 'token'.
+        if (module_exists('token')) {
+          $form['argument_mode']['#options']['token'] = t("Use tokens from the user the view is attached to");
+          $form['token_prefix'] = array(
+            '#id' => 'views-attached-token-arguments',
+            '#type' => 'hidden',
+            '#prefix' => '<div><div id="views-attached-token-arguments">',
+            '#process' => array('views_process_dependency'),
+            '#dependency' => array(
+              'radio:argument_mode' => array('token')
+            ),
+          );
+          $form['default_argument'] = array(
+            '#type' => 'textfield',
+            '#default_value' => $this->get_option('default_argument'),
+            '#description' => t('You may use token replacement to provide arguments based on the current user profile. Separate arguments with "/".'),
+          );
+          $form['token_help'] = array(
+            '#type' => 'fieldset',
+            '#title' => t('Replacement tokens'),
+            '#collapsible' => TRUE,
+            '#collapsed' => TRUE,
+            '#description' => theme('token_help', 'user'),
+          );
+          $form['token_suffix'] = array(
+            '#value' => '</div></div>',
+          );
+        }
+        elseif ($default == 'token') {
+          $form['argument_mode']['#default_value'] = 'none';
+        }
         break;
     }
   }
@@ -103,9 +144,41 @@ class views_attach_plugin_display_profile extends views_plugin_display {
       case 'category':
         $this->set_option('category', $form_state['values']['category']);
         break;
-      case 'default_argument':
-        $this->set_option('default_argument', $form_state['values']['default_argument']);
+      case 'arguments':
+        $this->set_option('argument_mode', $form_state['values']['argument_mode']);
+        if ($form_state['values']['argument_mode'] == 'token') {
+          $this->set_option('default_argument', $form_state['values']['default_argument']);
+        }
+        else {
+          $this->set_option('default_argument', NULL);          
+        }
         break;
+    }
+  }
+
+  /**
+   * We have to run token replacement before the arguments are used.
+   */
+  function pre_execute() {
+    // Call the parent setup function so we do not lose data.
+    parent::pre_execute();
+    $account = $this->view->current_account;
+    $arg_mode = $this->view->display_handler->get_option('argument_mode');
+    if (module_exists('token') && $arg_mode == 'token') {
+      if ($token_string = $this->view->display_handler->get_option('default_argument')) {
+        // Now do the token replacement.
+        $token_values = views_attach_get_arguments_from_token_string($token_string, 'user', $account);
+        $new_args = array();
+        // We have to be careful to only replace arguments that have tokens.
+        foreach ($token_values as $key => $value) {
+          $new_args[$key] = $value;
+        }
+    
+        $this->view->args = $new_args;
+      }
+    }
+    elseif ($arg_mode == 'uid') {
+      $this->view->args = array($account->uid);
     }
   }
 

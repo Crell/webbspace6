@@ -165,6 +165,7 @@ function webb_update_6001() {
   module_enable(array(
     // New modules.
     'auto_nodetitle', 'helpers_database', 'advanced_help', 'update', 'views_tree',
+    'token', 'views_attach',
 
     // Legal seemed to turn itself off somewhere, so just to be safe we'll force
     // it to enable again.
@@ -531,4 +532,13 @@ function webb_update_6006() {
 function webb_update_6007() {
   variable_set('webb_og_posting_types', array('board' => 'board'));
   variable_set('webbtopic_og_types', array('board' => 'board'));
+}
+
+/**
+ * Configure the new tabname_tweaker module.  Yay, Eaton!
+ */
+function webb_update_6008() {
+  variable_set('tabname_tweaker_board', 'MOTD');
+  variable_set('tabname_tweaker_fleet', 'MOTD');
+
 }

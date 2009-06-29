@@ -1,0 +1,11 @@
+; $Id: tabname_tweaker.info,v 1.1 2009/06/23 15:04:15 eaton Exp $
+name = Tab name tweaker
+description = Changes the title of the node 'View' tab.
+core = 6.x
+suggests[] = token
+; Information added by drupal.org packaging script on 2009-06-23
+version = "6.x-1.0"
+core = "6.x"
+project = "tabname_tweaker"
+datestamp = "1245770285"
+

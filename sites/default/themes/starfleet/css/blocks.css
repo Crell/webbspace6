@@ -37,6 +37,10 @@
 .block .content /* Block's content wrapper */ {
 }
 
+.sidebar .block .content /* Block's content wrapper */ {
+border: 1px solid #C49A34;
+}
+
 #block-aggregator-category-1 /* Block for the latest news items in the first category */ {
 }
 
@@ -100,3 +104,15 @@
  * Adding some treatment to content that appear in the 
  * left and right sidebar regions.
  */
+.sidebar h2{
+  font-family: Tahoma, Verdana, Arial, Helvetica, "Bitstream Vera Sans", sans-serif;
+  font-size: 1em;
+  color: #C49A34;
+  line-height: 1em;
+  margin-top: 0.769em; /* Equivalent to 1em in the page's base font: 1 / 1.3 = 0.769 */
+  margin-bottom: 0.769em;
+}
+
+.sidebar a {
+  color: #C09358;
+}

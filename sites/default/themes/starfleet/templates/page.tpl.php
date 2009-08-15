@@ -128,6 +128,9 @@
             <?php endif; ?>
           <?php endif; ?>
 
+          <?php print theme('links', $primary_links, array('id' => 'main-menu', 'class' => 'links clearfix')); ?>
+
+
           <?php if ($site_slogan): ?>
             <div id="site-slogan"><?php print $site_slogan; ?></div>
           <?php endif; ?>
@@ -190,12 +193,10 @@
 
       </div></div> <!-- /#content-inner, /#content -->
 
-      <?php if ($primary_links || $navbar): ?>
+      <?php if ($navbar): ?>
         <div id="navbar"><div id="navbar-inner" class="clearfix region region-navbar">
 
           <a name="navigation" id="navigation"></a>
-
-          <?php print theme('links', $primary_links, array('id' => 'main-menu', 'class' => 'links clearfix')); ?>
 
           <?php print $navbar; ?>
 
@@ -203,9 +204,9 @@
       <?php endif; ?>
 
       <?php if ($left): ?>
-        <div id="sidebar-first"><div id="sidebar-first-inner" class="region region-sidebar-first">
+        <div id="sidebar-first" class="sidebar"><div id="sidebar-first-inner" class="region region-sidebar-first">
           <?php print $left; ?>
-        </div></div> <!-- /#sidebar-first-inner, /#sidebar-first -->
+        </div></div> <!-- /#sidebar-first-inner, /#sidebar-first - caroltron added a class of .sidebar to outermost div -->
       <?php endif; ?>
 
       <?php if ($right): ?>

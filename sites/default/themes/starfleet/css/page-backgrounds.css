@@ -31,11 +31,22 @@ body {
 }
 
 #main {
-  border: 1px solid #fff;
-  background-color: #000;
 }
 
 #main-inner {
+  border: 1px solid #fff;
+  background-color: #000;
+  padding: 20px;
+}
+
+#content {
+}
+
+#content-inner {
+}
+
+#content-area {
+  border: 1px solid #fff;
 }
 
 #footer {

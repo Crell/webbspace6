@@ -51,7 +51,6 @@ div#site-name /* The name of the website */ {
 
 #site-name a:link,
 #site-name a:visited {
-  color: #000;
   text-decoration: none;
 }
 
@@ -84,6 +83,8 @@ div#site-name /* The name of the website */ {
 }
 
 #mission /* The mission statement of the site (displayed on homepage) */ {
+background-color: #333;
+padding: 10px;
 }
 
 #content-top /* Wrapper for any blocks placed in the "content top" region */ {

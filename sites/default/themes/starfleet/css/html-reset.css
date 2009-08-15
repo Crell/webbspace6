@@ -89,6 +89,7 @@ code {
  */
 h1 {
   font-size: 2em;
+  font-family: Georgia, "Times New Roman", "Bitstream Vera Serif", serif;
   line-height: 1.3em;
   color: #F0F388;
   margin-top: 0;
@@ -103,6 +104,7 @@ h1 {
 
 h2 {
   font-size: 1.5em;
+  font-family: Georgia, "Times New Roman", "Bitstream Vera Serif", serif;
   line-height: 1.3em;
   margin-top: 0.667em; /* Equivalent to 1em in the page's base font: 1 / 1.5 = 0.667em */
   margin-bottom: 0.667em;
@@ -186,6 +188,10 @@ li.leaf /* Drupal override */ {
   padding: 0;
 }
 
+ul.menu li {
+  list-style: none;
+}
+
 ul          { list-style-type: disc; }
 ul ul       { list-style-type: circle; }
 ul ul ul    { list-style-type: square; }
@@ -247,6 +253,16 @@ tbody th {
 
 tbody {
   border-top: none;
+}
+
+tr {
+  background-color: #999;
+  color: #333;
+  border: 1px solid #fff;
+}
+
+tr.region-empty /* style blocks tables */{
+  color: #ccc;
 }
 
 /*

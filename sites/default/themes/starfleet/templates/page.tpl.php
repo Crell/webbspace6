@@ -187,6 +187,20 @@
         <?php endif; ?>
         </div> <!-- /#content-area -->
 
+    <?php if ($footer || $footer_message || $secondary_links): ?>
+      <div id="footer"><div id="footer-inner" class="region region-footer">
+
+        <?php print theme('links', $secondary_links, array('id' => 'secondary-menu', 'class' => 'links clearfix')); ?>
+
+        <?php if ($footer_message): ?>
+          <div id="footer-message"><?php print $footer_message; ?></div>
+        <?php endif; ?>
+
+        <?php print $footer; ?>
+
+      </div></div> <!-- /#footer-inner, /#footer -->
+    <?php endif; ?>
+
         <?php if ($feed_icons): ?>
           <div class="feed-icons"><?php print $feed_icons; ?></div>
         <?php endif; ?>
@@ -216,20 +230,6 @@
       <?php endif; ?>
 
     </div></div> <!-- /#main-inner, /#main -->
-
-    <?php if ($footer || $footer_message || $secondary_links): ?>
-      <div id="footer"><div id="footer-inner" class="region region-footer">
-
-        <?php print theme('links', $secondary_links, array('id' => 'secondary-menu', 'class' => 'links clearfix')); ?>
-
-        <?php if ($footer_message): ?>
-          <div id="footer-message"><?php print $footer_message; ?></div>
-        <?php endif; ?>
-
-        <?php print $footer; ?>
-
-      </div></div> <!-- /#footer-inner, /#footer -->
-    <?php endif; ?>
 
   </div></div> <!-- /#page-inner, /#page -->
 

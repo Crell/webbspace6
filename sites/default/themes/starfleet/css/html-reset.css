@@ -34,7 +34,7 @@ body {
 
   /* Use a 12px base font size with a 16px line height */
   font-size: 0.75em; /* 16px x .75 = 12px */
-  line-height: 1.333em; /* 12px x 1.333 = 16px */
+  line-height: 1.4em;
 
   /* Use a 14px base font size with a 18px line height */
   /*font-size: 0.875em; /* 16px x .875 = 14px */
@@ -89,6 +89,7 @@ code {
  */
 h1 {
   font-size: 2em;
+  font-weight: bold;
   font-family: Georgia, "Times New Roman", "Bitstream Vera Serif", serif;
   line-height: 1.3em;
   color: #F0F388;
@@ -136,7 +137,7 @@ dl,
 pre,
 table,
 fieldset {
-  margin: 1em 0;
+  margin: 20px 0;
 }
 
 blockquote {
@@ -218,15 +219,19 @@ dd {
  */
 a:link {
   color: #6090FF;
+  text-decoration: none;
+
 }
 
 a:visited {
-  color: #99FFFF;
+  color: #6090FF/*99FFFF*/;
+  text-decoration: none;
 }
 
 a:hover,
 a:focus {
   color: #5070FF;
+  text-decoration: none;
 }
 
 a:active {

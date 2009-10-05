@@ -39,6 +39,7 @@
 }
 
 .node-teaser /* A node displayed as teaser */ {
+  margin-bottom: 20px;
 }
 
 /* All nodes are given a node-type-FOO class that describes the type of
@@ -70,12 +71,18 @@
 }
 
 .node .submitted /* The "posted by" information */ {
+  color:#999999;
+  font-size:0.8em;
+  float: left;
+  margin-right: 10px;
 }
 
 .node .terms /* Node terms (taxonomy) */ {
+  font-size:0.8em;
 }
 
 .node .content /* Node's content wrapper */ {
+  clear: left;
 }
 
 .node ul.links /* Node links. See also the ul.links declaration in the pages.css. */ {

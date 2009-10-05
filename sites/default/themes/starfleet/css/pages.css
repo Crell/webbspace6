@@ -33,12 +33,6 @@ body {
 #header-inner {
 }
 
-#header ul li a,
-.sidebar li a {
-  text-decoration: none;
-}
-
-
 #logo /* Wrapping link for logo */ {
   float: left; /* LTR */
   margin: 0 10px 0 0; /* LTR */
@@ -62,7 +56,7 @@ div#site-name /* The name of the website */ {
 }
 
 #site-name a:hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 #site-slogan /* The slogan (or tagline) of a website */ {
@@ -291,4 +285,8 @@ ul.links li {
   height: 0;
   overflow: hidden;
   position: absolute;
+}
+
+.sidebar div.item-list ul {
+  list-style: none;
 }

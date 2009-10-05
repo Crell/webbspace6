@@ -10,8 +10,7 @@
  * The active item in a Drupal menu
  */
 li a.active {
-  color: #fff; {
-;
+  color: #fff; 
 }
 
 /*
@@ -32,6 +31,11 @@ li a.active {
 #secondary-menu {
 }
 
+.sidebar .block ul {
+  padding: 0;
+}
+
+
 /*
  * Menu blocks
  */
@@ -45,7 +49,27 @@ li a.active {
  * the header region, the same way.  We moved #main-menu into header.
  */
 #header ul li {
-  border-right: 1px solid #6090FF;
+  border-right: 1px solid #99FFFF;
+  color: #99FFFF;
+}
+
+#header ul li a:link {
+  color: #99FFFF;
+}
+
+#header ul li a:visited {
+  color: #99FFFF/*99FFFF*/;
+}
+
+#header ul li a:hover,
+#header ul li a:focus {
+  color: #5070FF;
+}
+
+#header ul li a:active {
+}
+
+.sidebar li a:link {
 }
 
 /*

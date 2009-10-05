@@ -151,7 +151,7 @@ margin: 20px;
 .with-navbar #content,
 .with-navbar #sidebar-first,
 .with-navbar #sidebar-second {
-  margin-top: 2.3em; /* Set this to the same value as the navbar height above. */
+  margin-top: 0;
 }
 
 #navbar-inner {
@@ -196,7 +196,7 @@ margin: 20px;
 }
 
 #sidebar-second-inner {
-  margin: 0 0 0 20px; /* LTR */
+  margin: 0 0 0 40px; /* LTR */
   padding: 0;
 }
 

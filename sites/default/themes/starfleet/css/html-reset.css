@@ -37,8 +37,8 @@ body {
   line-height: 1.333em; /* 12px x 1.333 = 16px */
 
   /* Use a 14px base font size with a 18px line height */
-  font-size: 0.875em; /* 16px x .875 = 14px */
-  line-height: 1.286em; /* 14px x 1.286 = 18px */
+  /*font-size: 0.875em; /* 16px x .875 = 14px */
+  /*line-height: 1.286em; /* 14px x 1.286 = 18px */
 }
 
 body,
@@ -75,7 +75,7 @@ fieldset {
 
    */
 
-  font-family: Tahoma, Verdana, Arial, Helvetica, "Bitstream Vera Sans", sans-serif;
+  font-family: Verdana, Arial, Helvetica, "Bitstream Vera Sans", sans-serif;
 }
 
 pre,
@@ -221,7 +221,7 @@ a:link {
 }
 
 a:visited {
-  color: #6090FF;
+  color: #99FFFF;
 }
 
 a:hover,

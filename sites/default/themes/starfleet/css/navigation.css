@@ -10,7 +10,8 @@
  * The active item in a Drupal menu
  */
 li a.active {
-  color: #000;
+  color: #fff; {
+;
 }
 
 /*
@@ -38,7 +39,30 @@ li a.active {
 }
 
 /*
+ * Header
+ *
+ * We taking a chance here and theming all uls (hopefully all menus) that get thrown into
+ * the header region, the same way.  We moved #main-menu into header.
+ */
+#header ul li {
+  border-right: 1px solid #6090FF;
+}
+
+/*
+ * Sidebar-first (left sidebar)
+ */
+#sidebar-first ul li {
+  padding: 2px 0 4px 0;
+}
+
+.sidebar a:visited {
+  color: #F0C388;
+}
+
+/*
  * "Menu block" blocks. See http://drupal.org/project/menu_block
  */
 .block-menu_block {
 }
+
+

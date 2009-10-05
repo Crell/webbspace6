@@ -40,6 +40,8 @@
 .sidebar .block .content /* Block's content wrapper */ {
   border: 1px solid #C49A34;
   padding: 1.5em;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
 }
 
 #block-aggregator-category-1 /* Block for the latest news items in the first category */ {

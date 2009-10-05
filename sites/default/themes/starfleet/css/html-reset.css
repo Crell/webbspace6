@@ -231,7 +231,7 @@ a:visited {
 a:hover,
 a:focus {
   color: #5070FF;
-  text-decoration: none;
+  text-decoration: underline;
 }
 
 a:active {
@@ -252,8 +252,15 @@ th,
 thead th,
 tbody th {
   text-align: left; /* LTR */
-  padding: 0;
+  padding: 5px;
   border-bottom: none;
+  background-color: #000000;
+  color: #fff;
+  border-bottom: 2px solid #fff;
+}
+
+thead th a:link {
+  color: #fff;
 }
 
 tbody {
@@ -261,13 +268,26 @@ tbody {
 }
 
 tr {
-  background-color: #999;
-  color: #333;
-  border: 1px solid #fff;
+  background-color: #000000;
+  color: #fff;
 }
 
-tr.region-empty /* style blocks tables */{
-  color: #ccc;
+tr.region-empty, /* style blocks tables */
+#blocks tr.region-message {
+  color: #666;
+  background-color: #222222;
+}
+
+tr.even, tr.odd {
+  border: none;
+}
+
+tr.even {
+  background-color: #222222;
+}
+
+tr.odd {
+  background-color: #000000;
 }
 
 /*
@@ -311,4 +331,14 @@ form {
 fieldset {
   margin: 1em 0;
   padding: 0.5em;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+}
+ fieldset.collapsed {
+  -moz-border-radius: 0;
+  -webkit-border-radius: 0;
+}
+
+html.js fieldset.collapsible legend a {
+  padding-left: 0;
 }

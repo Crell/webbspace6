@@ -37,6 +37,9 @@ body {
   border: 1px solid #ccc;
   background-color: #000;
   padding: 20px 20px 20px 20px;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+
 }
 
 #content {
@@ -47,6 +50,8 @@ body {
 
 #content-area {
   border: 1px solid #ccc;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
 }
 
 #footer {

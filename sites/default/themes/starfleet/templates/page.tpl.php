@@ -153,42 +153,42 @@
 
       <div id="content"><div id="content-inner">
 
-        <?php if ($mission): ?>
-          <div id="mission"><?php print $mission; ?></div>
-        <?php endif; ?>
-
-        <?php if ($content_top): ?>
-          <div id="content-top" class="region region-content_top">
-            <?php print $content_top; ?>
-          </div> <!-- /#content-top -->
-        <?php endif; ?>
-
-        <?php if ($breadcrumb || $title || $tabs || $help || $messages): ?>
-          <div id="content-header">
-            <?php print $breadcrumb; ?>
-            <?php if ($title): ?>
-              <h1 class="title"><?php print $title; ?></h1>
-            <?php endif; ?>
-            <?php print $messages; ?>
-            <?php if ($tabs): ?>
-              <div class="tabs"><?php print $tabs; ?></div>
-            <?php endif; ?>
-            <?php print $help; ?>
-          </div> <!-- /#content-header -->
-        <?php endif; ?>
-
         <div id="content-area">
-          <?php print $content; ?>
-        </div>
+          <?php if ($mission): ?>
+            <div id="mission"><?php print $mission; ?></div>
+          <?php endif; ?>
 
-        <?php if ($feed_icons): ?>
-          <div class="feed-icons"><?php print $feed_icons; ?></div>
-        <?php endif; ?>
+          <?php if ($breadcrumb || $title || $tabs || $help || $messages): ?>
+            <div id="content-header">
+              <?php print $breadcrumb; ?>
+              <?php if ($title): ?>
+                <h1 class="title"><?php print $title; ?></h1>
+              <?php endif; ?>
+              <?php print $messages; ?>
+              <?php if ($tabs): ?>
+                <div class="tabs"><?php print $tabs; ?></div>
+              <?php endif; ?>
+              <?php print $help; ?>
+            </div> <!-- /#content-header -->
+          <?php endif; ?>
+
+          <?php if ($content_top): ?>
+            <div id="content-top" class="region region-content_top">
+              <?php print $content_top; ?>
+            </div> <!-- /#content-top -->
+          <?php endif; ?>
+          
+          <?php print $content; ?>
 
         <?php if ($content_bottom): ?>
           <div id="content-bottom" class="region region-content_bottom">
             <?php print $content_bottom; ?>
           </div> <!-- /#content-bottom -->
+        <?php endif; ?>
+        </div> <!-- /#content-area -->
+
+        <?php if ($feed_icons): ?>
+          <div class="feed-icons"><?php print $feed_icons; ?></div>
         <?php endif; ?>
 
       </div></div> <!-- /#content-inner, /#content -->

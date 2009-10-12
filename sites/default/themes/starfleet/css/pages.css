@@ -156,6 +156,7 @@ div.tabs /* See also the tabs.css file. */ {
 
 #content-area /* Wrapper for the actual page content */ {
   padding: 15px;
+  clear: right; /* Clear floating tabs */
 }
 
 ul.links /* List of links */ {

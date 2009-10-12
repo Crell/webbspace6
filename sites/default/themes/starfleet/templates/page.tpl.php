@@ -151,7 +151,9 @@
     <div id="main"><div id="main-inner" class="clearfix<?php if ($primary_links || $navbar) { print ' with-navbar'; } ?>">
 
       <div id="content"><div id="content-inner">
-
+        <?php if ($tabs): ?>
+          <div class="tabs"><?php print $tabs; ?></div>
+        <?php endif; ?>
         <div id="content-area">
           <?php if ($mission): ?>
             <div id="mission"><?php print $mission; ?></div>
@@ -164,9 +166,6 @@
                 <h1 class="title"><?php print $title; ?></h1>
               <?php endif; ?>
               <?php print $messages; ?>
-              <?php if ($tabs): ?>
-                <div class="tabs"><?php print $tabs; ?></div>
-              <?php endif; ?>
               <?php print $help; ?>
             </div> <!-- /#content-header -->
           <?php endif; ?>

@@ -12,7 +12,8 @@
 
 
 div.tabs {
-  margin: 0 0 5px 0;
+  margin: 0 10px -1px 0;
+  float: right;
 }
 
 ul.primary {
@@ -26,7 +27,7 @@ ul.primary {
 }
 
 ul.primary li {
-  float: right; /* LTR */
+  float: left; /* LTR */
   margin: 0;
   padding: 0;
 }
@@ -87,7 +88,7 @@ ul.secondary {
 }
 
 ul.secondary li {
-  float: right; /* LTR */
+  float: left; /* LTR */
   margin: 0 5px 0 0;
   padding: 5px 0;
   border-right: none; /* LTR */

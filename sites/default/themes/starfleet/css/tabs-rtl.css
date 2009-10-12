@@ -5,6 +5,10 @@
  * RTL companion for the tabs.css file.
  */
 
+div.tabs {
+  margin: 0 0 -1px 10px;
+  float: left;
+}
 
 ul.primary {
   padding: 0 10px 0 0;

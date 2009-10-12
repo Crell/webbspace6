@@ -127,13 +127,12 @@
               </h1>
             <?php endif; ?>
           <?php endif; ?>
-
-          <?php print theme('links', $primary_links, array('id' => 'main-menu', 'class' => 'links clearfix')); ?>
-
-
           <?php if ($site_slogan): ?>
             <div id="site-slogan"><?php print $site_slogan; ?></div>
           <?php endif; ?>
+
+          <?php print theme('links', $primary_links, array('id' => 'main-menu', 'class' => 'links clearfix')); ?>
+
         </div> <!-- /#name-and-slogan -->
       <?php endif; ?>
 

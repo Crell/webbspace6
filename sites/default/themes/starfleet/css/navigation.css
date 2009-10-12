@@ -13,7 +13,19 @@ li.leaf {
 
 ul.menu li.collapsed {
   list-style-type: square;
+  list-style-image: url(../images/collapsed.png);
 }
+
+ul.menu li.expanded {
+  list-style-type: square;
+  list-style-image: url(../images/expanded.png);
+}
+
+ul.menu li.expanded li.collapsed {
+  list-style-type: square;
+  list-style-image: url(../images/collapsed.png);
+}
+
 /*
  * The active item in a Drupal menu
  */

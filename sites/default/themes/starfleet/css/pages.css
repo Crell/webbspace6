@@ -59,12 +59,14 @@ div#site-name /* The name of the website */ {
 
 #site-name a:hover {
   text-decoration: none;
+  color: #6090FF;
 }
 
 #site-slogan /* The slogan (or tagline) of a website */ {
   font-family: Impact, Tahoma, Verdana, Arial, Helvetica, "Bitstream Vera Sans", sans-serif;
   font-style: italic;
   font-weight: normal;
+  font-size: 1.5em;
 }
 
 #header-blocks /* Wrapper for any blocks placed in the header region */ {
@@ -101,7 +103,8 @@ margin-bottom: 20px;
 }
 
 .breadcrumb /* The path to the current page in the form of a list of links */ {
-  padding-bottom: 0; /* Undo system.css */
+  padding-bottom: 5px; /* Undo system.css */
+  margin-left: 110px;
 }
 
 h1.title, /* The title of the page */
@@ -157,6 +160,7 @@ div.tabs /* See also the tabs.css file. */ {
 #content-area /* Wrapper for the actual page content */ {
   padding: 15px;
   clear: right; /* Clear floating tabs */
+  margin-top: 28px;
 }
 
 ul.links /* List of links */ {

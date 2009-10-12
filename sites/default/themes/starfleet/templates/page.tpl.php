@@ -140,10 +140,12 @@
         <div id="search-box"><?php print $search_box; ?></div>
       <?php endif; ?>
 
-      <?php if ($header): ?>
+      <?php if ($header || $breadcrumb): ?>
         <div id="header-blocks" class="region region-header">
           <?php print $header; ?>
         </div> <!-- /#header-blocks -->
+          <?php print $breadcrumb; ?>
+
       <?php endif; ?>
 
     </div></div> <!-- /#header-inner, /#header -->
@@ -159,9 +161,8 @@
             <div id="mission"><?php print $mission; ?></div>
           <?php endif; ?>
 
-          <?php if ($breadcrumb || $title || $tabs || $help || $messages): ?>
+          <?php if ($title || $tabs || $help || $messages): ?>
             <div id="content-header">
-              <?php print $breadcrumb; ?>
               <?php if ($title): ?>
                 <h1 class="title"><?php print $title; ?></h1>
               <?php endif; ?>

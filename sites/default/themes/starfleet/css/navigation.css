@@ -48,6 +48,11 @@ li a.active {
 #main-menu {
 }
 
+#main-menu li.first {
+  padding-left: 0;
+}
+
+
 #secondary-menu {
 }
 

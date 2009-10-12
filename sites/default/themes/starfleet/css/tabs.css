@@ -40,9 +40,9 @@ ul.primary li a {
   border-width: 0;
   font-weight: bold;
   text-decoration: none;
-  color: #777;
+  /*color: #777;*/
   background-color: transparent;
-  background: url(../images/tab-left.png) no-repeat left -38px;
+  background: url(../images/starfleet-tab-left.png) no-repeat left -38px;
 }
 
 ul.primary li a .tab {
@@ -52,17 +52,17 @@ ul.primary li a .tab {
   padding: 4px 13px 0 6px;
   border-width: 0;
   line-height: 20px;
-  background: url(../images/tab-right.png) no-repeat right -38px;
+  background: url(../images/starfleet-tab-right.png) no-repeat right -38px;
 }
 
 ul.primary li a:hover {
   border-width: 0;
   background-color: transparent;
-  background: url(../images/tab-left.png) no-repeat left -76px;
+  background: url(../images/starfleet-tab-left.png) no-repeat left -76px;
 }
 
 ul.primary li a:hover .tab {
-  background: url(../images/tab-right.png) no-repeat right -76px;
+  background: url(../images/starfleet-tab-right.png) no-repeat right -76px;
 }
 
 ul.primary li.active a,
@@ -70,12 +70,12 @@ ul.primary li.active a:hover {
   border-width: 0;
   color: #000;
   background-color: transparent;
-  background: url(../images/tab-left.png) no-repeat left 0;
+  background: url(../images/starfleet-tab-left.png) no-repeat left 0;
 }
 
 ul.primary li.active a .tab,
 ul.primary li.active a:hover .tab {
-  background: url(../images/tab-right.png) no-repeat right 0;
+  background: url(../images/starfleet-tab-right.png) no-repeat right 0;
 }
 
 ul.secondary {
@@ -122,4 +122,8 @@ ul.secondary a.active:hover {
   border: 1px solid #c0c0c0;
   color: #000;
   background: url(../images/tab-secondary.png) repeat-x left top;
+}
+
+.page-admin-build-block div.tabs {
+  margin-top: 25px; /* Move tabs so they're readable on Blocks page */
 }

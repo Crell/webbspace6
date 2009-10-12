@@ -5,7 +5,15 @@
  * Navigation Styling
  */
 
+ul.menu li, 
+li.leaf {
+  list-style: disc;
+  color: #C09358;
+}
 
+ul.menu li.collapsed {
+  list-style-type: square;
+}
 /*
  * The active item in a Drupal menu
  */
@@ -32,7 +40,8 @@ li a.active {
 }
 
 .sidebar .block ul {
-  padding: 0;
+  padding: 10px;
+  margin: 0;
 }
 
 

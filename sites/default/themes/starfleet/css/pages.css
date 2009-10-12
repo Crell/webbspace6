@@ -47,7 +47,9 @@ div#site-name /* The name of the website */ {
   margin: 0;
   font-size: 3em;
   line-height: 1.3em;
-  font-family: Verdana, Arial, Helvetica, "Bitstream Vera Sans", sans-serif;
+  font-family: Impact, Tahoma, Verdana, Arial, Helvetica, "Bitstream Vera Sans", sans-serif;
+  font-style: italic;
+  font-weight: normal;
 }
 
 #site-name a:link,
@@ -60,6 +62,9 @@ div#site-name /* The name of the website */ {
 }
 
 #site-slogan /* The slogan (or tagline) of a website */ {
+  font-family: Impact, Tahoma, Verdana, Arial, Helvetica, "Bitstream Vera Sans", sans-serif;
+  font-style: italic;
+  font-weight: normal;
 }
 
 #header-blocks /* Wrapper for any blocks placed in the header region */ {

@@ -1,5 +1,5 @@
 <?php
-// $Id: og.module,v 1.628 2009/03/31 13:30:54 weitzman Exp $
+// $Id: og.module,v 1.628.2.3 2009/09/30 19:11:38 dww Exp $
 
 // Selective groups states. chosen by the group admin
 define ('OG_OPEN', 0);
@@ -1269,11 +1269,13 @@ function og_page_activity() {
 // 
 function og_view_group(&$node, $teaser = FALSE, $page = FALSE) {
   if ($teaser || !$page) {
-    $node->content['og_description'] = array(
-      '#type' => 'item',
-      '#title' => t('Description'),
-      '#value' => $node->og_description,
+    if (!empty($node->og_description)) {
+      $node->content['og_description'] = array(
+        '#type' => 'item',
+        '#title' => t('Description'),
+        '#value' => check_plain($node->og_description),
       );
+    }
   }
   else {
     // See http://drupal.org/files/issues/bc-fixup-204415-50.patch for an alternate way
@@ -2297,7 +2299,7 @@ function og_save_ancestry($node) {
         $ancestry = array(
           'nid' => $node->nid,
           'group_nid' => $gid,
-          'is_public' => $node->og_public,
+          'is_public' => !empty($node->og_public),
         );
         drupal_write_record('og_ancestry', $ancestry);
       }
@@ -2598,7 +2600,7 @@ function og_og_create_links($group) {
     $type_url_str = str_replace('_', '-', $post_type);
     if (module_invoke($types[$post_type]->module, 'access', 'create', $post_type, $user)) {
       $links["create_$post_type"] = l(t('Create !type', array('!type' => $type_name)), "node/add/$type_url_str", array(
-        'title' => t('Add a new !type in this group.', array('!type' => $type_name)),
+        'attributes' => array('title' => t('Add a new !type in this group.', array('!type' => $type_name))),
         'query' => "gids[]=$group->nid",
         ));
     }

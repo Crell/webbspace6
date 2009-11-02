@@ -1,4 +1,4 @@
-$Id: README.txt,v 1.7.2.3 2009/02/10 10:32:21 fago Exp $
+$Id: README.txt,v 1.7.2.4 2009/07/15 19:59:14 fago Exp $
 
 Automatic Nodetitle Module
 ------------------------
@@ -41,10 +41,13 @@ Installation
  ---------------------------------------
  
  You can combine php evalution with the token module, because tokens are replaced first.
+ However be aware to don't use this with any textual values provided by users as this would
+ open a security hole. If you are in doubt, don't combine tokens with php evaluation.
+ 
  Here is an example:
  
 <?php
-  $token = '[field_testtext-raw]';
+  $token = '[field_testnumber]';
   if (empty($token)) {
     return '[type]';
   }
@@ -53,7 +56,7 @@ Installation
   } 
 ?>
 
- So if the text of the CCK textfield [field_testtext-raw] isn't empty it will be used as title.
+ So if the text of the CCK number [field_testnumber] isn't empty it will be used as title.
  Otherwise the node type will be used.
 
 

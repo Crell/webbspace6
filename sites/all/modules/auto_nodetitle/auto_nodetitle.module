@@ -1,5 +1,5 @@
 <?php
-// $Id: auto_nodetitle.module,v 1.20.2.4 2009/02/10 10:06:09 fago Exp $
+// $Id: auto_nodetitle.module,v 1.20.2.5 2009/04/21 08:52:10 fago Exp $
 
 /**
  * @file
@@ -61,7 +61,7 @@ function auto_nodetitle_node_form_submit($form, &$form_state) {
 /**
  * Implementation of hook_nodeapi().
  */
-function auto_nodetitle_nodeapi($node, $op) {
+function auto_nodetitle_nodeapi(&$node, $op) {
   if ($op == 'presave' && auto_nodetitle_is_needed($node)) {
     auto_nodetitle_set_title($node);
   }

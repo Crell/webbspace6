@@ -1,4 +1,4 @@
-// $Id: README.txt,v 1.1 2009/01/22 02:25:29 quicksketch Exp $
+// $Id: README.txt,v 1.2 2009/06/15 15:03:58 quicksketch Exp $
 
 The Node Reference URL Widget module adds a new widget to the Node Reference
 CCK field type. It auto-populates a node reference field with a value from the
@@ -15,7 +15,7 @@ Dependencies
 
 Install
 -------
-Installing the Five Star voting module is simple:
+Installing the Node Reference URL Widget is simple:
 
 1) Copy the nodereference_url folder to the sites/all/modules folder in your installation.
 

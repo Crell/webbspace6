@@ -4,9 +4,9 @@ description = Attempts to thwart spam-bots by encoding email addresses.
 dependencies[] = filter
 core = 6.x
 
-; Information added by drupal.org packaging script on 2009-06-19
-version = "6.x-1.x-dev"
+; Information added by drupal.org packaging script on 2009-08-25
+version = "6.x-1.2"
 core = "6.x"
 project = "invisimail"
-datestamp = "1245370757"
+datestamp = "1251237947"
 

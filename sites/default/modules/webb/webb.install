@@ -547,3 +547,16 @@ function webb_update_6008() {
 
   return array();
 }
+
+/**
+ * Bounce the update module to make the cache tables recreate properly.
+ *
+ * For some reason this doesn't actually work.
+ */
+function webb_update_6009() {
+	module_disable(array('update'));
+  drupal_uninstall_module('update');
+  module_enable(array('update'));
+
+  return array();
+}

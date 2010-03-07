@@ -1,4 +1,4 @@
-; $Id: checkbox_validate.info,v 1.1 2008/05/25 00:02:17 MegaGrunt Exp $
+; $Id: checkbox_validate.info,v 1.2 2010/03/06 17:47:56 MegaGrunt Exp $
 name = Checkbox Validate
 description = Makes checkbox fields that have been specified as required behave as required (corrects core bug).
 core = 6.x 
@@ -10,4 +10,11 @@ version = "6.x-1.1"
 core = "6.x"
 project = "checkbox_validate"
 datestamp = "1212071414"
+
+
+; Information added by drupal.org packaging script on 2010-03-06
+version = "6.x-2.0"
+core = "6.x"
+project = "checkbox_validate"
+datestamp = "1267898102"
 

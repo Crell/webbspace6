@@ -18,7 +18,7 @@
 }
 
 .node-unpublished /* Unpublished nodes */ {
-  /* background-color: #fff4f4; */ /* Drupal core uses a #fff4f4 background */
+  background-color: #666; */ /* Drupal core uses a #fff4f4 background */
 }
 
 .node-unpublished div.unpublished,

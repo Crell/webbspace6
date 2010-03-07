@@ -88,10 +88,12 @@ code {
  * Headings
  */
 h1 {
-  font-size: 2em;
+  font-size: 3em;
   font-weight: bold;
-  font-family: Georgia, "Times New Roman", "Bitstream Vera Serif", serif;
-  line-height: 1.3em;
+  font-family: Impact, Tahoma, Verdana, Arial, Helvetica, "Bitstream Vera Sans", sans-serif;
+  font-style: italic;
+  font-weight: normal;  
+ line-height: 1.3em;
   color: #F0F388;
   margin-top: 0;
   margin-bottom: 0.5em; /* 0.5em is equavalent to 1em in the page's base font.
@@ -105,7 +107,9 @@ h1 {
 
 h2 {
   font-size: 1.5em;
-  font-family: Georgia, "Times New Roman", "Bitstream Vera Serif", serif;
+  font-family: Impact, Tahoma, Verdana, Arial, Helvetica, "Bitstream Vera Sans", sans-serif;
+  font-style: italic;
+  font-weight: normal;
   line-height: 1.3em;
   margin-top: 0.667em; /* Equivalent to 1em in the page's base font: 1 / 1.5 = 0.667em */
   margin-bottom: 0.667em;
@@ -330,6 +334,7 @@ fieldset {
   padding: 0.5em;
   -moz-border-radius: 6px;
   -webkit-border-radius: 6px;
+  border: 2px groove #222;
 }
  fieldset.collapsed {
   -moz-border-radius: 0;

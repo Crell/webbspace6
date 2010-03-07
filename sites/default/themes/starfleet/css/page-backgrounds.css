@@ -54,6 +54,11 @@ body {
   -webkit-border-radius: 6px;
 }
 
+#mission, .messages {
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+}
+
 #footer {
 }
 

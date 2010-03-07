@@ -512,6 +512,8 @@ function webb_update_6004() {
 function webb_update_6005() {
   // Set the OG home page view to our "do nothing" view.
   variable_set('og_home_page_view', 'og_ghp_null');
+
+  return array();
 }
 
 /**
@@ -532,6 +534,8 @@ function webb_update_6006() {
 function webb_update_6007() {
   variable_set('webb_og_posting_types', array('board' => 'board'));
   variable_set('webbtopic_og_types', array('board' => 'board'));
+
+  return array();
 }
 
 /**
@@ -541,4 +545,5 @@ function webb_update_6008() {
   variable_set('tabname_tweaker_board', 'MOTD');
   variable_set('tabname_tweaker_fleet', 'MOTD');
 
+  return array();
 }

@@ -71,7 +71,7 @@ DirectoryIndex index.php
 </IfModule>
 
 # Additions
-php_value memory_limit 48M
+php_value memory_limit 64M
 
 php_value display_errors On
 

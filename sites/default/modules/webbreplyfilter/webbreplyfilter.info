@@ -1,0 +1,6 @@
+name = WeBB Reply Filter
+description = A "reply" filter for WeBB notes.
+version = 1.0
+package = STF
+core = 6.x
+php = 5.2

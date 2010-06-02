@@ -14,7 +14,6 @@ module_load_include('inc', 'webb', 'webb.utility');
  */
 function webb_init() {
   module_load_include('inc', 'webb', 'webb_nodes');
-  module_load_include('inc', 'webb', 'webb.filters');
   module_load_include('inc', 'webb', 'webb.computed_field');
   //module_load_include('inc', webb, 'dbhelpers');
 }
@@ -908,33 +907,10 @@ function _webb_og_notes_filter_form_time_options($view) {
 
 function webb_theme($existing, $type, $theme, $path) {
   return array(
-    'webb_note_quoted_line' => array(
-      'arguments' => array('line' => '', 'quote_char' => ':'),
-    ),
     'nodereference_character_select' => array(
       'arguments' => array('element' => NULL),
     ),
   );
-}
-
-/**
- * Theme a quoted note by wrapping lines with classed spans.
- *
- * @ingroup themeable
- * @param $line
- *   The line to theme.
- * @param $quote_char
- *   The quote character to check for.
- */
-function theme_webb_note_quoted_line($line, $quote_char = ':') {
-
-  // This bit of excitement counts the number of quote characters the $line
-  // starts with, that is, how deep the quote nesting is.
-  $i = 0;
-  $stripped_line = str_replace(': ', ':', $line);
-  while ($stripped_line[++$i] == $quote_char);
-
-  return "<span class='webb-quoted webb-quoted-{$i}'>" . $line . "</span>";
 }
 
 

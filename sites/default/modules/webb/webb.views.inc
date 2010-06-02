@@ -4,7 +4,7 @@
  * Implementation of hook_views_plugins
  */
 function webb_views_plugins() {
-return array(
+  return array(
     'argument default' => array(
       'webb_node_owner_or_user' => array(
         'title' => t('Node owner or current user'),

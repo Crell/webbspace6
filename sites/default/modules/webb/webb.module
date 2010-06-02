@@ -403,7 +403,6 @@ function _webb_link_note($node, $teaser) {
     }
 
     // Add a "reply" link
-    /*
     if (user_access('post notes')) {
       $links['reply'] = array(
         'title' => t("Reply"),
@@ -414,7 +413,7 @@ function _webb_link_note($node, $teaser) {
          ),
       );
     }
-     */
+    
 
     // Add a link to the next note chronologically on this board.
     $next_by_time = db_result(

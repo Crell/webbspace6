@@ -279,7 +279,7 @@ function webb_menu() {
 }
 
 /**
- * Menu loader callback. Load a webform node if the given nid is a webform.
+ * Menu loader callback. Load a postable node if the given nid is postable.
  */
 function webb_postable_node_load($nid) {
   if (!is_numeric($nid)) {

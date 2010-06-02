@@ -562,6 +562,7 @@ function webb_update_6009() {
  *
  * For some reason this doesn't actually work.
  */
+/*
 function webb_update_6010() {
 	module_disable(array('update'));
   drupal_uninstall_module('update');
@@ -569,4 +570,5 @@ function webb_update_6010() {
 
   return array();
 }
+*/
 

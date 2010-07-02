@@ -66,7 +66,7 @@ function webb_get_field_instance($field_name, $type_name) {
 /**
  * Formats a note as the default body string for replies to it.
  */
-function webb_quote_note($node) {
+function   webb_quote_note($node) {
 
   $body = trim($node->body);
 

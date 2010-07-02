@@ -29,26 +29,58 @@ function webb_schema() {
 
   $schema['webb_board_positions'] = array(
     'fields' => array(
-         'nid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, 'disp-width' => '10'),
-         'tid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, 'disp-width' => '10')),
+      'nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+       ),
+      'tid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      )
+    ),
     'primary key' => array('nid', 'tid'),
   );
 
   $schema['webb_board_ranks'] = array(
     'fields' => array(
-         'nid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, 'disp-width' => '10'),
-         'tid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, 'disp-width' => '10')),
+      'nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'tid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      )
+    ),
     'primary key' => array('nid', 'tid'),
   );
 
   $schema['webb_note_lookup'] = array(
     'fields' => array(
-         'nid' => array('type' => 'int', 'not null' => TRUE, 'disp-width' => '10'),
-         'group_nid' => array('type' => 'int', 'not null' => TRUE, 'disp-width' => '10'),
-         'created' => array('type' => 'int', 'not null' => TRUE, 'disp-width' => '11')),
+      'nid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'group_nid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'created' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+      )
+    ),
     'primary key' => array('nid', 'group_nid'),
     'indexes' => array(
-         'group_nid' => array('group_nid', 'created', 'nid')),
+      'group_nid' => array('group_nid', 'created', 'nid')),
   );
 
   return $schema;

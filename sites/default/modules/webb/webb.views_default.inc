@@ -7,6 +7,7 @@ function webb_views_default_views() {
   /*
    * View 'character_posts'
    */
+  /*
   $view = new view;
   $view->name = 'character_posts';
   $view->description = 'A list of posts by a given character.';
@@ -15,7 +16,7 @@ function webb_views_default_views() {
   $view->base_table = 'node';
   $view->is_cacheable = FALSE;
   $view->api_version = 2;
-  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially 
   $handler = $view->new_display('default', 'Defaults', 'default');
   $handler->override_option('fields', array(
     'title' => array(
@@ -156,7 +157,8 @@ function webb_views_default_views() {
   ));
   $handler->override_option('default_argument', 'nid');
   $views[$view->name] = $view;
-
+  */
+  
   /*
    * View 'og_colog'
    */
@@ -672,6 +674,7 @@ function webb_views_default_views() {
   /*
    * View 'og_roster'
    */
+  /*
   $view = new view;
   $view->name = 'og_roster';
   $view->description = 'A roster of characters on a given Group.';
@@ -680,7 +683,7 @@ function webb_views_default_views() {
   $view->base_table = 'node';
   $view->is_cacheable = FALSE;
   $view->api_version = 2;
-  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially 
   $handler = $view->new_display('default', 'Defaults', 'default');
   $handler->override_option('relationships', array(
     'field_positionref_nid' => array(
@@ -1464,7 +1467,7 @@ function webb_views_default_views() {
   ));
   $handler->override_option('default_argument', 'nid');
   $views[$view->name] = $view;
-
+  */
   /*
    * View 'og_subscribers'
    */
@@ -2104,6 +2107,7 @@ function webb_views_default_views() {
   /*
    * View 'user_characters'
    */
+  /*
   $view = new view;
   $view->name = 'user_characters';
   $view->description = 'A list of all characters belonging to a specified user.';
@@ -2112,7 +2116,7 @@ function webb_views_default_views() {
   $view->base_table = 'node';
   $view->is_cacheable = FALSE;
   $view->api_version = 2;
-  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially 
   $handler = $view->new_display('default', 'Defaults', 'default');
   $handler->override_option('relationships', array(
     'group_nid' => array(
@@ -2274,6 +2278,7 @@ function webb_views_default_views() {
   $handler->override_option('weight', 10);
   $handler->override_option('default_argument', 'uid');
   $views[$view->name] = $view;
-
+  */
+  
   return $views;
 }

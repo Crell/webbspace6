@@ -545,8 +545,8 @@ function webb_update_6004() {
  * Set up OG configuration changes.
  */
 function webb_update_6005() {
-  // Set the OG home page view to our "do nothing" view.
-  variable_set('og_home_page_view', 'og_ghp_null');
+  // Set the OG home page view to nothing.
+  variable_set('og_home_page_view', '0');
 
   return array();
 }

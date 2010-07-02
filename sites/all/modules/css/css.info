@@ -3,9 +3,9 @@ name = CSS
 description = Permits adding CSS rules to node contents.
 package = Content
 core = "6.x"
-; Information added by drupal.org packaging script on 2008-12-26
-version = "6.x-1.0-rc1"
+; Information added by drupal.org packaging script on 2010-04-29
+version = "6.x-1.0"
 core = "6.x"
 project = "css"
-datestamp = "1230309917"
+datestamp = "1272539106"
 

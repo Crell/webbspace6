@@ -1,5 +1,5 @@
 <?php
-// $Id: css.module,v 1.4.2.1 2008/12/26 16:38:32 fax8 Exp $
+// $Id: css.module,v 1.4.2.3 2010/04/29 10:40:04 fax8 Exp $
 
 /**
  * @file
@@ -94,6 +94,7 @@ function css_form_alter(&$form, $form_state, $form_id) {
           '#title' => t('Enable CSS Editing.'),
           '#return_value' => 1,
           '#default_value' => variable_get('css__'.$form['#node_type']->type, FALSE),
+          '#description' => t('Users with the <em>create css for nodes</em> permission will be able to edit CSS rules to be applied to this node type.'),
     );
   }
 } 
@@ -119,7 +120,7 @@ function css_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
       // Now that the form has been properly completed, it is time to commit the new
       // data to the database.
       case 'insert':
-        if (!empty($node->css_css)) {
+        if (!empty($node->css_css) && user_access('create css for nodes')) {
           db_query("INSERT INTO {css} (nid, css) VALUES (%d, '%s')", $node->nid, $node->css_css);
         }
         break;
@@ -128,9 +129,11 @@ function css_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
       // one, this operation gets called instead. We use a DELETE then INSERT rather
       // than an UPDATE just in case the rating didn't exist for some reason.
       case 'update':
-        db_query("DELETE FROM {css} WHERE nid = %d", $node->nid);
-        if (!empty($node->css_css)) {
-          db_query("INSERT INTO {css} (nid, css) VALUES (%d, '%s')", $node->nid, $node->css_css);
+        if (user_access('create css for nodes')) {
+          db_query("DELETE FROM {css} WHERE nid = %d", $node->nid);
+          if (!empty($node->css_css)) {
+            db_query("INSERT INTO {css} (nid, css) VALUES (%d, '%s')", $node->nid, $node->css_css);
+          }
         }
         break;
 
@@ -163,14 +166,21 @@ function css_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
           // Drupal 6 seems to check for the physical existence of CSS files
           // before allowing them to be added. We have to include the virtual
           // CSS file manually since it does not really exist.
+          // To keep the order consistent with Drupal 5 version of CSS module
+          // we had to implement something kind of hacky below. For more details
+          // see http://drupal.org/node/351764
           if (!empty($node->css_css)) {
-            $link = url('css/get/'.$node->nid);
-            drupal_add_link(array(
+            $attributes = array(
               'type' => 'text/css',
               'rel' => 'stylesheet',
               'media' => 'all',
-              'href' => $link,
-            ));
+              'href' => url('css/get/'.$node->nid),
+            );
+            $link = '<link'. drupal_attributes($attributes) .' />';
+            $css = "\n//--><!]]>\n"."</script>\n".
+           $link."\n".
+           '<script type="text/javascript">'."\n<!--//--><![CDATA[//><!--\n";
+           drupal_add_js($css, 'inline', 'header', FALSE, FALSE, FALSE);
           }
         }
         break;

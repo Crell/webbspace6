@@ -9,4 +9,3 @@ function webb_views_api() {
     'path' => drupal_get_path('module', 'webb'),
   );
 }
-

@@ -1,0 +1,3 @@
+<?php
+
+include_once('stf_news.features.inc');

@@ -1,5 +1,5 @@
-name = WeBB Owner Or User Argument
-description = Custom Views argument plugin to support the note posting system.
+name = WeBB Owner Or User Argument Default
+description = Custom Views argument default plugin to support the note posting system.
 version = 1.0
 package = STF
 core = 6.x

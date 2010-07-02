@@ -6,6 +6,6 @@
 function webb_node_owner_or_user_views_api() {
   return array(
     'api' => 2,
-    'path' => drupal_get_path('module', 'webb'),
+    'path' => drupal_get_path('module', 'webb_node_owner_or_user'),
   );
 }

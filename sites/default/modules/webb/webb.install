@@ -199,6 +199,9 @@ function webb_update_6001() {
     'auto_nodetitle', 'helpers_database', 'advanced_help', 'update', 'views_tree',
     'token', 'views_attach',
 
+    // New custom modules.
+    'webb_node_owner_or_user',
+
     // Legal seemed to turn itself off somewhere, so just to be safe we'll force
     // it to enable again.
     'legal',

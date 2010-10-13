@@ -227,3 +227,9 @@ $conf = array(
 #   'forum'      => 'Discussion board',
 #   '@count min' => '@count minutes',
 # );
+
+// Pull in local settings.
+$local = dirname(realpath(__FILE__)) . '/settings.local.php';
+if (file_exists($local)) {
+  include 'settings.local.php';
+}

@@ -89,7 +89,7 @@
  *   $db_url = 'mysqli://username:password@localhost/databasename';
  *   $db_url = 'pgsql://username:password@localhost/databasename';
  */
-$db_url = 'mysql://test:test@localhost/webbspace_dev';
+$db_url = 'mysql://webb:webb@localhost/webb';
 $db_prefix = '';
 
 /**

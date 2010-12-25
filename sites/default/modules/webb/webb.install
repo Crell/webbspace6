@@ -593,17 +593,17 @@ function webb_update_6009() {
 }
 
 /**
- * Bounce the update module to make the cache tables recreate properly.
- *
- * For some reason this doesn't actually work.
+ * Create the update cache table.
+ * 
+ * I've no idea why this isn't being created on its own.
  */
-/*
 function webb_update_6010() {
-	module_disable(array('update'));
-  drupal_uninstall_module('update');
-  module_enable(array('update'));
+	$ret = array();
 
-  return array();
+  if (!db_table_exists('cache_update')) {
+    $schema['cache_update'] = drupal_get_schema_unprocessed('system', 'cache');
+  	db_create_table($ret, 'cache_update', $schema['cache_update']);
+  }
+  
+  return $ret;
 }
-*/
-

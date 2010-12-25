@@ -616,3 +616,16 @@ function webb_update_6011() {
 
   return array();
 }
+
+/**
+ * Delete the old Latest news menu item.
+ * 
+ * This menu item is now provided by the News view directly.
+ */
+function webb_update_6012() {
+
+	// We know this is the right mlid because Larry looked it up.
+	menu_link_delete(16);
+	
+	return array();
+}

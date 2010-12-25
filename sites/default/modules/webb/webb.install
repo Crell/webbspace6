@@ -598,11 +598,11 @@ function webb_update_6009() {
  * I've no idea why this isn't being created on its own.
  */
 function webb_update_6010() {
-	$ret = array();
+  $ret = array();
 
   if (!db_table_exists('cache_update')) {
     $schema['cache_update'] = drupal_get_schema_unprocessed('system', 'cache');
-  	db_create_table($ret, 'cache_update', $schema['cache_update']);
+    db_create_table($ret, 'cache_update', $schema['cache_update']);
   }
   
   return $ret;
@@ -612,7 +612,7 @@ function webb_update_6010() {
  * Enable the features module.
  */
 function webb_update_6011() {
-	module_enable(array('features'));
+  module_enable(array('features'));
 
   return array();
 }
@@ -624,8 +624,8 @@ function webb_update_6011() {
  */
 function webb_update_6012() {
 
-	// We know this is the right mlid because Larry looked it up.
-	menu_link_delete(16);
-	
-	return array();
+  // We know this is the right mlid because Larry looked it up.
+  menu_link_delete(16);
+
+  return array();
 }

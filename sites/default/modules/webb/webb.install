@@ -570,6 +570,10 @@ function webb_update_6007() {
   variable_set('webb_og_posting_types', array('board' => 'board'));
   variable_set('webbtopic_og_types', array('board' => 'board'));
 
+  // Disable the cache so it doesn't look like stuff broke.
+  variable_set('cache', 0);
+  variable_set('preprocess_css', 0);
+  
   return array();
 }
 
@@ -613,6 +617,8 @@ function webb_update_6010() {
  */
 function webb_update_6011() {
   module_enable(array('features'));
+  
+  drupal_set_message('Remember to enable the new feature modules!');
 
   return array();
 }
@@ -629,3 +635,4 @@ function webb_update_6012() {
 
   return array();
 }
+

@@ -607,3 +607,12 @@ function webb_update_6010() {
   
   return $ret;
 }
+
+/**
+ * Enable the features module.
+ */
+function webb_update_6011() {
+	module_enable(array('features'));
+
+  return array();
+}

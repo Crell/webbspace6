@@ -291,7 +291,7 @@ function stf_notes_views_default_views() {
   ));
   $handler->override_option('argument_mode', 'token');
   $handler->override_option('default_argument', '[og-id]');
-  $handler->override_option('show_title', 1);
+  $handler->override_option('show_title', 0);
 
   $views[$view->name] = $view;
 

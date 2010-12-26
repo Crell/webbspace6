@@ -636,3 +636,11 @@ function webb_update_6012() {
   return array();
 }
 
+/**
+ * Enable the Eldorado Superfly module. I feel dirty.
+ */
+function webb_update_6013() {
+  module_enable(array('eldorado_superfly'));
+
+  return array();
+}

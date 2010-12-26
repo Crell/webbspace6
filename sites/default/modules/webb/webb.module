@@ -101,9 +101,6 @@ function _webb_nodeapi_note(&$node, $op, $a3 = NULL, $a4 = NULL) {
       break;
     case 'view':
       if ($a4) {  // in $op=view, $a4 is the $page boolean.
-        $node->content['notes'] = array(
-          '#value' => component_get_view('og_notes', $node->og_groups[0]),
-        );
       }
       break;
   }

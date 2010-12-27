@@ -197,10 +197,11 @@ function webb_update_6001() {
   module_enable(array(
     // New modules.
     'auto_nodetitle', 'helpers_database', 'advanced_help', 'update', 'views_tree',
-    'token', 'views_attach',
+    'token', 'views_attach', 'eldorado_superfly', 'features', 'nodereference_url',
+  
 
     // New custom modules.
-    'webb_node_owner_or_user',
+    'webb_node_owner_or_user', 'webbdatefilter', 'webbreplyfilter',
 
     // Legal seemed to turn itself off somewhere, so just to be safe we'll force
     // it to enable again.
@@ -210,6 +211,8 @@ function webb_update_6001() {
     'fieldgroup', 'userreference',
   ));
 
+  drupal_set_message('Remember to enable the new feature modules!');
+  
   return array();
 }
 
@@ -588,20 +591,11 @@ function webb_update_6008() {
 }
 
 /**
- * Enable the new webbreplyfilter module.
- */
-function webb_update_6009() {
-  module_enable(array('webbreplyfilter'));
-
-  return array();
-}
-
-/**
  * Create the update cache table.
  * 
  * I've no idea why this isn't being created on its own.
  */
-function webb_update_6010() {
+function webb_update_6009() {
   $ret = array();
 
   if (!db_table_exists('cache_update')) {
@@ -613,22 +607,11 @@ function webb_update_6010() {
 }
 
 /**
- * Enable the features module.
- */
-function webb_update_6011() {
-  module_enable(array('features'));
-  
-  drupal_set_message('Remember to enable the new feature modules!');
-
-  return array();
-}
-
-/**
  * Delete the old Latest news menu item.
  * 
  * This menu item is now provided by the News view directly.
  */
-function webb_update_6012() {
+function webb_update_6010() {
 
   // We know this is the right mlid because Larry looked it up.
   menu_link_delete(16);
@@ -636,29 +619,3 @@ function webb_update_6012() {
   return array();
 }
 
-/**
- * Enable the Eldorado Superfly module. I feel dirty.
- */
-function webb_update_6013() {
-  module_enable(array('eldorado_superfly'));
-
-  return array();
-}
-
-/**
- * Enable the new webbdatefilter module.
- */
-function webb_update_6014() {
-  module_enable(array('webbdatefilter'));
-
-  return array();
-}
-
-/**
- * Enable the nodereference_url module.
- */
-function webb_update_6015() {
-  module_enable(array('nodereference_url'));
-
-  return array();
-}

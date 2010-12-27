@@ -644,3 +644,12 @@ function webb_update_6013() {
 
   return array();
 }
+
+/**
+ * Enable the new webbdatefilter module.
+ */
+function webb_update_6014() {
+  module_enable(array('webbdatefilter'));
+
+  return array();
+}

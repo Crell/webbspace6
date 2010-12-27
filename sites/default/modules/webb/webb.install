@@ -653,3 +653,12 @@ function webb_update_6014() {
 
   return array();
 }
+
+/**
+ * Enable the nodereference_url module.
+ */
+function webb_update_6015() {
+  module_enable(array('nodereference_url'));
+
+  return array();
+}

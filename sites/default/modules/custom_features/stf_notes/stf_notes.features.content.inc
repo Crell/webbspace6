@@ -11,15 +11,17 @@ function stf_notes_content_default_fields() {
     'field_name' => 'field_character',
     'type_name' => 'note',
     'display_settings' => array(
+      'weight' => '3',
+      'parent' => '',
       'label' => array(
-        'format' => 'above',
-      ),
-      'full' => array(
-        'format' => 'default',
-        'exclude' => 0,
+        'format' => 'hidden',
       ),
       'teaser' => array(
-        'format' => 'default',
+        'format' => 'hidden',
+        'exclude' => 0,
+      ),
+      'full' => array(
+        'format' => 'hidden',
         'exclude' => 0,
       ),
     ),
@@ -49,7 +51,7 @@ function stf_notes_content_default_fields() {
       ),
       'default_value_php' => '',
       'label' => 'Character',
-      'weight' => 0,
+      'weight' => '3',
       'description' => '',
       'type' => 'nodereference_select',
       'module' => 'nodereference',
@@ -61,15 +63,17 @@ function stf_notes_content_default_fields() {
     'field_name' => 'field_character_name',
     'type_name' => 'note',
     'display_settings' => array(
+      'weight' => '2',
+      'parent' => '',
       'label' => array(
-        'format' => 'above',
-      ),
-      'full' => array(
-        'format' => 'default',
-        'exclude' => 0,
+        'format' => 'hidden',
       ),
       'teaser' => array(
         'format' => 'default',
+        'exclude' => 0,
+      ),
+      'full' => array(
+        'format' => 'hidden',
         'exclude' => 0,
       ),
     ),
@@ -82,17 +86,16 @@ function stf_notes_content_default_fields() {
     'code' => '//if ($node->nid != 0) return; // Do not allow this value to be edited, only set on creation
 $node_field[0][\'value\'] = webb_character_name_format($node, $field, $node_field);
 ',
-    'display' => 1,
     'display_format' => '$display = $node_field_item[\'value\'];',
     'store' => 1,
     'data_type' => 'varchar',
     'data_length' => '255',
-    'data_not_null' => 1,
+    'data_not_NULL' => '',
     'data_default' => '',
     'data_sortable' => 1,
     'widget' => array(
       'label' => 'Character Name',
-      'weight' => 0,
+      'weight' => '2',
       'description' => '',
       'type' => 'computed',
       'module' => 'computed_field',
@@ -104,15 +107,17 @@ $node_field[0][\'value\'] = webb_character_name_format($node, $field, $node_fiel
     'field_name' => 'field_parent_note',
     'type_name' => 'note',
     'display_settings' => array(
+      'weight' => '1',
+      'parent' => '',
       'label' => array(
-        'format' => 'above',
-      ),
-      'full' => array(
-        'format' => 'default',
-        'exclude' => 0,
+        'format' => 'hidden',
       ),
       'teaser' => array(
-        'format' => 'default',
+        'format' => 'hidden',
+        'exclude' => 0,
+      ),
+      'full' => array(
+        'format' => 'hidden',
         'exclude' => 0,
       ),
     ),
@@ -144,7 +149,7 @@ $node_field[0][\'value\'] = webb_character_name_format($node, $field, $node_fiel
       ),
       'default_value_php' => '',
       'label' => 'Parent Note',
-      'weight' => 0,
+      'weight' => '1',
       'description' => '',
       'type' => 'nodereference_autocomplete',
       'module' => 'nodereference',
@@ -156,16 +161,17 @@ $node_field[0][\'value\'] = webb_character_name_format($node, $field, $node_fiel
     'field_name' => 'field_topic',
     'type_name' => 'note',
     'display_settings' => array(
+      'weight' => '4',
+      'parent' => '',
       'label' => array(
-        'format' => 'above',
-        'exclude' => 0,
+        'format' => 'hidden',
       ),
       'teaser' => array(
-        'format' => 'default',
+        'format' => 'hidden',
         'exclude' => 0,
       ),
       'full' => array(
-        'format' => 'default',
+        'format' => 'hidden',
         'exclude' => 0,
       ),
       '4' => array(
@@ -186,7 +192,7 @@ $node_field[0][\'value\'] = webb_character_name_format($node, $field, $node_fiel
     'widget' => array(
       'size' => NULL,
       'label' => 'Location',
-      'weight' => 0,
+      'weight' => '4',
       'description' => '',
       'type' => 'text_textfield_ogsuggest',
       'module' => 'webbtopic',

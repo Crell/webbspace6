@@ -189,28 +189,6 @@ function stf_notes_views_default_views() {
     ),
   ));
   $handler->override_option('filters', array(
-    'created' => array(
-      'operator' => '>=',
-      'value' => array(
-        'type' => 'offset',
-        'value' => '-1 week',
-        'min' => '',
-        'max' => '',
-      ),
-      'group' => '0',
-      'exposed' => FALSE,
-      'expose' => array(
-        'operator' => FALSE,
-        'label' => '',
-      ),
-      'id' => 'created',
-      'table' => 'node',
-      'field' => 'created',
-      'relationship' => 'none',
-      'override' => array(
-        'button' => 'Override',
-      ),
-    ),
     'type' => array(
       'operator' => 'in',
       'value' => array(
@@ -241,6 +219,55 @@ function stf_notes_views_default_views() {
       'field' => 'status',
       'relationship' => 'none',
     ),
+    'field_topic_value' => array(
+      'operator' => 'contains',
+      'value' => '',
+      'group' => '0',
+      'exposed' => TRUE,
+      'expose' => array(
+        'use_operator' => 0,
+        'operator' => 'field_topic_value_op',
+        'identifier' => 'topic',
+        'label' => 'Topic',
+        'optional' => 1,
+        'remember' => 0,
+      ),
+      'case' => 0,
+      'id' => 'field_topic_value',
+      'table' => 'node_data_field_topic',
+      'field' => 'field_topic_value',
+      'relationship' => 'none',
+    ),
+    'webbdatefilter' => array(
+      'operator' => '>=',
+      'value' => array(
+        'type' => 'offset',
+        'value' => '-1 week',
+        'min' => '',
+        'max' => '',
+        'value_options' => '1 week ago|-1 week
+2 weeks ago|-2 weeks
+1 month ago|-1 month
+3 months ago|-3 months
+1 year ago|-1 year',
+      ),
+      'group' => '0',
+      'exposed' => TRUE,
+      'expose' => array(
+        'use_operator' => 0,
+        'operator' => 'webbdatefilter_op',
+        'identifier' => 'since',
+        'label' => 'Since',
+        'optional' => 1,
+        'remember' => 1,
+      ),
+      'id' => 'webbdatefilter',
+      'table' => 'node',
+      'field' => 'webbdatefilter',
+      'relationship' => 'none',
+      'value_options' => '1 week ago|-1week
+2 weeks ago|-2 weeks',
+    ),
   ));
   $handler->override_option('access', array(
     'type' => 'perm',
@@ -252,7 +279,7 @@ function stf_notes_views_default_views() {
   $handler->override_option('title', 'Recent notes');
   $handler->override_option('empty', 'No notes found.');
   $handler->override_option('empty_format', '6');
-  $handler->override_option('items_per_page', 20);
+  $handler->override_option('items_per_page', 100);
   $handler->override_option('style_plugin', 'tree');
   $handler->override_option('style_options', array(
     'type' => 'ul',
@@ -283,6 +310,7 @@ function stf_notes_views_default_views() {
     'name' => 'navigation',
   ));
   $handler = $view->new_display('node_content', 'Node content', 'node_content_1');
+  $handler->override_option('use_ajax', TRUE);
   $handler->override_option('types', array(
     'note' => 'note',
   ));

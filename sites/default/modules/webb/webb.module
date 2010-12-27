@@ -356,16 +356,25 @@ function _webb_link_note($node, $teaser) {
     drupal_add_link(array('rel' => 'start', 'href' => url('node/'. $group_nid)));
     drupal_add_link(array('rel' => 'index', 'href' => url('node/'. $group_nid .'/notes')));
 
+    // Create a temporary table to generate the links below
+    db_query_temporary("SELECT nid, created 
+      FROM node 
+      WHERE created >= %d 
+        AND created <= %d 
+        AND status = 1 
+        AND type = '%s'", 
+      array($node->created - 7776000, $node->created + 7776000, $node->type), 
+      'recent_posts'
+    );
+
     // Add a link to the previous note chronologically on this board
     $prev_by_time = db_result(
       db_query_range("SELECT n.nid
-        FROM {node} n INNER JOIN {og_ancestry} oa ON n.nid=oa.nid
-        WHERE n.type='%s'
-          AND oa.group_nid=%d
+        FROM {recent_posts} n INNER JOIN {og_ancestry} oa ON n.nid=oa.nid
+        WHERE oa.group_nid = %d
           AND n.created < %d
-          AND n.status = 1
         ORDER By created DESC",
-        array($node->type, $group_nid, $node->created), 0, 1)
+        array($group_nid, $node->created), 0, 1)
     );
     if ($prev_by_time) {
       $links['prev_by_time'] = array(
@@ -415,13 +424,11 @@ function _webb_link_note($node, $teaser) {
     // Add a link to the next note chronologically on this board.
     $next_by_time = db_result(
       db_query_range("SELECT n.nid
-        FROM {node} n INNER JOIN {og_ancestry} oa ON n.nid=oa.nid
-        WHERE n.type='%s'
-          AND oa.group_nid=%d
+        FROM {recent_posts} n INNER JOIN {og_ancestry} oa ON n.nid=oa.nid
+        WHERE oa.group_nid=%d
           AND n.created > %d
-          AND n.status = 1
         ORDER By created",
-        array($node->type, $group_nid, $node->created), 0, 1)
+        array($group_nid, $node->created), 0, 1)
     );
     if ($next_by_time) {
       $links['next_by_time'] = array(
@@ -438,16 +445,14 @@ function _webb_link_note($node, $teaser) {
     $dbinfo = content_database_info(content_fields('field_topic'));
     $next_in_topic = db_result(
         db_query_range("SELECT n.nid
-          FROM {node} n
+          FROM {recent_posts} n
             INNER JOIN {og_ancestry} oa ON n.nid=oa.nid
             INNER JOIN {{$dbinfo['table']}} f ON f.nid=n.nid
-          WHERE n.type='%s'
-            AND oa.group_nid=%d
+          WHERE oa.group_nid=%d
             AND n.created > %d
-            AND n.status <> 0
             AND f.{$dbinfo['columns']['value']['column']}='%s'
           ORDER By created",
-          array($node->type, $group_nid, $node->created, $node->field_topic[0]['value']), 0, 1)
+          array($group_nid, $node->created, $node->field_topic[0]['value']), 0, 1)
       );
     if ($next_in_topic) {
       $topic_label = db_result(db_query("SELECT label FROM {webbtopic_label} WHERE nid=%d", array($group_nid)));
@@ -464,16 +469,14 @@ function _webb_link_note($node, $teaser) {
     if ($user->uid) {
       $next_unread = db_result(
         db_query_range("SELECT n.nid
-          FROM {node} n
+          FROM {recent_posts} n
             INNER JOIN {og_ancestry} oa ON n.nid=oa.nid
-            LEFT OUTER JOIN {history} h ON h.uid=2 AND h.nid=n.nid
-          WHERE n.type='%s'
-            AND oa.group_nid=%d
+            LEFT OUTER JOIN {history} h ON h.uid=%d AND h.nid=n.nid
+          WHERE oa.group_nid=%d
             AND n.created > %d
-            AND n.status = 1
             AND h.nid IS NULL
           ORDER By created",
-          array($node->type, $group_nid, $node->created), 0, 1)
+          array($user->uid, $group_nid, $node->created), 0, 1)
       );
       if ($next_unread) {
         $links['next_unread'] = array(
@@ -485,6 +488,10 @@ function _webb_link_note($node, $teaser) {
         );
       }
     }
+   
+   // Drop temporary table
+   db_query_temporary("DROP TABLE {recent_posts}");
+
   }
 
   return $links;

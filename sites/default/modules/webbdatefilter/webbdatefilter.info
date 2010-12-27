@@ -1,0 +1,5 @@
+name = WeBB Views date range filter
+description = Adds a date filter with simple range options.
+package = STF
+dependencies[] = views
+core = 6.x

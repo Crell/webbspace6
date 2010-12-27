@@ -1,0 +1,11 @@
+; $Id: eldorado_superfly.info,v 1.1 2009/06/27 00:27:24 eaton Exp $
+name = Eldorado Super Fly
+description = Relocates node links, submission info, and comments into the node content, where they can re-ordered by CCK.
+core = 6.x
+dependencies[] = content
+; Information added by drupal.org packaging script on 2009-06-27
+version = "6.x-1.1"
+core = "6.x"
+project = "eldorado_superfly"
+datestamp = "1246072533"
+

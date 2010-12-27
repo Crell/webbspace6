@@ -1,5 +1,5 @@
 <?php
-// $Id: component.module,v 1.1.4.1 2008/12/02 04:32:17 crell Exp $
+// $Id: component.module,v 1.1.4.2 2010/07/02 23:28:30 crell Exp $
 
 /**
  * Implementation of hook_menu().
@@ -77,9 +77,12 @@ function component_get_block($module, $delta, $title_text = NULL) {
 *   The name of the view to display
 * @param $display
 *   The name of the display on the specified view.
+* @param ...
+*   Any additional parameters will be passed as arguments to the view.
+* @see views_embed_view().
 */
-function component_get_view($view_name, $display) {
-  return views_embed_view($view_name, $display);
+function component_get_view() {
+  return call_user_func_array('views_embed_view', func_get_args());
 }
 
 /**

@@ -1,0 +1,184 @@
+<?php
+// $Id: eldorado_superfly.module,v 1.2 2009/06/27 03:08:57 eaton Exp $
+
+/**
+ * Implementation of hook_menu_alter.
+ *
+ * This is kind of wicked. We're hijacking the node page callback to avoid
+ * the ugliness that is node_show().
+ */
+function eldorado_superfly_menu_alter(&$items) {
+  $items['node/%node']['page callback'] = 'eldorado_superfly_node_page_view';
+}
+
+/**
+ * Implementation of hook_form_alter.
+ */
+function eldorado_superfly_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'node_type_form') {
+    $form['workflow']['#weight'] = isset($form['workflow']['#weight']) ? $form['workflow']['#weight'] + 1 : 1;
+    $form['submit']['#weight'] = isset($form['submit']['#weight']) ? $form['submit']['#weight'] + 1 : 1;
+    $form['delete']['#weight'] = isset($form['delete']['#weight']) ? $form['delete']['#weight'] + 1 : 1;
+
+    $type = $form['#node_type']->type;
+    
+    $form['esf'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Eldorado Superfly'),
+      '#description' => t("Oooh, Superfly! You're gonna make your node by and by. But if you theme, don't ask no questions why. The only game you know is 'Alter or Die.' Ah-ha-ha..."),
+      '#prefix' => '<span id="superfly" />',
+      '#collapsible' => TRUE,
+    );
+
+    $form['esf']['esf_submitted'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Display authoring information'),
+      '#default_value' => variable_get('esf_submitted_' . $type, TRUE),
+    );
+
+    $form['esf']['esf_user_pictures'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Display user pictures'),
+      '#default_value' => variable_get('esf_user_pictures_' . $type, TRUE),
+    );
+
+    $form['esf']['esf_links'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Hijack node links'),
+      '#default_value' => variable_get('esf_links_' . $type, TRUE),
+    );
+
+    $form['esf']['esf_comments'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Hijack comments'),
+      '#default_value' => variable_get('esf_comments_' . $type, FALSE),
+    );
+  }
+}
+
+/**
+ * Implementation of hook_content_extra_fields.
+ */
+function eldorado_superfly_content_extra_fields($type_name) {
+  $options = array('query' => drupal_get_destination(), 'fragment' => 'superfly');
+  $link = l(t('Configure'), 'admin/content/node-type/' . $type_name, $options);
+
+  if (variable_get('esf_submitted_' . $type_name, TRUE)) {
+    $extras['esf_submitted'] = array(
+      'label' => t('Submitted by'),
+      'description' => t('Author information and timestamp for the node.'),
+      'weight' => -5,
+      'configure' => $link,
+    );
+  }
+  
+  if (variable_get('user_pictures', FALSE) && variable_get('esf_user_pictures_' . $type_name, TRUE)) {
+    $extras['esf_picture'] = array(
+      'label' => t('Author picture'),
+      'description' => t('Optional picture of the node author.'),
+      'weight' => -5,
+      'configure' => $link,
+    );
+  }
+  
+  if (variable_get('esf_links_' . $type_name, TRUE)) {
+    $extras['esf_links'] = array(
+      'label' => t('Node links'),
+      'description' => t('Links displayed when a node is viewed.'),
+      'weight' => 80,
+      'configure' => $link,
+    );
+  }
+
+  if (module_exists('comment') && variable_get('esf_comments_' . $type_name, FALSE)) {
+    $extras['esf_comments'] = array(
+      'label' => t('Comments'),
+      'description' => t('Comment list and form for the node.'),
+      'weight' => 100,
+      'configure' => $link,
+    );
+  }
+  return $extras;
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function eldorado_superfly_nodeapi(&$node, $op, $teaser, $page) {
+  if ($op == 'view') {
+    // First we handle the submitted-by information.
+    if (variable_get('esf_submitted_' . $node->type, TRUE)) {
+      $weight = content_extra_field_weight($node->type, 'esf_submitted');
+      $node->content['esf_submitted'] = array(
+        '#weight' => !empty($weight) ? $weight : -5,
+        '#value' => theme('node_submitted', $node),
+      );
+    }
+
+    // Aaaaaand the user picture.
+    if (variable_get('esf_user_pictures_' . $node->type, TRUE)) {
+      $weight = content_extra_field_weight($node->type, 'esf_picture');
+      $node->content['esf_picture'] = array(
+        '#weight' => !empty($weight) ? $weight : -5,
+        '#value' => theme('user_picture', $node),
+      );
+    }
+    
+    // Then the links.
+    if (variable_get('esf_user_links_' . $node->type, TRUE)) {
+      $links = module_invoke_all('link', 'node', $node, $teaser);
+      drupal_alter('link', $links, $node);
+  
+      if (!empty($links)) {
+        $output = theme('links', $links, array('class' => 'links inline'));
+        $weight = content_extra_field_weight($node->type, 'esf_links');
+        $node->content['esf_links'] = array(
+          '#weight' => !empty($weight) ? $weight : 80,
+          '#value' => $output,
+        );
+      }
+    }
+
+    // And finally, because we're awesome, the comments.
+    if (module_exists('comment') && $node->comment && $page && variable_get('esf_comments_' . $node->type, FALSE)) {
+      $cid = empty($node->requested_comment) ? NULL : $node->requested_comment;
+      $weight = content_extra_field_weight($node->type, 'esf_comments');
+      $node->content['esf_comments'] = array(
+        '#weight' => !empty($weight) ? $weight : 100,
+        '#value' => comment_render($node, $cid),
+      );
+    }
+  }
+}
+
+/**
+ * Generate a page displaying a single node, along with its comments.
+ *
+ * @see node_show() 
+ */
+function eldorado_superfly_node_page_view($node, $cid = NULL) {
+  drupal_set_title(check_plain($node->title));
+  if (variable_get('esf_comments_' . $node->type, FALSE)) {
+    $node->comment_requested = $cid;
+    $output = node_view($node, FALSE, TRUE);
+  
+    // Update the history table, stating that this user viewed this node.
+    node_tag_new($node->nid);
+    return $output;
+  }
+  else {
+    return node_show($node, $cid);
+  }
+}
+
+/**
+ * Implementation of hook_preprocess_node().
+ */
+function eldorado_superfly_preprocess_node(&$vars) {
+  $node = $vars['node'];
+  if (variable_get('esf_user_links_' . $node->type, TRUE)) {
+    $vars['links'] = '';
+  }
+  $vars['submitted'] = '';
+  $vars['picture'] = '';
+}

@@ -7,9 +7,9 @@ core = 6.x
 
 
 
-; Information added by drupal.org packaging script on 2008-08-08
-version = "6.x-2.2-beta4"
+; Information added by drupal.org packaging script on 2010-11-28
+version = "6.x-2.4-rc2"
 core = "6.x"
 project = "legal"
-datestamp = "1218236117"
+datestamp = "1290951968"
 

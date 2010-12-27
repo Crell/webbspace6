@@ -570,6 +570,10 @@ function webb_update_6007() {
   variable_set('webb_og_posting_types', array('board' => 'board'));
   variable_set('webbtopic_og_types', array('board' => 'board'));
 
+  // Disable the cache so it doesn't look like stuff broke.
+  variable_set('cache', 0);
+  variable_set('preprocess_css', 0);
+  
   return array();
 }
 
@@ -593,17 +597,59 @@ function webb_update_6009() {
 }
 
 /**
- * Bounce the update module to make the cache tables recreate properly.
- *
- * For some reason this doesn't actually work.
+ * Create the update cache table.
+ * 
+ * I've no idea why this isn't being created on its own.
  */
-/*
 function webb_update_6010() {
-	module_disable(array('update'));
-  drupal_uninstall_module('update');
-  module_enable(array('update'));
+  $ret = array();
+
+  if (!db_table_exists('cache_update')) {
+    $schema['cache_update'] = drupal_get_schema_unprocessed('system', 'cache');
+    db_create_table($ret, 'cache_update', $schema['cache_update']);
+  }
+  
+  return $ret;
+}
+
+/**
+ * Enable the features module.
+ */
+function webb_update_6011() {
+  module_enable(array('features'));
+  
+  drupal_set_message('Remember to enable the new feature modules!');
 
   return array();
 }
-*/
 
+/**
+ * Delete the old Latest news menu item.
+ * 
+ * This menu item is now provided by the News view directly.
+ */
+function webb_update_6012() {
+
+  // We know this is the right mlid because Larry looked it up.
+  menu_link_delete(16);
+
+  return array();
+}
+
+/**
+ * Enable the Eldorado Superfly module. I feel dirty.
+ */
+function webb_update_6013() {
+  module_enable(array('eldorado_superfly'));
+
+  return array();
+}
+
+/**
+ * Enable the new webbdatefilter module.
+ */
+function webb_update_6014() {
+  module_enable(array('webbdatefilter'));
+
+  return array();
+}

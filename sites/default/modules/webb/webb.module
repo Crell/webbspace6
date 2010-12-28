@@ -323,17 +323,22 @@ function webb_project_page_link_alter($project, &$all_links) {
 
 /**
  * Implementation of hook_link().
- *
  */
 function webb_link($type, $node=NULL, $teaser=FALSE) {
-  $links = array();
+  static $links = array();
 
-  if ($type == 'node' && $node->type == 'note') {
-    $links = array_merge($links, _webb_link_note($node, $teaser));
-  }
+  // Because Eldorado Superfly (I still can't believe we're using that module)
+  // re-calls hook_link(), we need to statically cache the output. Fortunately
+  // it wouldn't vary anyway, but some of these involve rather expensive
+  // queries.
+  if (empty($links)) {
+	  if ($type == 'node' && $node->type == 'note') {
+	    $links = array_merge($links, _webb_link_note($node, $teaser));
+	  }
 
-  if ($type == 'node' && webb_is_post_type($node->type)) {
-    $links = array_merge($links, _webb_link_post_type($node, $teaser));
+	  if ($type == 'node' && webb_is_post_type($node->type)) {
+	    $links = array_merge($links, _webb_link_post_type($node, $teaser));
+	  }
   }
 
   return $links;

@@ -481,10 +481,6 @@ function _webb_link_note($node, $teaser) {
         );
       }
     }
-   
-   // Drop temporary table
-   db_query_temporary("DROP TABLE {recent_posts}");
-
   }
 
   return $links;

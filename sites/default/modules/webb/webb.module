@@ -652,20 +652,14 @@ function webb_form_note_node_form_alter(&$form, &$form_state) {
     webb_set_og_context();
   }
 
-  // Pre-fill the parent id field from the GET query, then hide it
-  //$parent_nid = (int)$_GET['parent_nid'];
+  // Retrieve the parent node if any and pre-populate the note
+  // body with a quoted version of it.
   $parent_nid = arg(3);
-  //$form['field_parent_note'][0]['#type'] = 'value';
   if ($parent_nid) {
-    
     $parent = node_load($parent_nid);
-/*
-    //Note 2 [nid:13]
-    $form['field_parent_note'][0]['#value'] = "{$parent->title} [nid:{$parent->nid}]";
-*/
-    // Also set the default value of the note to the quoted version of the parent's body
+
     $body = &$form['body_field']['body'];
-    //dpm($body);
+
     if (! $body['#default_value']) {
       $parent = node_load($parent_nid);
       $body['#default_value'] = webb_quote_note($parent);

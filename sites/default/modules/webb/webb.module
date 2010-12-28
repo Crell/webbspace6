@@ -356,7 +356,13 @@ function _webb_link_note($node, $teaser) {
     drupal_add_link(array('rel' => 'start', 'href' => url('node/'. $group_nid)));
     drupal_add_link(array('rel' => 'index', 'href' => url('node/'. $group_nid .'/notes')));
 
-    // Create a temporary table to generate the links below
+    // Create a temporary table to generate the links below.
+    // 7776000 seconds is 90 days. That is, we assume all next/prev
+    // notes will be no more than 90 days apart. Since we elsewhere
+    // prevent replying to a note older than 90 days that should
+    // never be a problem.  By filtering the node table down first,
+    // though, we avoid a massive and expensive temporary table in
+    // all of the queries that follow.
     db_query_temporary("SELECT nid, created 
       FROM node 
       WHERE created >= %d 

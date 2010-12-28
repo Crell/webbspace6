@@ -46,24 +46,6 @@ function webb_is_post_type($type) {
 }
 
 /**
- * Utility function to load a cck field instance object.
- *
- * Why this doesn't exist in CCK, I don't know...
- *
- * This is probably D5-only.
- *
- * @param string $field_name
- * @param string $type_name
- * @return object
- */
-function webb_get_field_instance($field_name, $type_name) {
-  $field = db_fetch_object(db_query("SELECT * FROM {node_field_instance} WHERE field_name='%s' AND type_name='%s'", $field_name, $type_name));
-  $field->widget_settings = unserialize($field->widget_settings);
-  $field->display_settings = unserialize($field->display_settings);
-  return $field;
-}
-
-/**
  * Formats a note as the default body string for replies to it.
  */
 function   webb_quote_note($node) {

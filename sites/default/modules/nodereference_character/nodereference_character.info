@@ -1,5 +1,0 @@
-name = Node Reference Character widget
-description = Adds an additional widget for selecting characters.
-dependencies[] = nodereference
-package = STF
-core = 6.x

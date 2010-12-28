@@ -377,7 +377,10 @@ function _webb_link_note($node, $teaser) {
       'recent_posts'
     );
 
-    // Add a link to the previous note chronologically on this board
+    // Add a link to the previous note chronologically on this board.
+    // Note that this query is still filtering and ordering by different
+    // tables so it will be slower than the others. Because of the temp
+    // table, however, it should never get too bad.
     $prev_by_time = db_result(
       db_query_range("SELECT n.nid
         FROM {recent_posts} n INNER JOIN {og_ancestry} oa ON n.nid=oa.nid

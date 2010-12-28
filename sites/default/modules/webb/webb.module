@@ -365,11 +365,10 @@ function _webb_link_note($node, $teaser) {
     // all of the queries that follow.
     db_query_temporary("SELECT nid, created 
       FROM node 
-      WHERE created >= %d 
-        AND created <= %d 
-        AND status = 1 
-        AND type = '%s'", 
-      array($node->created - 7776000, $node->created + 7776000, $node->type), 
+      WHERE type = '%s'
+        AND status = %d
+        AND created BETWEEN %d AND %d",
+      array($node->type, 1, $node->created - 7776000, $node->created + 7776000), 
       'recent_posts'
     );
 

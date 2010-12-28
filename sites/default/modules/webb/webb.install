@@ -618,3 +618,21 @@ function webb_update_6010() {
 
   return array();
 }
+
+/**
+ * Add a new index on the node table for faster navigation lookups.
+ *
+ * Note the benefit of this index will only show on InnoDB. For
+ * some reason it actually slows queries down slightly on MyISAM,
+ * at least on Larry's computer.
+ */
+function webb_update_6011() {
+
+  $ret = array();
+
+  // It's possible this will fail if the index already exists, but Drupal  6
+  // has no "index exists" command that I can find.  Blargh.
+  db_add_index($ret, 'node', 'note_navigation', array('type', 'status', 'created'));
+
+  return $ret;
+}

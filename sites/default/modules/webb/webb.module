@@ -396,16 +396,7 @@ function _webb_link_note($node, $teaser) {
       );
       drupal_add_link(array('rel' => 'prev', 'href' => url('node/'. $prev_by_time)));
     }
-/*
-    // Add a link back to the Board
-    $links['view_board'] = array(
-      'title' => t("Back to !boardname", array('!boardname' => $group->title)),
-      'href' => "node/{$group_nid}",
-      'attributes' => array(
-        'title' => t("Back to Board"),
-       ),
-    );
-*/
+
     // Add a link to the parent note, if any
     if ($node->field_parent_note[0]['nid']) {
       $links['parent_note'] = array(

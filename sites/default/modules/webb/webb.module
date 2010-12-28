@@ -399,19 +399,6 @@ function _webb_link_note($node, $teaser) {
       drupal_add_link(array('rel' => 'up', 'href' => url('node/'. $node->field_parent_note[0]['nid'])));
     }
 
-    // Add a "reply" link
-    if (user_access('post notes')) {
-      $links['reply'] = array(
-        'title' => t("Reply"),
-        'href' => "node/{$group->nid}/post/". $node->nid,
-        'query' => 'parent_nid='. $node->nid,
-        'attributes' => array(
-          'title' => t("Post a reply to this note"),
-         ),
-      );
-    }
-    
-
     // Add a link to the next note chronologically on this board.
     $next_by_time = db_result(
       db_query_range("SELECT n.nid

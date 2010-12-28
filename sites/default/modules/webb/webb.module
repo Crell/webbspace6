@@ -659,7 +659,7 @@ function webb_form_user_edit_alter(&$form, &$form_state) {
  * Implementation of hook_form_alter();
  */
 function webb_form_note_node_form_alter(&$form, &$form_state) {
-  dpm(__FUNCTION__);
+  //dpm(__FUNCTION__);
 
   if (empty($form['nid']['#value'])) {
     webb_set_og_context();
@@ -678,7 +678,7 @@ function webb_form_note_node_form_alter(&$form, &$form_state) {
 */
     // Also set the default value of the note to the quoted version of the parent's body
     $body = &$form['body_field']['body'];
-    dpm($body);
+    //dpm($body);
     if (! $body['#default_value']) {
       $parent = node_load($parent_nid);
       $body['#default_value'] = webb_quote_note($parent);

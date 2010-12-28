@@ -394,7 +394,7 @@ function _webb_link_note($node, $teaser) {
           'title' => t("View the previous note on this board"),
          ),
       );
-      drupal_add_link(array('rel' => 'prev', 'href' => url('node/'. $prev_nid)));
+      drupal_add_link(array('rel' => 'prev', 'href' => url('node/'. $prev_by_time)));
     }
 /*
     // Add a link back to the Board
@@ -435,7 +435,7 @@ function _webb_link_note($node, $teaser) {
           'title' => t("View the next note on this board"),
          ),
       );
-      drupal_add_link(array('rel' => 'next', 'href' => url('node/'. $next_nid)));
+      drupal_add_link(array('rel' => 'next', 'href' => url('node/'. $next_by_time)));
     }
 
     // Add a link to the next note in the same topic.

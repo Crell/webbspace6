@@ -1,0 +1,173 @@
+? adding_revisions_support-358605-1-fax8.patch
+? revisions_50.patch
+Index: css.install
+===================================================================
+RCS file: /cvs/drupal-contrib/contributions/modules/css/css.install,v
+retrieving revision 1.2.2.1
+diff -u -p -r1.2.2.1 css.install
+--- css.install	4 May 2010 07:55:38 -0000	1.2.2.1
++++ css.install	5 Jul 2010 09:35:58 -0000
+@@ -1,8 +1,8 @@
+ <?php
+ // $Id: css.install,v 1.2.2.1 2010/05/04 07:55:38 fax8 Exp $
+ 
+-/**
+- * @file
++/**
++ * @file
+  * CSS module install file.
+  */
+ 
+@@ -18,15 +18,22 @@ function css_schema() {
+           'type' => 'int',
+           'unsigned' => TRUE,
+           'not null' => TRUE,
+-          'default' => 0
++          'default' => 0,
++        ),
++        'vid' => array(
++          'description' => t('The {node}.vid for the CSS.'),
++          'type' => 'int',
++          'unsigned' => TRUE,
++          'not null' => TRUE,
++          'default' => 0,
+         ),
+         'css' => array(
+-          'description' => t('The primary identifier for the relation.'),
++          'description' => t('The CSS to add for this node.'),
+           'type' => 'text',
+           'not null' => FALSE,
+         ),
+       ),
+-      'primary key' => array('nid'),
++      'primary key' => array('vid'),
+   );
+   return $schema;
+ }
+@@ -39,10 +46,30 @@ function css_install() {
+   drupal_install_schema('css');
+ }
+ 
+-
+ /**
+  * Implementation of hook_uninstall().
+  */
+ function css_uninstall() {
+   drupal_uninstall_schema('css');
+ }
++
++/**
++ * Add a vid column for tracking revisions.
++ */
++function css_update_6001() {
++  $ret = array();
++
++  $vid = array(
++    'description' => t('The {node}.vid for the CSS.'),
++    'type' => 'int',
++    'unsigned' => TRUE,
++    'not null' => TRUE,
++    'default' => 0,
++  );
++
++  db_add_field($ret, 'css', 'vid', $vid);
++  $ret[] = update_sql('UPDATE css c SET vid = (SELECT vid FROM node n WHERE n.nid = c.nid)');
++  $ret[] = update_sql('ALTER TABLE {css} DROP PRIMARY KEY, ADD PRIMARY KEY ( `vid` )');
++
++  return $ret;
++}
+Index: css.module
+===================================================================
+RCS file: /cvs/drupal-contrib/contributions/modules/css/css.module,v
+retrieving revision 1.4.2.4
+diff -u -p -r1.4.2.4 css.module
+--- css.module	4 May 2010 07:55:38 -0000	1.4.2.4
++++ css.module	5 Jul 2010 09:35:58 -0000
+@@ -5,22 +5,6 @@
+  * @file
+  * Adds the support for css on node creation.
+  * We add the ability for each node to have an attached css
+- *
+- * @author Fabio Varesano <fvaresano at yahoo dot it>
+- * @updated to Drupal 5 by Christopher Skauss <christopher skauss at gmail dot com>
+- * @modified drupal 5 Version by Whispero
+- * @updated for Drupal 6 by Joshua Chan <josh at joshuachan dot ca>
+- *
+- * To store this extra information, we need an auxiliary database table.
+- *
+- * Database definition:
+- * @code
+-   CREATE TABLE css (
+-      nid int(10) unsigned NOT NULL default '0',
+-      css text NULL default NULL,
+-      PRIMARY KEY (nid)
+-    )
+- * @endcode
+  */
+ 
+ /**
+@@ -130,9 +114,9 @@ function css_nodeapi(&$node, $op, $tease
+       // than an UPDATE just in case the rating didn't exist for some reason.
+       case 'update':
+         if (user_access('create css for nodes')) {
+-          db_query("DELETE FROM {css} WHERE nid = %d", $node->nid);
++          db_query("DELETE FROM {css} WHERE vid = %d", $node->vid);
+           if (!empty($node->css_css)) {
+-            db_query("INSERT INTO {css} (nid, css) VALUES (%d, '%s')", $node->nid, $node->css_css);
++            db_query("INSERT INTO {css} (nid, vid, css) VALUES (%d, %d, '%s')", $node->nid, $node->vid, $node->css_css);
+           }
+         }
+         break;
+@@ -143,10 +127,14 @@ function css_nodeapi(&$node, $op, $tease
+         db_query('DELETE FROM {css} WHERE nid = %d', $node->nid);
+         break;
+ 
++      case 'delete revision':
++        db_query('DELETE FROM {css} WHERE vid = %d', $node->vid);
++        break;
++
+       // Now we need to take care of loading one of the extended nodes from the
+       // database. An array containing our extra field needs to be returned.
+       case 'load':
+-        $object = db_fetch_object(db_query('SELECT css FROM {css} WHERE nid = %d', $node->nid));
++        $object = db_fetch_object(db_query('SELECT css FROM {css} WHERE vid = %d', $node->vid));
+         return array('css_css' => $object->css);
+         break;
+ 
+@@ -162,7 +150,7 @@ function css_nodeapi(&$node, $op, $tease
+                    ' </style>';
+             drupal_set_html_head($css, 'preview');
+           }
+-        }
++        }
+         else {
+           // Drupal 6 seems to check for the physical existence of CSS files
+           // before allowing them to be added. We have to include the virtual
+@@ -175,7 +163,7 @@ function css_nodeapi(&$node, $op, $tease
+               'type' => 'text/css',
+               'rel' => 'stylesheet',
+               'media' => 'all',
+-              'href' => url('css/get/' . $node->nid),
++              'href' => url('css/get/' . $node->vid),
+             );
+             $link = '<link'. drupal_attributes($attributes) .' />';
+             $css = "\n//--><!]]>\n"."</script>\n".
+@@ -193,11 +181,15 @@ function css_nodeapi(&$node, $op, $tease
+ 
+ /**
+  * Return the css attached to the node.
++ *
+  * Last-Modified header is set to let browsers cache the css.
++ *
++ * @param int $vid
++ *   The vid of the node/revision for which we want to return the CSS.
+  */
+-function css_get($nid = 0) {
+-  if (is_numeric($nid) && $nid > 0) {
+-    $object = db_fetch_object(db_query('SELECT css, changed FROM {css} c, {node} n WHERE n.nid = %d AND n.nid = c.nid', $nid));
++function css_get($vid = 0) {
++  if (is_numeric($vid) && $vid > 0) {
++    $object = db_fetch_object(db_query('SELECT css, timestamp FROM {css} c, {node_revisions} nr WHERE nr.vid = %d AND nr.vid = c.vid', $vid));
+     if ($object) {
+       $date = gmdate('D, d M Y H:i:s', $object->changed) .' GMT';
+       header("Last-Modified: $date");

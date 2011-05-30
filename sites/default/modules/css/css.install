@@ -1,0 +1,74 @@
+<?php
+
+/**
+ * @file
+ * CSS module install file.
+ */
+
+/**
+ * Database table schema definition.
+ */
+function css_schema() {
+  $schema['css'] = array(
+      'description' => t('CSS rules added to individual nodes.'),
+      'fields' => array(
+        'nid' => array(
+          'description' => t('The {node}.nid for the CSS.'),
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 0,
+        ),
+        'vid' => array(
+          'description' => t('The {node}.vid for the CSS.'),
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 0,
+        ),
+        'css' => array(
+          'description' => t('The CSS to add for this node.'),
+          'type' => 'text',
+          'not null' => FALSE,
+        ),
+      ),
+      'primary key' => array('vid'),
+  );
+  return $schema;
+}
+
+
+/**
+ * Implementation of hook_install().
+ */
+function css_install() {
+  drupal_install_schema('css');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function css_uninstall() {
+  drupal_uninstall_schema('css');
+}
+
+/**
+ * Add a vid column for tracking revisions.
+ */
+function css_update_6001() {
+  $ret = array();
+
+  $vid = array(
+    'description' => t('The {node}.vid for the CSS.'),
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+  );
+
+  db_add_field($ret, 'css', 'vid', $vid);
+  $ret[] = update_sql('UPDATE css c SET vid = (SELECT vid FROM node n WHERE n.nid = c.nid)');
+  $ret[] = update_sql('ALTER TABLE {css} DROP PRIMARY KEY, ADD PRIMARY KEY ( `vid` )');
+
+  return $ret;
+}
